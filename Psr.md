@@ -69,160 +69,172 @@ $int++;
 
 * константа класса: `\My\Space\MyClass::MY_CONSTANT`
 
-### Правила
+## Правила
 
 Описание DocBlock в виде нотации БНФ:
 
+```
 PHPDoc      = [summary] [description] [tags]
-
 summary     = *CHAR (2*CRLF)
-
 description = 1*(CHAR / inline-tag) 1*CRLF
-
 tags        = *(tag 1*CRLF)
-
 inline-tag  = "{" tag "}"
-
 tag         = "@" tag-name [":" tag-specialization] [tag-details]
+```
 
-CHAR, насколько я понял, может включать и символ перевода строк LF (0x0A).
 
-DocBlock уровня файлов размещается в верхней части файла исходного кода PHP: 
+CHAR, насколько я понял, может включать и символ перевода строк `LF` (0x0A).
+
+*DocBlock* уровня файлов размещается в верхней части файла исходного кода PHP: 
+
+```php
+/**
+ * This is a file-level DocBlock
+ */
 
 /**
-  \* This is a file-level DocBlock
-  */
+ * This is a class DocBlock
+ */
+class MyClass
+{
 
- /**
-  \* This is a class DocBlock
-  */
- **class** MyClass
- {
+}
+```
 
- }
+Остальные типы *DocBlock* должны непосредственно предшествовать *Структурному элементу*.
 
-Остальные типы DocBlock должны непосредственно предшествовать Структурному элементу.
+### Сводка (summary)
 
-#### Сводка (summary)
+*Summary* описывает назначение *Структурного элемента*. Объем одна, максимум две строки. 
 
-Summary описывает назначение Структурного элемента. Объем одна, максимум две строки. 
+*Summary* должна заканчиваться двумя последовательными `LF`. Если кроме *Summary* PHPDoc ничего не содержит, то `LF` не ставится.
 
-Summary должна заканчиваться двумя последовательными LF. Если кроме Summary PHPDoc ничего не содержит, то LF не ставится.
+### Описание (description)
 
-#### Описание (description)
+*Summary* должно предшествовать *Description*, иначе *Description* будет считься *Summary* (сводкой). 
 
-Summary должно предшествовать Description, иначе Description будет считься Summary (сводкой). 
+*Description* используется опционально, в том случае если требуется более подробно описать Summary. 
 
-Description используется опционально, в том случае если требуется более подробно описать Summary. 
+*Description* может использовать оформление текста согласно Markdown.
 
-Description может использовать оформление текста согласно Markdown.
-
-#### Теги (Tags)
+### Теги (Tags)
 
 Формат отдельного тега:
 
+```
 "@" tag-name [":" tag-specialization] [tag-details]
+```
 
 Примеры ниже идентичны:
 
+```php
 /**
-
- \* @var string This is a description.
-
- \* @var string This is a
-
- \*    description.
-
- \* @var string
-
- \*    This is a description.
-
+ * @var string This is a description.
+ * @var string This is a
+ *    description.
+ * @var string
+ *    This is a description.
  */
+```
 
 Специализация тега (tag-specialization) может использоваться для уточнения тега: 
 
+```
 @see:unit-test \Mapping\EntityTest::testGetId
+```
 
-##### Типы
+#### Типы
 
 Если для параметра возможно несколько разных типов, то они должны быть разделены вертикальной линией |:
 
+```
 @return int|null
+```
 
 Возможные типы:
 
-\1.        array. Способы задания типа элементов массива:
+1. `array`. Способы задания типа элементов массива:
+   
+   * не задавать тип элемента массива:
+   
+     ```
+     @return array
+     ```
+   
+   * все элементы массива имеют один тип:
+   
+     ```
+     @return int[]
+     ```
+   
+   * элементы массива могут иметь несколько различных типов:
+   
+     ```
+     @return (int|string)[]
+     ```
+   
+   * (не PSR, но поддерживается статическими анализаторами) массивы-структуры с фиксированным набором ключей, где каждый ключ имеет значение конкретного типа:
+   
+     ```
+     @return array{scheme:string, host:string, path:string}
+     ```
+   
+2. Класс. Способы задания:
 
-o   не задавать тип элемента массива:
+   - *Fully Qualified Class Name* (FQCN)
+   - именем класса, для классов в том же namespace
 
-@return array
+3. `bool`
 
-o   все элементы массива имеют один тип:
+4. `int`
 
-@return int[]
+5. `float`
 
-o   элементы массива могут иметь несколько различных типов:
+6. `string`
 
-@return (int|string)[]
+7. `object`
 
-o   (не PSR, но поддерживается статическими анализаторами) массивы-структуры с фиксированным набором ключей, где каждый ключ имеет значение конкретного типа:
+8. `iterable`
 
-@return array{scheme:string, host:string, path:string}
+9. `resource`
 
-\2.   Класс. Способы задания:
+10. `mixed` – любой тип
 
-o   Fully Qualified Class Name (FQCN)
+11. `void` – используется для функций, которые ничего не возвращают
 
-o    именем класса, для классов в том же namespace
+12. `null`
 
-\3.   bool
+13. `callable`
 
-\4.   int
+14. `self` – элемент того класса, в котором записан *DocBlock* 
 
-\5.   float
+15. `static` – элемент того класса, в котором используется *DocBlock* с учетом наследования (аналог позднего статического связывания, LSB)
 
-\6.   string
+16. `$this` – текущий экземпляр класса. Чаще всего используется, как возвращаемое значения для методов, реализующих [паттерн Fluent Interface](TODO):
 
-\7.   object
+```php
+/**
+ * @return $this
+ */
+public function setName($name) : self
+{
+    $this->name = $name;
+    return $this;
+}
+```
 
-\8.   iterable
+#### Наследование и @inheritdoc
 
-\9.   resource
+Если следующие части *PHPDoc* не указаны у потомков, то потомки наследуют следующие элементы *PHPDoc* родителя :
 
-\10.    mixed – любой тип
+* Сводка (summary)
 
-\11.    void – используется для функций, которые ничего не возвращают
+* Описание (description)
 
-\12. null
-
-13.callable
-
-\14.  self – элемент того класса, в котором записан DocBlock 
-
-\15.  static – элемент того класса, в котором используется DocBlock с учетом наследования (аналог позднего статического связывания, LSB)
-
-\16.  $this – текущий экземпляр класса. Чаще всего используется, как возвращаемое значения для методов, реализующих паттерн Fluent Interface:
-
-*/**  \* **@return** $this  \*/* **public function** setName($name) : **self** {
-     $this->**name** = $name;
-     **return** $this;
- }
-
-##### Наследование и @inheritdoc
-
-Если следующие части PHPDoc не указаны у потомков, то потомки наследуют следующие элементы PHPDoc родителя :
-
-·      Сводка (summary)
-
-·      Описание (description)
-
-·      Некоторые теги (tags):
-
-o    @author
-
-o    @copyright
-
-o    @version
+* Некоторые теги (tags):
+  * @author
+  * @copyright
+  * @version
 
 Для классов:
 

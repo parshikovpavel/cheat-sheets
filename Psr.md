@@ -365,41 +365,28 @@ public function getUser()
  */
 ```
 
+#### @method
 
+Тег указывает «магические» методы, явно не указанные в классе и реализованные через `__call()`. Используется только со *Структурными элементами* типа `class` или `interface`.
 
+```php
 /**
-  \* Summary
-  *
-  \* Description
-  \* Foo ({**@link** http://example.com/foo}) is used to ...
-  */
+ * @method [return type] [name]([type] [parameter], [...]) [description]
+ * @method void setString(int $integer)
+ */
+class Child extends Parent {}
 
- 
+```
 
-##### @method
+#### @package
 
-Тег указывает «магические» методы, явно не указанные в классе и реализованные через __call()
+Тег используется для логического разделения *Структурных элементов*. Тогда как `namespace` осуществляют функциональное разделение *Структурных элементов*. Поэтому значение тега `@package` может отличаться от значения `namespace`. Если значение тега `@package` совпадает со значением `namespace`, то его НЕ РЕКОМЕНДУЕТСЯ использовать, чтобы не тратить время на поддержку актуального значения тега `@package`.
 
-[@method](https://vk.com/method) [return type] [name]([type] [parameter], [...]) [description] 
-
-Тег @method используется только со Структурными элементами типа class или interface.
-
- /**
-  \* **@method** void setString(int $integer)
-  */
- **class** Child **extends** Parent {}
-
-##### @package
-
-Тег [@package](https://vk.com/package) используется для логического разделения Структурных элементов. Тогда как namespace осуществляют функциональное разделение Структурных элементов. Поэтому значение тега [@package](https://vk.com/package) может отличаться от значения namespace. Если значение тега [@package](https://vk.com/package) совпадает со значением namespace , то его НЕ РЕКОМЕНДУЕТСЯ использовать, чтобы не тратить время на поддержку актуального значения тега [@package](https://vk.com/package).
-
-Пример
-
-[                                                    ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [22:45](https://vk.com/im?sel=2733257&msgid=63904)
-
- 
+```php
+/**
+ * @package PSR\Documentation\API
+ */
+```
 
 5.9. [@param](https://vk.com/param)
 

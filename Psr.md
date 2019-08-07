@@ -331,6 +331,7 @@ public function getUser()
 ```php
 /**
  * @deprecated [<"Semantic Version">] [<description>]
+ * @deprecated 1.0.0 No longer used by internal code and not recommended.
  */
 ```
 
@@ -344,7 +345,19 @@ public function getUser()
  */
 ```
 
-#### `@link`
+Тег может быть встроенным, в этом случае в нем размещается примечание, которое будут отображаться только для разработчиков и не будет включаться в документацию:
+
+```php
+/**
+ * {@internal [description]}
+ * {@internal Developers should note that ... }
+ */
+ 
+```
+
+
+
+#### @link`
 
 Тег показывает связь между *Структурным элементом* и внешним ресурсом по ссылке URI.
 

@@ -1,8 +1,8 @@
 # Синтаксис
 
-## Операторы манипуляции данными
+## Statements манипуляции данными
 
-### SELECT
+### `SELECT`
 
 ```mysql
 SELECT
@@ -71,17 +71,17 @@ SELECT
 * условие соединения помещается в `JOIN ON`
 * условия фильтрации помещаются в `WHERE`.
 
-#### COUNT
+#### `COUNT`
 
-COUNT может применяться для подсчетов.
+`COUNT` может применяться для подсчетов.
 
-- Количество не `NULL` значений
+- Количество не `NULL` значений выражения `expr`
 
   ```mysql
   COUNT(expr)
   ```
 
-  Возвращает количество не `NULL` значений `expr` в строках, полученных оператором `SELECT`.  Если нет соответствующих строк, `COUNT()` возвращает 0.
+  Если нет соответствующих строк, `COUNT()` возвращает 0.
 
   Например, найти все строки, где `id IS NOT NULL`
 
@@ -89,86 +89,89 @@ COUNT может применяться для подсчетов.
   COUNT(id)
   ```
 
-- Количество различных не NULL значений
+- Количество строк с *различными* не `NULL` значениями `expr`
 
+  ```mysql
+  COUNT(DISTINCT expr)
+  ```
 
+##### Подсчет количества строк в таблице
 
-COUNT`(`DISTINCT` expr``)`](https://dev.mysql.com/doc/refman/5.7/en/group-by-functions.html#function_count)
+  Лучше всего использовать специальную форму:
 
-Возвращает количество строк с различными не NULL значениями.
+  ```mysql
+  COUNT(*)
+  ```
 
-###### Количество строк
+которая вовсе не сводится к подстановке вместо метасимвола `*` полного списка столбцов таблицы, столбцы вообще игнорируются, а подсчитываются только строки.
 
-Если MySQL точно знает, что выражение внутри скобок не может быть равно NULL, то просто подсчитывает строки. 
+Если MySQL точно знает, что выражение внутри скобок не может быть равно `NULL`, то также просто подсчитывает строки. Поэтому также можно использовать аналоги, вроде `COUNT(1)`, т.к. в скобках записана константа и значений `NULL` нет.
 
-Лучше всего использовать специальную форму:
+Одна из наиболее часто встречающихся ошибок – задание имени столбца в скобках, когда требуется подсчитать строки. Если нужно узнать, сколько строк в результирующем наборе, всегда употребляйте `COUNT(*)`. Тем самым вы избежите возможного падения производительности.
 
-COUNT(*)
+Для *MyISAM* `COUNT(*)` выполняется очень быстро, если 
 
-которая вовсе не сводится к подстановке вместо метасимвола * полного списка столбцов таблицы, столбцы вообще игнорируются, а подсчитываются сами строки. Также можно использовать аналоги, вроде COUNT(1), т.к. в скобках записана константа и значений NULL нет.
+- `SELECT` извлекает данные из одной таблицы
+- никакие другие столбцы не извлекаются
+- нет `WHERE`. 
 
-Одна из наиболее часто встречающихся ошибок – задание имени столбца в скобках, когда требуется подсчитать строки. Если нужно узнать, сколько строк в результирующем наборе, всегда употребляйте COUNT(*). Тем самым вы избежите возможного падения производительности.
-
-Для MyISAM COUNT(*) выполняется очень быстро, если SELECT извлекает данные из одной таблицы, никакие другие столбцы не извлекаются, и нет WHERE. Это возможно, потому что MyISAM хранит точное количество строк в таблице. MyISAM не обладает никакими магическими возможностями для подсчета строк, когда в запросе есть фраза WHERE, равно как и для подсчета значений, а не строк.
-
-Например:
-
+```mysql
 SELECT COUNT(*) FROM student;
+```
 
-Иногда оптимизацию COUNT(*) в MyISAM можно использовать, если требуется подсчитать все строки, кроме очень небольшого числа, т.е. заменить
+Это возможно, потому что *MyISAM* хранит точное количество строк в таблице. *MyISAM* не обладает никакими магическими возможностями для другого подсчета строк, например если в запросе есть фраза `WHERE`.
 
+Иногда оптимизацию `COUNT(*)` в *MyISAM* можно использовать, если требуется подсчитать все строки, кроме очень небольшого числа, т.е. заменить
+
+```mysql
 SELECT COUNT(*) FROM world.city WHERE ID > 5;
+```
 
 на
 
+```
 SELECT (SELECT COUNT(*) FROM world.city)- COUNT(*)
-
 FROM world.City 
-
 WHERE ID <= 5; 
+```
 
 В этом варианте читается меньше строк, поскольку на стадии оптимизации подзапрос преобразуется в константу: 
 
+```
 +----+-------------+-------+...+------+------------------------------+ 
- | id | select_type | table |...| rows | Extra                        | 
- +----+-------------+-------+...+------+------------------------------+ 
- | 1  | PRIMARY     | City  |...| 6    | Using where; Using index     | 
- | 2  | SUBQUERY    | NULL  |...| NULL | Select tables optimized away | 
- +----+-------------+-------+...+------+------------------------------+
+| id | select_type | table |...| rows | Extra                        | 
++----+-------------+-------+...+------+------------------------------+ 
+| 1  | PRIMARY     | City  |...| 6    | Using where; Using index     | 
+| 2  | SUBQUERY    | NULL  |...| NULL | Select tables optimized away | 
++----+-------------+-------+...+------+------------------------------+
+```
 
 Для транзакционной InnoDB невозможно хранение точного количества строк, т.к. одновременно могут совершаться несколько транзакций, каждый из которых может влиять на количество. Если достаточно приблизительного количества строк, то можно использовать команду [SHOW TABLE STATUS](https://dev.mysql.com/doc/refman/5.7/en/show-table-status.html).
 
-###### Оптимизация запросов с COUNT
+##### Оптимизация запросов с COUNT
 
-Запросы, содержащие COUNT(), с трудом поддаются оптимизации, поскольку обычно они должны подсчитать много строк (то есть «прошерстить» большой объем данных). При таком запросе требуется поднять все данные в кеш (например, в innodb_buffer_pool), если они там не находятся.
+Запросы, содержащие `COUNT()`, с трудом поддаются оптимизации, поскольку обычно они должны подсчитать много строк (то есть «прошерстить» большой объем данных). При таком запросе требуется поднять все данные в кеш (например, в `innodb_buffer_pool`), если они там не находятся.
 
 Единственная возможность оптимизации внутри самого сервера MySQL – воспользоваться покрывающим индексом. 
 
 Если этого недостаточно, рекомендуется внести изменения в архитектуру приложения. Например, самостоятельно реализовать счетчик количества строк и вручную этот счетчик изменять. Однако, такой счетчик может стать узким местом, если таблица активно изменяется. Счетчик может храниться:
 
-·      в сводной таблице в самой базе данных (например, на fishki такой таблицей является fishki_user_stat).
+- в сводной таблице в самой базе данных (пример – таблица `fishki_user_stat`).
+- в *in-memory* кеше (например, *memcached*). 
 
-·      в in-memory кеше (например, memcached). 
+Придется выбрать 2 из трех:
 
-Придется выбрать 2 из трех – быстро, точно, просто.
+* быстро
+* точно
+* просто.
 
-COUNT(distinct id) – число уникальных id
+#### `HAVING`
 
- 
+Идет сразу после `GROUP BY`. Аналог `WHERE` для группированных полей.
 
- 
+#### Примеры
 
- 
-
- 
-
-##### HAVING
-
-Идет сразу после GROUP BY, аналог WHERE для группированных полей.
-
-##### Примеры
-
-Допустим есть таблица user_group(user_id, group_id), которая связывает таблицы user и group. Необходимо найти количество уникальных групп, в которых состоят пользователи :user1 и :user2. При вычитании останутся только те группы, которые в списке были по 2 раза.
+Допустим есть таблица user_group(user_id, group_id), которая связывает таблицы user и group. Необходимо найти количество уникальных групп, в которых состоят пользователи :user1 и :user2. При вычитании будет убрано то количество групп, которое встречалось в списке 2 раза.
 
 SELECT
 
@@ -182,165 +185,150 @@ WHERE
 
 ​     `user_id` IN (:user1,:user2)
 
-#### INSERT
+### `INSERT`
+
+Возможны три формы синтаксиса:
+
+```mysql
+INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    {VALUES | VALUE} (value_list) [, (value_list)] ...
+    [ON DUPLICATE KEY UPDATE assignment_list]
 
 INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
-
-​    [INTO] *tbl_name*
-
-​    [PARTITION (*partition_name* [, *partition_name*] ...)]
-
-​    [(*col_name* [, *col_name*] ...)]
-
-​    {VALUES | VALUE} (*value_list*) [, (*value_list*)] ...
-
-​    [ON DUPLICATE KEY UPDATE *assignment_list*]
-
- 
-
-INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
-
-​    [INTO] *tbl_name*
-
-​    [PARTITION (*partition_name* [, *partition_name*] ...)]
-
-​    SET *assignment_list*
-
-​    [ON DUPLICATE KEY UPDATE *assignment_list*]
-
- 
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    SET assignment_list
+    [ON DUPLICATE KEY UPDATE assignment_list]
 
 INSERT [LOW_PRIORITY | HIGH_PRIORITY] [IGNORE]
-
-​    [INTO] *tbl_name*
-
-​    [PARTITION (*partition_name* [, *partition_name*] ...)]
-
-​    [(*col_name* [, *col_name*] ...)]
-
-​    SELECT ...
-
-​    [ON DUPLICATE KEY UPDATE *assignment_list*]
-
- 
-
-*value*:
-
-​    {*expr* | DEFAULT}
-
- 
-
-*value_list*:
-
-​    *value* [, *value*] ...
-
- 
-
-*assignment*:
-
-​    *col_name* = *value*
-
- 
-
-*assignment**_**list*:
-
-​    *assignment* [, *assignment*] ...
-
-IGNORE –  игнорировать ошибки, возникающие при выполнении и не прерывать выполнение оператора. Например, при дублировании UNIQUE индекса строка просто пропускается.
-
-#### UPDATE
-
-UPDATE [LOW_PRIORITY] [IGNORE] table_reference
-
-​    SET assignment_list
-
-​    [WHERE where_condition]
-
-​    [ORDER BY ...]
-
-​    [LIMIT row_count]
-
- 
-
-assignment_list:
-
-​    assignment [, assignment] ...
-
- 
-
-assignment:
-
-​    col_name = value
-
- 
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    SELECT ...
+    [ON DUPLICATE KEY UPDATE assignment_list]
 
 value:
+    {expr | DEFAULT}
 
-​    {expr | DEFAULT}
+value_list:
+    value [, value] ...
 
-В качестве значения (value) может быть указано ключевое слово DEFAULT, что означает использование значения по умолчанию для данного столбца. 
+assignment:
+    col_name = value
 
-Если обновляются несколько столбцов и значение ранее обновленного столбца используются в последующих обновлениях, то используются уже новое значение, а не исходное. Например, здесь col2=(col1+1)+1, т.е. второе присваивание использует уже новое (обновленное) col1 значение. Это поведение отличается от стандарта SQL.
+assignment_list:
+    assignment [, assignment] ...
+```
 
+- `IGNORE` –  игнорировать ошибки, возникающие при выполнении, и не прерывать выполнение оператора. Например, при дублировании `UNIQUE` индекса строка просто пропускается.
+
+### `UPDATE`
+
+Возможно две формы синтаксиса:
+
+- одно-табличный синтаксис:
+
+  ```mysql
+  UPDATE [LOW_PRIORITY] [IGNORE] table_reference
+      SET assignment_list
+      [WHERE where_condition]
+      [ORDER BY ...]
+      [LIMIT row_count]
+  
+  value:
+      {expr | DEFAULT}
+  
+  assignment:
+      col_name = value
+  
+  assignment_list:
+      assignment [, assignment] ...
+  ```
+
+- много-табличный синтаксис:
+
+  ```mysql
+  UPDATE [LOW_PRIORITY] [IGNORE] table_references
+      SET assignment_list
+      [WHERE where_condition]
+  ```
+
+`value: DEFAULT` – использование значения по умолчанию для данного столбца. 
+
+Если обновляются несколько столбцов и значение ранее обновленного столбца используются в последующих обновлениях, то используются уже новое значение, а не исходное. Например, здесь:
+
+```mysql
 UPDATE t1 SET col1 = col1 + 1, col2 = col1;
+```
 
- 
+`col2=col1+1`, т.е. второе присваивание использует уже новое (обновленное) `col1` значение. Это поведение отличается от стандарта SQL.
 
-### GROUP_CONCAT
+Операторы
 
-Возвращает строку с конкатенированными не NULL значениями из группы, или NULL если нет не NULL значений. 
+### Functions and operators
 
-GROUP_CONCAT([DISTINCT] *expr* [,*expr* ...]
+#### `GROUP_CONCAT`
 
-​             [ORDER BY {*unsigned_integer* | *col_name* | *expr*}
+Возвращает:
 
-​                 [ASC | DESC] [,*col_name* ...]]
+- строку с конкатенированными не `NULL` значениями из группы, 
+- `NULL`, если все значения – `NULL`. 
 
-​             [SEPARATOR *str_val*])
+Синтаксис:
 
-mysql> SELECT student_name,
+```mysql
+GROUP_CONCAT([DISTINCT] expr [,expr ...]
+             [ORDER BY {unsigned_integer | col_name | expr}
+                 [ASC | DESC] [,col_name ...]]
+             [SEPARATOR str_val])
+```
 
-​         GROUP_CONCAT(test_score)
+Простой пример:
 
-​       FROM student
+```mysql
+SELECT student_name, GROUP_CONCAT(test_score)
+FROM student
+GROUP BY student_name;
+```
 
-​       GROUP BY student_name;
+Пример с указанием сортировки значений `ORDER BY` и разделителя `SEPARATOR`:
 
-mysql> SELECT student_name,
+```mysql
+SELECT student_name,
+       GROUP_CONCAT(DISTINCT test_score
+                    ORDER BY test_score DESC SEPARATOR ' ')
+FROM student
+GROUP BY student_name
+```
 
-​         GROUP_CONCAT(DISTINCT test_score
+#### `IF`
 
-​                      ORDER BY test_score DESC SEPARATOR ' ')
+```mysql
+IF(expr1, expr2, expr3)
+```
 
-​       FROM student
+Возвращает:
 
-​       GROUP BY student_name;
+- если `expr1=TRUE` ( `expr1 <> 0` и `expr1 <> NULL`) возвращает `expr2`
+- иначе – возвращает `expr3`.
 
-### Операторы управления потоком
+#### `CASE WHEN THEN`
 
-#### IF
+- Первая форма:
 
-[`IF``(``expr``1,``expr``2,``expr``3)`](https://dev.mysql.com/doc/refman/5.7/en/control-flow-functions.html#function_if)
+  ```mysql
+  CASE value
+  	WHEN compare_value_1 THEN result_1
+  	WHEN compare_value_2 THEN result_2
+  	…
+  	ELSE result 
+  END
+  ```
 
-Если expr1 имеет значение TRUE (expr1 <> 0 и expr1 <> NULL), IF () возвращает expr2. В противном случае он возвращает expr3.
-
-#### CASE WHEN THEN
-
-Первая форма:
-
-CASE value
-
-​     WHEN compare_value_1 THEN result_1
-
-​     WHEN compare_value_2 THEN result_2
-
-​     …
-
-​     ELSE result 
-
-END
-
-Если value равно compare_value, то возвращает соответствующий результат result_1.  Если value не соответствует ни одному compare_value, возвращает результат, указанный в ELSE предложении.
+  Если `value == compare_value_X `, то возвращается соответствующий результат `result_X`.  Если value не соответствует ни одному compare_value, возвращает результат, указанный в ELSE предложении.
 
 Вторая форма:
 

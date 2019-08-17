@@ -615,152 +615,302 @@ class Foo
 /** **@var** \ArrayObject $array */
  **public** $array = **null**;
 
-# PSR-6. Кэширование
+# PSR-6. Кэширование с пулом
 
 Описывает общий интерфейс для кеширующих систем. 
+
+Концепции:
+
+- *Item* (элемент) – ключ-значение в кеше
+- *Pool* (пул) – коллекция из всех закешированных *items*. 
+
+Общий принцип:
+
+* *Item* извлекаются из *Pool* , обрабатываются и возвращаются в него. *Item* не создаются самостоятельно *Calling Library*, а всегда извлекаются из *Pool*
 
  Основные термины:
 
 * *Calling Library* (вызывающая библиотека) – код, обращающийся к кеширующей библиотеке
 *  *Implementing Library* (реализующая библиотека). Библиотека ДОЛЖНА реализовывать `CacheItemInterface` и `CacheItemPoolInterface`.
-* *TTL* ([Time To Live](Dictionary.md#ttl)) – время жизни *item* в кеше. 
-* *Expiration* – момент истечения срока жизни *item*. *Expiration* и *TTL* связаны друг с другом и при изменении одного, изменяется другое. *Item* МОЖЕТ "протухнуть" раньше *Expiration*, но ДОЛЖЕН "протухнуть" гарантированно после *Expiration*. Если *Expiration* и *TTL* не указаны, то элемент хранится вечно.
+* *TTL* ([Time To Live](Dictionary.md#ttl)) – время жизни *item* в кеше. Задается в виде интервала времени `\DateInterval` или в секундах `int`.
+* *Expiration* – момент истечения срока жизни *item*. Задается в виде `\DateTimeInterface`. *Expiration* и *TTL* связаны друг с другом и при изменении одного, изменяется другое. *Item* МОЖЕТ "протухнуть" раньше *Expiration*, но ДОЛЖЕН "протухнуть" гарантированно после *Expiration*. Если *Expiration* и *TTL* не указаны, то элемент хранится вечно.
 * *Key*. Должны поддерживаться (как минимум) ключи из символов `A-Z`, `a-z`, `0-9`, `_`, и `.` и длиной до 64 символов.
 * *Hit* (попадание)  – *item* существует и не "протух". 
 * *Miss* (промах) – *item* не существует или "протух". *Miss* =! *Hit*.
 * *Deferred* (отложенный) – *item* может сохраняться в персистентное хранилище с задержкой. Задержку определяет сама система хранения. Система хранения может оптимизировать сохранение в персистентное хранилище, используя групповые операции. Однако при вызове `commit()` все *deffered items* должны быть гарантировано сохранены в персистентное хранилище. *Deffered items* должны возвращаться по запросу в кеш, даже если они еще не сохранены в персистентное хранилище.
 
-Концепции:
-
-- Item (элемент) – ключ-значение в кеше
-- Pool (пул) – 
-
 *Implementing libraries* должны поддерживать кеширования всех типов данных (включая `array`, `object`, `null`). Данные должны возвращаться назад в том же виде, как они были переданы для сохранения, включая тип данных. Поэтому вместе с данными должен быть сохранен и их тип. Проще всего использовать функции `serialize()`/`unserialize()`. 
 
-Получение значения должно выполняться так:
+## `CacheItemInterface`
+
+`CacheItemInterface` – интерфейс для класса закешированного *Item*.
+
+*Calling Libraries* НЕ ДОЛЖНЫ самостоятельно инстанцировать `CacheItemInterface` объекты. Они должны создаваться только `CacheItemPoolInterface` объектом. Получить `CacheItemInterface` объект можно только через `CacheItemPoolInterface::getItem()` метод.
 
 ```php
-if ($item->isHit()) {
-    $item->get();
+interface CacheItemInterface
+{
+    /**
+     * Получить ключ для текущего item
+     * @return string
+     */
+    public function getKey();
+
+    /**
+     * Получить значение для текущего item
+     * Если `isHit()` возвращает false, этот метод должен возвращать null. 
+     * @return mixed
+     */
+    public function get();
+
+    /**
+     * Произошел Hit
+     * @return bool
+     */
+    public function isHit();
+
+    /**
+     * Устеновить value. 
+     * Тип данных $value - любой, сериализацию выполняет сама Implementing Library
+     * @param mixed $value
+     * @return static Для fluent interface
+     */
+    public function set($value);
+
+    /**
+     * Устанавливает expiration time
+     * @param \DateTimeInterface|null $expiration
+     * @return static Для fluent interface
+     */
+    public function expiresAt($expiration);
+
+    /**
+     * Устанавливает TTL (интервал времени или в секундах)
+     * @param int|\DateInterval|null $time
+     * @return static Для fluent interface
+     */
+    public function expiresAfter($time);
+
 }
 ```
 
+## `CacheItemPoolInterface`
 
+`CacheItemPoolInterface` – интерфейс для *Pool* класса.
 
+Основная задача – генерировать `CacheItemInterface` объекты, пустые или с закешированным значением.
 
+```php
+interface CacheItemPoolInterface
+{
+    /**
+     * Возвращает Item по ключу $key
+     * Всегда возращает CacheItemInterface объект, даже в случае промаха
+     * @param string $key
+     * @return CacheItemInterface
+     */
+    public function getItem($key);
 
-Объекты, представляющие пару "ключ-значение", обязаны реализовывать интерфейс Cacheiteminterface
+    /**
+     * Возвращает массив CacheItemInterface объектов, соответствующих массиву ключей. 
+     * Для каждого ключа должен быть возвращен CacheItemInterface объект.
+     * @param string[] $keys
+     * @return CacheItemInterface[]
+     */
+    public function getItems(array $keys = array());
 
- 
+    /**
+     * В Pool имеется Item с указанным ключом. Не использовать совместно с getItem()
+     * из-за возможного race condition. Вместо этого использовать isHit()+get().
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function hasItem($key);
 
-Интерфейс содержит шесть следующих методов
+    /**
+     * Очистить Pool
+     *
+     * @return bool Успешно или нет
+     */
+    public function clear();
 
-[     ](https://vk.com/id2733257)
+    /**
+     * Удалить Item из Pool
+     *
+     * @param string $key
+     * @return bool Успешно или нет
+     */
+    public function deleteItem($key);
 
-[Павел](https://vk.com/id2733257) [19:16](https://vk.com/im?sel=2733257&msgid=61706)
+    /**
+     * Удалить набор Items из Pool
+     *
+     * @param string[] $keys
+     * @return bool Успешно или нет
+     */
+    public function deleteItems(array $keys);
 
- 
+    /**
+     * Сохранить персистентно CacheItemInterface немедленно
+     *
+     * @param CacheItemInterface $item
+     * @return bool Успешно или нет
+     */
+    public function save(CacheItemInterface $item);
 
- 
+    /**
+     * Сохранить CacheItemInterface как Deffered Item
+     *
+     * @param CacheItemInterface $item
+     * @return bool Успешно или нет
+     */
+    public function saveDeferred(CacheItemInterface $item);
 
- 
+    /**
+     * Сохранить все Deferred Items в персистентное хранилище
+     *
+     * @return bool Успешно или нет
+     */
+    public function commit();
+}
+```
 
-Для реализации коллекции пар "ключ-значение" предназначен интерфейсCacheltemPoolInterface (листинг 42.12).
+## Паттерны применения
 
-2 ноября
+```php
+/**
+ * Получение данных из кеша. 
+ * Если данные отсутствуют, то они вычисляются и кладутся в кеш на час
+ */
+    $item = $pool->getItem($key);
+    if (!$item->isHit()) {
+        $value = compute();
+        $item->set($value);
+        $item->expiresAfter(3600);
+        $pool->save($item);
+    }
+    return $item->get();
+}
+```
 
-[     ](https://vk.com/id2733257)
+```php
+/**
+ * Массовое мультисохранение записей в кеш
+ */
+$values = [];
+$items = $pool->getItems($keys);
+foreach ($items as $key => $item) {
+    if ($item->isHit()) {
+        $value = $item->get();
+    } else {
+        $value = load($key);
+        $item->set($value);
+        $item->expiresAfter(3600);
+        $pool->saveDeferred($item, true);
+    }
+    $values[$key] = $value;
+}
+$pool->commit(); 
+```
 
-[Павел](https://vk.com/id2733257) [11:47](https://vk.com/im?sel=2733257&msgid=62360)
+## Преимущества подхода
 
- 
+* По сравнению с самостоятельным инстанцированием `CacheItemInterface` в *Calling Library* – этот подход более гибкий. Не требует включения `CacheItemInterface` конструктора в интерфейсы, что лучше унифицирует *Implementing Library*.
+* По сравнению с простым подходом, когда `CacheItemInterface` отсутствует, данные сохраняются без "обертки", в "голом" виде – было бы невозможно определить разницу между *cache miss* и извлечением данного, обозначающего *cache miss* (часто `false` или `null`)
 
-[https://www.php-fig.org/psr/psr-6/](https://vk.com/away.php?to=https%3A%2F%2Fwww.php-fig.org%2Fpsr%2Fpsr-6%2F&cc_key=)
+# PSR-16. Простое кеширование
 
+Решает ту же проблему, что и *PSR-6*. Недостатки *PSR-6*:
 
+* слишком много классов для простых случаев
 
- 
+В описании используются термины из PSR-6 с поправками:
 
+* *Implementing Library* (реализующая библиотека) ДОЛЖНА реализовывать `CacheInterface`.
 
+Основное отличие от *PSR-6* – в случае *cache miss* возвращается `null`. Т.е. сохранить значение `null` возможно, но отличить сохраненное значение `null` от `cache miss` – невозможно.
 
-[     ](https://vk.com/id2733257)
+## `CacheInterface`
 
-[Павел](https://vk.com/id2733257) [13:42](https://vk.com/im?sel=2733257&msgid=62365)
+Экземпляр `CacheInterface` соответствует некоторому хранилищу с коллекцией *Item*. Он эквивалентен *Pool* в PSR-6. 
 
- 
+```php
+nterface CacheInterface
+{
+    /**
+     * Получить значение из кеша
+     *
+     * @param string $key     
+     * @param mixed  $default Возвращается, если ключ не существует
+     *
+     * @return mixed Значение Item или $default в случае cache miss.
+     */
+    public function get($key, $default = null);
 
-Все данные, переданные в библиотеку реализации, ДОЛЖНЫ быть возвращены точно так же, как и переданные. Это включает тип переменной. То есть, это ошибка для возврата (строка) 5, если (int) 5 было сохраненным значением. Р
+    /**
+     * Сохранить данные в кеш
+     *
+     * @param string $key
+     * @param mixed $value 
+     * @param null|int|\DateInterval $ttl   Если неустановлено - хранить вечно
+     * @return bool Успешно или нет
+     */
+    public function set($key, $value, $ttl = null);
 
-[     ](https://vk.com/id2733257)
+    /**
+     * Удалить Item из кеша
+     *
+     * @param string $key 
+     * @return bool Успешно или нет
+     */
+    public function delete($key);
 
-[Павел](https://vk.com/id2733257) [23:07](https://vk.com/im?sel=2733257&msgid=62498)
+    /**
+     * Очистить кэш
+     *
+     * @return bool Успешно или нет
+     */
+    public function clear();
 
+    /**
+     * Получить множество Items
+     *
+     * @param iterable $keys   
+     * @param mixed    $default Возвращается для всех несуществующих ключей
+     *
+     * @return iterable Массив key => value. Для несуществующих ключей value=$default
+      */
+    public function getMultiple($keys, $default = null);
 
+    /**
+     * Сохранить множество Items в виде key => value 
+     *
+     * @param iterable $values 
+     * @param null|int|\DateInterval $ttl  Если неустановлено - хранить вечно
+     * @return bool Успешно или нет
+     */
+    public function setMultiple($values, $ttl = null);
 
-PSR-16: Common Interface for Caching Libraries
+    /**
+     * Удалить множество Items
+     *
+     * @param iterable $keys 
+     *
+     * @return bool True Успешно или нет
+     */
+    public function deleteMultiple($keys);
 
- 
+    /**
+     * Определяет наличие Item
+     *
+     * Не рекомендуется использовать совместно с get(), возможен race condition
+     *
+     * @param string $key 
+     *
+     * @return bool
+     */
+    public function has($key);
+}
+```
 
-PSR-6 решает эту проблему уже,
-
-MiddlewareInterfaceОпределяет один метод , который принимает запрос HTTP и обработчик запроса и должен возвратить ответ
-
-[                                                    ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [12:17](https://vk.com/im?sel=2733257&msgid=63454)
-
- 
-
-Обработчик запросов на основе очереди
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [14:11](https://vk.com/im?sel=2733257&msgid=63456)
-
- 
-
-При выполнении первого промежуточного программного обеспечения очередь переходит в качестве обработчика запросов к промежуточному программному обеспечению
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [15:00](https://vk.com/im?sel=2733257&msgid=63457)
-
- 
-
-В этом подходе реализация обработчика запросов украшает как экземпляр промежуточного программного обеспечения
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [16:49](https://vk.com/im?sel=2733257&msgid=63493)
-
- 
-
-Определения для библиотеки вызовов, реализации библиотеки, TTL, срока действия и ключа копируются из PSR-6,
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [17:13](https://vk.com/im?sel=2733257&msgid=63494)
-
- 
-
-Пропуск кеша возвращает null, и поэтому обнаружение того, что один из nullних не был сохранен, невозможен. Это основное отклонение от предположений PSR-6.
-
- 
-
-2.1 CacheInterface
-<<<<<<< HEAD
-
-=======
- 
->>>>>>> a359fff0eca9e3396d776c37e9b85c9cbe35008d
- Интерфейс кэша
-
- 
-
-Экземпляр CacheInterface соответствует единому набору элементов кэша с одним ключевым пространством имен и эквивалентен «пулу» в PSR-6. Р
-
-вчера
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [0:14](https://vk.com/im?sel=2733257&msgid=63498)

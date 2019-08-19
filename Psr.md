@@ -357,7 +357,7 @@ public function getUser()
 
 
 
-#### @link`
+#### `@link`
 
 Тег показывает связь между *Структурным элементом* и внешним ресурсом по ссылке URI.
 
@@ -378,7 +378,7 @@ public function getUser()
  */
 ```
 
-#### @method
+#### `@method`
 
 Тег указывает «магические» методы, явно не указанные в классе и реализованные через `__call()`. Используется только со *Структурными элементами* типа `class` или `interface`.
 
@@ -391,7 +391,7 @@ class Child extends Parent {}
 
 ```
 
-#### @package
+#### `@package`
 
 Тег используется для логического разделения *Структурных элементов*. Тогда как `namespace` осуществляют функциональное разделение *Структурных элементов*. Поэтому значение тега `@package` может отличаться от значения `namespace`. Если значение тега `@package` совпадает со значением `namespace`, то его НЕ РЕКОМЕНДУЕТСЯ использовать, чтобы не тратить время на поддержку актуального значения тега `@package`.
 
@@ -401,67 +401,85 @@ class Child extends Parent {}
  */
 ```
 
-5.9. [@param](https://vk.com/param)
+#### `@param`
 
- Тег [@param](https://vk.com/param) используется для документирования одного параметра функции или метода.
+ Тег используется для документирования одного параметра функции или метода.
 
- 
+```php
+/**
+ * @param ["Type"] [name] [<description>]
+ * @param mixed[] $items Array structure to count the elements of.
+ */
+```
 
-Тег [@param](https://vk.com/param) МОЖЕТ иметь многострочное описание и не нуждается в явном разграничении.
+Тег МОЖЕТ иметь многострочное описание и не нуждается в явных границах.
 
-26 ноября
+#### `@property[-x]`
 
-[     ](https://vk.com/id2733257)
+Теги `@property`, `@property-read`, `@property-write` используются только для *Структурных элементов* `class` и `trait`.
 
-[Павел](https://vk.com/id2733257) [9:44](https://vk.com/im?sel=2733257&msgid=63990)
+Тег `@property` используется, чтобы объявить какие "магические" свойства доступны через "магические" методы `__get()` и/или `__set()`.
 
- 
+Тег `@property-read` МОЖЕТ быть использован вместо `@property` для "магических" свойств, которые только читаются.
 
-@propertyТег используется для объявления , которые «волшебные» свойства поддерживаются.
+Тег `@property-write` МОЖЕТ быть использован вместо `@property`  для "магических" свойств, которые только пишутся.
 
- 
+```php
+/**
+ * @property[<-read|-write>] ["Type"] [name] [<description>]
+ * @property-read string $full_name
+ */
+```
 
-__get() и / или __set()«магические» метод
+#### @return
 
- 
+Тег используется только со *Структурными элементами* типа функция и метод. Для документирования возвращаемого значения.
 
-@property-readИ @property-writeварианты могут быть использованы для обозначения «магические» свойства , которые могут быть прочитаны только или письменными
+```php
+/**
+ * @return <"Type"> [description]
+ * @return string|null The label's text or null if none provided.
+ */
+```
 
-[     ](https://vk.com/id2733257)
+Тег может иметь многострочное описание и не нуждается в явных границах.
 
-[Павел](https://vk.com/id2733257) [12:33](https://vk.com/im?sel=2733257&msgid=64032)
+ Тег может быть опущен для методов без возвращаемого значения, это аналогично `@return void`.
 
- 
+#### @see
 
-Тег [@return](https://vk.com/return) используется для документирования возвращаемого значения функций или методов
+Тег позволяет задать ссылку на веб-сайт или другой *Структурный элемент*.
 
-[     ](https://vk.com/id2733257)
+```php
+/**
+ * @see [URI | "FQSEN"] [<description>]
+ * @see MyClass::$items           For the property whose items are counted.
+ * @see MyClass::setItems()       To set the items for this collection.
+ * @see http://example.com/my/bar Documentation of Foo.
+ * @see:unit-test \Mapping\EntityTest::testGetId Description
+ */
+```
 
-[Павел](https://vk.com/id2733257) [13:31](https://vk.com/im?sel=2733257&msgid=64033)
+Тег ДОЛЖЕН иметь описание, чтобы указать, как связаны Структурный элемент и ссылка. 
 
- 
+Тег МОЖЕТ быть дополнен специализацией в виде `@see:unit-test`.
 
-Тег @see указывает ссылку из связанных «Структурных элементов» на веб-сайт или другие «Структурные элементы
+#### @since
 
-[     ](https://vk.com/id2733257)
+Тег позволяет указать, когда элемент был добавлен или изменен. Для тега РЕКОМЕНДУЕТСЯ указывать семантическую версию и МОЖЕТ быть добавлено описание.
 
-[Павел](https://vk.com/id2733257) [19:12](https://vk.com/im?sel=2733257&msgid=64095)
+```php
+/**
+ * @since 2.1.5 bar($arg1 = '', $arg2 = null) 
+ *        Introduced the optional $arg2
+ * @since 2.1.0 bar($arg1 = '')
+ *        Introduced the optional $arg1
+ * @since 2.0.0 bar()
+ *        Introduced new method bar()
+ */
+```
 
- 
 
-При определении ссылки на другие «Структурные элементы» вы можете обратиться к определенному элементу, добавив двойной двоеточие и указав имя этого элемента (также называемое «FQSEN»).
-
- 
-
-Тег @see ДОЛЖЕН иметь описание, чтобы предоставить дополнительную информацию о связи между элементом и его целью. К
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [19:31](https://vk.com/im?sel=2733257&msgid=64099)
-
- 
-
-Тег [@since](https://vk.com/since) используется для обозначения того, когда элемент был введен или изменен, используя некоторое описание «управления версиями» для этого элемента.
 
 27 ноября
 
@@ -614,6 +632,29 @@ class Foo
 
 /** **@var** \ArrayObject $array */
  **public** $array = **null**;
+
+
+
+
+
+
+
+```
+/**
+ * Counts the number of items in the provided array.
+ *
+ * @param mixed[] $array Array structure to count the elements of.
+ *
+ * @throws InvalidArgumentException if the provided argument is not of type
+ *     'array'.
+ *
+ * @return int Returns the number of elements.
+ */
+function count($items)
+{
+    <...>
+}
+```
 
 # PSR-6. Кэширование с пулом
 

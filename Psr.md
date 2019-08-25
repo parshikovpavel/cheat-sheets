@@ -397,6 +397,7 @@ class Child extends Parent {}
 
 ```php
 /**
+ * @package [level 1]\[level 2]\[etc.]
  * @package PSR\Documentation\API
  */
 ```
@@ -470,6 +471,11 @@ class Child extends Parent {}
 
 ```php
 /**
+ * @since 2.0.0 introduced
+ */
+class Foo {}
+
+/**
  * @since 2.1.5 bar($arg1 = '', $arg2 = null) 
  *        Introduced the optional $arg2
  * @since 2.1.0 bar($arg1 = '')
@@ -477,63 +483,49 @@ class Child extends Parent {}
  * @since 2.0.0 bar()
  *        Introduced new method bar()
  */
+function bar() {}
 ```
 
+#### @throws
 
+Тег позволяет указать, что *Структурный элемент* выбрасывает объект, унаследованный от `Throwable` (*exception* или *error*).
 
-27 ноября
+```php
+/*
+ * @throws ["Type"] [<description>]
+ * @throws InvalidArgumentException if the provided argument is not of type `array`
+ */
+```
 
-[     ](https://vk.com/id2733257)
+Рекомендуется писать тег для каждого исключения в теле Структурного элемента, даже если несколько исключений имеют один и тот же тип. 
 
-[Павел](https://vk.com/id2733257) [11:35](https://vk.com/im?sel=2733257&msgid=64125)
+####  @todo
 
- 
+Тег позволяет указать, что *Структурный элемент* требует доработки.
 
-5,14. [@throws](https://vk.com/throws)
+```php
+/**
+ * @todo [description]
+ * @todo add an array parameter to count
+ */
+```
 
- Тег [@throws](https://vk.com/throws) используется для указания того, выбрали ли «Структурные элементы» определенный тип Throwable (исключение или ошибка).
+#### @uses, @used-by
 
-[     ](https://vk.com/id2733257)
+Тег позволяет указать, что ассоциированный *Структурный элемент* использует файл или другой *Структурный элемент* в текущем проекте. Тег может указывать только на внутренние элементы (путь к *file* или *FQSEN*)
 
-[Павел](https://vk.com/id2733257) [20:49](https://vk.com/im?sel=2733257&msgid=64266)
+Например, можно указать, что контроллер использует файл шаблона.
 
- 
+```php
+/**
+ * @uses [file | "FQSEN"] [<description>]
+ * @uses MyView.php
+ */
+```
 
-Также РЕКОМЕНДОВАНО, что этот тег встречается для каждого случая исключения, даже если он имеет тот же тип.
+Рекомендуется в *PHPDoc Структурного элемента*, который использован, добавить тег `@used-by` (этот тег не описан в *PSR*). Тем самым отношение будет документировано с обоих сторон тегами `@uses` — `@used-by`.
 
- 
-
-todo
-
-28 ноября
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [10:33](https://vk.com/im?sel=2733257&msgid=64287)
-
- 
-
-Тег @todo используется для указания того, что действие, связанное с связанными «Структурными элементами», должно все еще происходить. Каж
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [10:43](https://vk.com/im?sel=2733257&msgid=64289)
-
- 
-
-Чтобы указать отношения с внешними элементами, можно использовать тег @see.
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [12:00](https://vk.com/im?sel=2733257&msgid=64290)
-
- 
-
-@used-byтег элемента назначения. Это можно использовать для обеспечения двунаправленного опыта
-
-[     ](https://vk.com/id2733257)
-
-
+Для того чтобы указать связь с внешними элементами через *URL*, нужно использовать тег `@see`.
 
 #### `@var `
 
@@ -579,21 +571,17 @@ class Foo
 /* @var $dataProvider yii\data\ActiveDataProvider */
 ```
 
+#### @version
 
+Тег позволяет документировать текущую «версию» *Структурного элемента*.
 
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [13:47](https://vk.com/im?sel=2733257&msgid=64300)
-
- 
-
-т текущую «версию» любого элемента.
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [14:21](https://vk.com/im?sel=2733257&msgid=64301)
-
- 
+```php
+/**
+ * @version ["Semantic Version"] [<description>]
+ * @version 2.1.7 MyApp (номер версии приложения)
+ * @version $Id$ (ключевое слово, которое Git заменяет на номер версии)
+ */
+```
 
 ### Примеры
 

@@ -599,6 +599,8 @@ class Foo
  * @param int        $parameter1 A parameter description.
  * @param \Exception $e          Another parameter description.
  *
+ * @throws InvalidArgumentException if the provided argument is not of type 'int'.
+ *
  * @return string
  */
 function test($parameter1, $e): string
@@ -618,6 +620,8 @@ function test($parameter1, $e): string
  * @param int        $parameter1 A parameter description.
  * @param \Exception $e          Another parameter description.
  *
+ * @throws InvalidArgumentException if the provided argument is not of type 'int'.
+ *
  * @return string
  */
 function test($parameter1, $e): string
@@ -628,55 +632,18 @@ function test($parameter1, $e): string
 
 *PHPDoc* только с *Summary* (не приветствуется, т.к. информация о параметрах и возвращаемом значении обязательна):
 
-
-
-
- * 
-
-Пример с Summary и Tags:
-
+```php
 /**
- * This is a Summary.
- *
- * @param int        $parameter1 A parameter description.
- * @param \Exception $e          Another parameter description.
- *
- * @return string
- */
-
-Пример с Summary:
-
-/**
-  \* This is a Summary.
-  */
-
-Однострочный DocBlock:
-
-/** **@var** \ArrayObject $array */
- **public** $array = **null**;
-
-
-
-
-
-
-
-```
-/**
- * Counts the number of items in the provided array.
- *
- * @param mixed[] $array Array structure to count the elements of.
- *
- * @throws InvalidArgumentException if the provided argument is not of type
- *     'array'.
- *
- * @return int Returns the number of elements.
+ * Это Summary.
  */
-function count($items)
+function test($parameter1, $e): string
 {
-    <...>
+   
 }
 ```
+
+
+
 
 # PSR-6. Кэширование с пулом
 

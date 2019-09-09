@@ -229,6 +229,7 @@ ISODate("2019-08-30T16:44:57Z")
 { "name": { $eq: "Pavel" } }
 ```
 
+
 более простая форма оператора:
 
 ```
@@ -343,6 +344,7 @@ ISODate("2019-08-30T16:44:57Z")
 { <field>: { <operator1>: <value1>, <operator2>: <value2>, ...}}
 { price: { $ne: 1.99, $exists: true } }
 ```
+
 
 
 

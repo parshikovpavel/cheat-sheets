@@ -345,26 +345,16 @@ ISODate("2019-08-30T16:44:57Z")
 { price: { $ne: 1.99, $exists: true } }
 ```
 
+### `$or`
+
+Логическое ИЛИ
+
+```javascript
+{ $or: [ { <expression1> }, { <expression2> }, ... , { <expressionN> } ] }
+{ $or: [ { quantity: { $lt: 20 } }, { price: 10 } ] } 
+```
 
 
-
- 
-
-Оператор $exists используется для проверки наличия или отсутствия поля, например: db.unicorns.find({vampires: {$exists: false}})
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [20:35](https://vk.com/im?sel=2733257&msgid=57774)
-
- 
-
-Если нужно ИЛИ вместо И, мы можем использовать оператор $or и присвоить ему массив значений, например:db.unicorns.find({gender: 'f', $or: [{loves: 'apple'}, {loves: 'orange'}, {weight: {$lt: 500}}]})Вышеуказанный запрос вернет всех самок единорогов, которые или любят яблоки, или любят апельсины, или весят менее 500 фунтов.
-
-[     ](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [20:52](https://vk.com/im?sel=2733257&msgid=57775)
-
- 
 
 и - поле loves это массив. MongoDB поддерживает массивы как объекты первого класса.
 

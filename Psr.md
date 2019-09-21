@@ -837,7 +837,7 @@ foreach ($items as $key => $item) {
         $value = load($key);
         $item->set($value);
         $item->expiresAfter(3600);
-        $pool->saveDeferred($item, true);
+        $pool->saveDeferred($item);
     }
     $values[$key] = $value;
 }

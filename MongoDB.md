@@ -159,12 +159,30 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 ```
 Команды в консоли записываются на *Javascript*. 
 
+Для *Mongo shell* можно писать скрипты на javascript и есть несколько способов запуска их в консоли. 
+
 ## Глобальные команды
 
 | Команда | Описание            |
 | ------- | ------------------- |
 | `help`  | Справка по командам |
 | `exit`  | Выход               |
+
+Некоторые действия можно выполнять двумя типами команд. Например, для выбора текущей БД:
+
+- shell helpers
+
+  ```
+  use <databaseName>
+  ```
+
+- javascript equivalents
+
+  ```javascript
+  db = db.getSiblingDB(<databaseName>)
+  ```
+
+  
 
 ## Работа с базой данных
 
@@ -174,6 +192,7 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 
     ```javascript
     use <databaseName>
+    db = db.getSiblingDB(<databaseName>)
     ```
     
     Получить список методов, доступных для объекта `db`:
@@ -213,7 +232,15 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 
   ```javascript
   db.getCollectionNames()
+  show collections
   ```
+## Типы данных в Mongo Shell
+
+Для создания данных конкретных типов введены специальные функции. Например:
+
+
+
+
 
 ## CRUD операции с документами
 
@@ -240,12 +267,21 @@ db.collection.insert({
 
 ```javascript
 > db.collection.find()
-{ 
-    "_id" : ObjectId("5d695289761f2b0e842ebe7a"), 
-    "name" : "Pavel", 
-    "age" : 34 
+{ "_id" : ObjectId("5d739ed824be55a6feb4ce50"), "name" : "Pavel", "age" : 34 }
+```
+
+Вывод результатов с форматированием (отступами перед полями, вложенными документами) через функцию `pretty()`
+
+```bash
+> db.collection.find().pretty()
+{
+        "_id" : ObjectId("5d739ed824be55a6feb4ce50"),
+        "name" : "Pavel",
+        "age" : 34
 }
 ```
+
+
 
 #### Выбор вложенных документов (embedded/nested)
 

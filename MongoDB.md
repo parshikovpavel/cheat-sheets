@@ -107,20 +107,6 @@ name: { first: "Alan", last: "Turing" }
 | `int`      | `{“$numberInt”:”10”}`                       | `10`                                   |
 | `double`   | `{“$numberDouble”:”10.5”}`                  | `10.5`                                 |
 
-# Mongo shell
-
-Подключение с параметрами по умолчанию к `localhost:27017`
-
-```bash
-mongo
-```
-
-Подключение к удаленному хосту с аутентификацией:
-
-```bash
-mongo --username <username> --password <password> --authenticationDatabase <db> --host <host> --port <port>
-```
-
 
 
 # Массивы и вложенные документы
@@ -158,8 +144,19 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 - можно вкладывать одни *документы* в другие (embed). Это позволяет при правильном выборе схемы удешевить выбор связанных данных и упростить шардирование.
 -  т.к. *документ* не имеет жесткой схемы, можно постепенно добавлять новые поля в новые документы, не затрагивая старые документы
 
-# Консоль
+# Mongo shell
 
+Подключение с параметрами по умолчанию к `localhost:27017`
+
+```bash
+mongo
+```
+
+Подключение к удаленному хосту с аутентификацией:
+
+```bash
+mongo --username <username> --password <password> --authenticationDatabase <db> --host <host> --port <port>
+```
 Команды в консоли записываются на *Javascript*. 
 
 ## Глобальные команды
@@ -198,7 +195,7 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
   show dbs
   ```
 
-- 
+
 
 ## Работа с коллекциями
 
@@ -237,9 +234,7 @@ db.collection.insert({
 
 ✓ https://docs.mongodb.com/manual/tutorial/query-documents/
 
-
-
-
+Для *read* используется метод `find()`. Метод возвращает курсор к результатам, который нужно итерировать для получения документов. Если курсор в *mongo shell* не присвоен переменной через `var`, то он итерируется 20 раз. 
 
  Выбор всех документов:
 

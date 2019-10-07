@@ -70,20 +70,85 @@ mongod --config /path/to/mongod.cfg
 
 # Типы данных BSON
 
-- embedded document
+BSON – бинарный формат для хранения документов.
 
-```json
-name: { first: "Alan", last: "Turing" }
-```
+Перечень типов:
+
+
+- `double` – 64 bit
+
+- `string` – используются формат *UTF8*
+
+- `array`
+
+  ```json
+  city: ['Moscow', 'Saint-Petersburg']
+  ```
+
+- `object` – вложенные документы (*embedded document*)
+
+   ```json
+   name: { first: "Alan", last: "Turing" }
+   ```
+
+
+- `objectId`
+- `date`
+- `Array`
+- `int` – 32 bit
+- `long` – 64 bit
+- `decimal` – 128 bit числа с плавающей запятой, эмулирующие отсутствие потери точности. Для денежных расчетов и т.д. 
+- ...
+
+Проверить тип поля в условии можно с помощью оператора [`$type`](#$type)
+
+## MongoDB Extended JSON
+
+Преобразование из бинарного *BSON* в текстовый *JSON* в чистом виде приведет к потере информации о типах. Поэтому придуман расширенный *JSON* – *MongoDB Extended JSON*. В  *MongoDB Extended JSON* информация о типе сохраняется вместе с самими данными. Причем возможны два способа сохранения значения и его типа вместе:
+
+- канонический режим (Canonical Mode) – подробное описание типа 
+- расслабленный режим (Relaxed Mode) – упрощенное описание типа
+
+ *MongoDB Extended JSON* используется:
+
+- драйверами языков программирования (в том числе *PHP*)
+- некоторые утилиты *MongoDB*, например, `mongodump`.
+
+Примеры значений различных типов в формате *MongoDB Extended JSON*:
+
+| Тип данных | Canonical Mode                              | Relaxed Mode                           |
+| ---------- | ------------------------------------------- | -------------------------------------- |
+| `date`     | `{“$date”:{“$numberLong”:”1565546054692”}}` | `{“$date”:”2019-08-11T17:54:14.692Z”}` |
+| `int`      | `{“$numberInt”:”10”}`                       | `10`                                   |
+| `double`   | `{“$numberDouble”:”10.5”}`                  | `10.5`                                 |
+
+
 
 # Массивы и вложенные документы
+
+Используется точечная нотация (*dot notation*)
 
 Доступ к элементу массива:
 
 ```
-fruit: [ "apple", "orange", "pineapple"]
+{
+	fruit: [ "apple", "orange", "pineapple"]
+}
+
 "<array>.<index>"
 "fruit.2"
+```
+
+Доступ к полю *embedded document*:
+
+
+```
+{
+	name: { first: "Alan", last: "Turing" }
+}
+
+"<document>.<field>"
+"name.first"
 ```
 
 
@@ -94,9 +159,22 @@ fruit: [ "apple", "orange", "pineapple"]
 - можно вкладывать одни *документы* в другие (embed). Это позволяет при правильном выборе схемы удешевить выбор связанных данных и упростить шардирование.
 -  т.к. *документ* не имеет жесткой схемы, можно постепенно добавлять новые поля в новые документы, не затрагивая старые документы
 
-# Консоль
+# Mongo shell
 
+Подключение с параметрами по умолчанию к `localhost:27017`
+
+```bash
+mongo
+```
+
+Подключение к удаленному хосту с аутентификацией:
+
+```bash
+mongo --username <username> --password <password> --authenticationDatabase <db> --host <host> --port <port>
+```
 Команды в консоли записываются на *Javascript*. 
+
+Для *Mongo shell* можно писать скрипты на javascript и есть несколько способов запуска их в консоли. 
 
 ## Глобальные команды
 
@@ -104,6 +182,22 @@ fruit: [ "apple", "orange", "pineapple"]
 | ------- | ------------------- |
 | `help`  | Справка по командам |
 | `exit`  | Выход               |
+
+Некоторые действия можно выполнять двумя типами команд. Например, для выбора текущей БД:
+
+- shell helpers
+
+  ```
+  use <databaseName>
+  ```
+
+- javascript equivalents
+
+  ```javascript
+  db = db.getSiblingDB(<databaseName>)
+  ```
+
+  
 
 ## Работа с базой данных
 
@@ -113,6 +207,7 @@ fruit: [ "apple", "orange", "pineapple"]
 
     ```javascript
     use <databaseName>
+    db = db.getSiblingDB(<databaseName>)
     ```
     
     Получить список методов, доступных для объекта `db`:
@@ -134,7 +229,7 @@ fruit: [ "apple", "orange", "pineapple"]
   show dbs
   ```
 
-- 
+
 
 ## Работа с коллекциями
 
@@ -152,41 +247,134 @@ fruit: [ "apple", "orange", "pineapple"]
 
   ```javascript
   db.getCollectionNames()
+  show collections
   ```
+## Типы данных в Mongo Shell
+
+*Mongo Shell* обрабатывает все числа по умолчанию, как 64-разрядный `double`.
+
+Для создания данных конкретных типов введены специальные функции. Например:
+
+- `date`:
+
+  ```javascript
+  Date() //текущая дата
+  ISODate("2012-12-19T06:01:17.171Z")
+  ```
+
+- `long`:
+
+  ```
+  NumberLong("2090845886852")
+  ```
+
+- `int` (у меня почему-то показываются аналогично значениям, вставленным без функции, как будто они `float`)
+
+  ```
+  NumberInt("10")
+  ```
+
+- `decimal`:
+
+  ```
+  NumberDecimal(1000.55)
+  ```
+  
+  
+  
+   
+
+
 
 ## CRUD операции с документами
 
 
 ### Create
 
-Вставка нового документа в коллекцию. Если коллекция не существует, то она создается:
+Поведение операций вставки:
+
+- Если в момент вставки документа коллекция не существует, то она создается. 
+- Если в документе не указано поле `_id`, автоматически добавляется поле `_id` с типом `ObjectId`.
+
+**Вставка одиночного документа.** 
 
 ```javascript
-db.collection.insert(<document>);
-db.collection.insert({  
-    name: "Pavel",      
-    age: 34             
-});
+> db.collection.insertOne(<document>);
+> db.collection.insertOne( { _id: 10, name: "Ivan" } );
+{ "acknowledged" : true, "insertedId" : 10 }
 ```
+
+Возвращаемое значение: 
+
+- `insertedId` – `_id` вставленного документа
+
+**Вставка нескольких документов**
+
+```
+> db.collection.insertMany(
+	[ <document 1> , <document 2>, ... ]
+);
+
+> db.products.insertMany( [
+      { item: "card", qty: 15 },
+      { item: "envelope", qty: 20 }
+   ] );
+
+{
+   "acknowledged" : true,
+   "insertedIds" : [
+      ObjectId("562a94d381cb9f1cd6eb0e1a"),
+      ObjectId("562a94d381cb9f1cd6eb0e1b")
+   ]
+}   
+```
+
+
 
 ### Read
 
-✓ https://docs.mongodb.com/manual/tutorial/query-documents/
+Для *read* используется метод `find()`. Метод возвращает курсор к результатам, который нужно итерировать для получения документов. Если курсор в *mongo shell* не присвоен переменной через `var`, то он итерируется 20 раз. 
+
+```
+db.collection.find(query)
+```
+
+- `query` – [*query filter document*](#документы-фильтрации-в-запросе)
 
  Выбор всех документов:
 
 ```javascript
 > db.collection.find()
-{ 
-    "_id" : ObjectId("5d695289761f2b0e842ebe7a"), 
-    "name" : "Pavel", 
-    "age" : 34 
+> db.collection.find( {} )
+{ "_id" : ObjectId("5d739ed824be55a6feb4ce50"), "name" : "Pavel", "age" : 34 }
+```
+
+Вывод результатов с форматированием (отступами перед полями, вложенными документами) через функцию `pretty()`
+
+```bash
+> db.collection.find().pretty()
+{
+        "_id" : ObjectId("5d739ed824be55a6feb4ce50"),
+        "name" : "Pavel",
+        "age" : 34
 }
 ```
 
+
+
 #### Выбор вложенных документов (embedded/nested)
 
-Для 
+Query filter document
+
+
+
+```
+{<field>
+```
+
+
+
+Если указать в условии вместо `<value>` некоторый document, то будут найдены все 
 
 ### Delete
 
@@ -269,11 +457,20 @@ ISODate("2019-08-30T16:44:57Z")
 
 - сортировка по полю  `_id` примерно эквивалентна сортировке по времени создания, т.к. значения в этом поле монотонно возрастают (вместе с *timestamp*)
 
-# Селектор запроса
+# Документы фильтрации в запросе
 
-Селектор запроса (*selection filter*) – это аналог `where` в *SQL*. Cелектор - это JSON-объект.
+Документы фильтрации в запросе (*query filter document*) – это документы для фильтрации в любых типах запросов (C,R,U,D), аналог `where` в *SQL*.
 
-Селектор запроса использует оператор запроса (*query operator*),
+*Query filter document* использует операторы запроса (*query operator*). 
+
+Общий вид документа:
+
+```json
+{
+    <field> : {<operaror>: <value>},
+	...
+}
+```
 
 ## Пустой оператор
 
@@ -381,7 +578,7 @@ ISODate("2019-08-30T16:44:57Z")
 - `true` – проверка, что в *документе* существует поле `field` (возможно даже со значением `null`)
 - `false` – проверка, что в *документе* не существует поле `field`
 
-
+### `$type`
 
 
 

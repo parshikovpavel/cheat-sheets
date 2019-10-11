@@ -176,6 +176,8 @@ class ClassB extends ClassA
 
 # Php Code Sniffer
 
+Работа с PHP Code Sniffer из консоли здесь.
+
 - Вначале нужно [установить пакет глобально](Psr.md#автоматическая-проверка-стиля-кода).
 
 - В настройках 
@@ -183,6 +185,8 @@ class ClassB extends ClassA
   `Settings/Preferences dialog (Ctrl+Alt+S) → Languages & Frameworks | PHP | Quality Tools` 
 
   указать путь к `phpcs`, найти путь можно в настройках [глобальной директории](Composer.md#глобальная-установка). 
+
+  Лучше также увеличить время таймаута до максимума (`Tool process timeout=30`)
 
 - Конфигурирование *PHP Code Sniffer* в качестве *PhpStorm inspection*:
 

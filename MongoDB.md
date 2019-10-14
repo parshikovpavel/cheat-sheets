@@ -299,7 +299,7 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 **Вставка одиночного документа.** 
 
 ```javascript
-> db.collection.insertOne(<document>);
+> db.collection.insertOne(<document>, <options>);
 > db.collection.insertOne( { _id: 10, name: "Ivan" } );
 { "acknowledged" : true, "insertedId" : 10 }
 ```
@@ -308,9 +308,20 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 
 - `insertedId` – `_id` вставленного документа
 
+
+```php
+function insertOne($document, array $options = []): MongoDB\InsertOneResult
+    
+$insertOneResult = $collection->insertOne([
+    '_id' => 10,
+    'name' => 'Ivan'
+]);
+$insertedId = $insertOneResult->getInsertedId(); # `_id` вставленного документа
+```
+
 **Вставка нескольких документов**
 
-```
+```javascript
 > db.collection.insertMany(
 	[ <document 1> , <document 2>, ... ]
 );
@@ -331,15 +342,35 @@ mongo --username <username> --password <password> --authenticationDatabase <db> 
 
 
 
+```php
+function insertMany(array $documents, array $options = []): MongoDB\InsertManyResult
+    
+$insertManyResult = $db->inventory->insertMany([
+    [
+        'item' => 'card',
+        'qty' => 15,
+    ],
+    [
+        'item' => 'envelope',
+        'qty' => 20,
+    ],
+]);
+$insertedIds = $insertManyResult->getInsertedIds(); # `_id`s вставленных документов
+```
+
+
+
 ### Read
 
 Для *read* используется метод `find()`. Метод возвращает курсор к результатам, который нужно итерировать для получения документов. Если курсор в *mongo shell* не присвоен переменной через `var`, то он итерируется 20 раз. 
+
+<u>Консоль</u>
 
 ```
 db.collection.find(query)
 ```
 
-- `query` – [*query filter document*](#документы-фильтрации-в-запросе)
+- `query` – [*query filter document*](#query-filter-document)
 
  Выбор всех документов:
 
@@ -348,6 +379,7 @@ db.collection.find(query)
 > db.collection.find( {} )
 { "_id" : ObjectId("5d739ed824be55a6feb4ce50"), "name" : "Pavel", "age" : 34 }
 ```
+
 
 Вывод результатов с форматированием (отступами перед полями, вложенными документами) через функцию `pretty()`
 
@@ -359,8 +391,16 @@ db.collection.find(query)
         "age" : 34
 }
 ```
+<u>PHP</u>
 
 
+```php
+function find($filter = [], array $options = []): MongoDB\Driver\Cursor;
+
+$cursor = $collection->find([]); # выбор всех документов    
+```
+
+Подробней [*query filter document*](#query-filter-document)
 
 #### Фильтр по вложенным документам (embedded/nested)
 
@@ -529,7 +569,7 @@ ISODate("2019-08-30T16:44:57Z")
 
 * оператор запроса вообще не указан
 * передан `null`
-* передан пустой документ `{}`
+* передан пустой документ `{}` (для PHP – пустой массив `[]`)
 
 ## Операторы сравнения
 

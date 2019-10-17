@@ -411,20 +411,37 @@ $cursor = $collection->find([]); # выбор всех документов
 { size: { h: 14, w: 21 } }
 ```
 
+```php
+[ <field> => <object_value>]
+[ size => [ h => 14, w => 21 ] ]
+```
+
 Будут найдены все документы, где `size` в точности равно `{ h: 14, w: 21 }`, учитывая порядок полей.
 
 <u>Сопоставление по значению вложенного поля (*nested field*)</u>
 
-Для фильтрации по значению вложенного поля необходимо в [query filter document](#query-filter-document) указать путь к вложенному полю через точечную нотацию `"field.nestedField"` (обязательно заключать в кавычки)
+Для фильтрации по значению вложенного поля необходимо в [query filter document](#query-filter-document) указать путь к вложенному полю через точечную нотацию `"field.nestedField"` (обязательно заключать в кавычки).
+
+Упрощенный вариант оператора `$eq`:
 
 ```json
-{ "field.nestedField": <value>} # упрощенный вариант оператора $eq
+{ "field.nestedField": <value>}
 { "size.x": 200 }
 ```
 
+```php
+[ "size.x" => 200 ]
+```
+
+Общий вариант с указанием оператора:
+
 ```json
-{ "field.nestedField": { <operator>: <value> } } # фильтр с указанием оператора
+{ "field.nestedField": { <operator>: <value> } } 
 { "size.x": { $lt: 200 } }
+```
+
+```php
+[ "size.x" => [ $lt: 200 ] ]
 ```
 
 #### Фильтр по массивам
@@ -434,6 +451,10 @@ $cursor = $collection->find([]); # выбор всех документов
 ```json
 { <array_field>: <array_value> }
 { tags: ["red", "blank"] }
+```
+
+```php
+[ 'tags' => [ 'red', 'blank' ] ]
 ```
 
 Будут найдены все документы, где `tags` в точности равно `["red", "blank"]`, учитывая порядок элементов.
@@ -565,11 +586,15 @@ ISODate("2019-08-30T16:44:57Z")
 Общий вид документа:
 
 ```json
-{
-    <field> : {<operator>: <value>},
-	...
-}
+{ <field> : {<operator>: <value>}, ... }
 ```
+
+```php
+[ <field1> => [ <operator> => <value1> ], ... ]
+['status' => ['$in' => ['A', 'D']]]
+```
+
+
 
 ## Пустой оператор
 
@@ -708,6 +733,13 @@ ISODate("2019-08-30T16:44:57Z")
 { { price: { $ne: 1.99 } }, { price: { $exists: true } } }
 ```
 
+```php
+[
+    'status' => 'A',
+    'qty' => ['$lt' => 30],
+]
+```
+
 Если `<expression1>`, `<expression2>`... применяются к одному полю, то можно использовать еще более простую форму, указав `field` только один раз:
 
 ```javascript
@@ -723,6 +755,21 @@ ISODate("2019-08-30T16:44:57Z")
 { $or: [ { <expression1> }, { <expression2> }, ... , { <expressionN> } ] }
 { $or: [ { quantity: { $lt: 20 } }, { price: 10 } ] } 
 ```
+
+```php
+[
+    '$or' => [
+        ['status' => 'A'],
+        ['qty' => ['$lt' => 30]],
+    ],
+]
+```
+
+
+
+
+
+
 
 
 

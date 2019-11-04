@@ -717,10 +717,88 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
 { <field> : null }
 ```
 
-Для выбора документов,  у которых `field` равен `null`, используется оператор [`$type`](#type):
+Для выбора документов,  у которых `field` равен `null`, используется оператор [`$type`](#type) :
 
 ```json
-{ <field> : { $type: 10 } }
+{ <field> : { $type: “null” } }
+```
+
+Для выбора документов, у которых field отсутствует, используется оператор [$exists](#exists):
+
+```json
+{ item : { $exists: false } }
+```
+
+### Update
+
+Доступные методы:
+
+- Обновить только один, *первый* документ коллекции, соответствующий фильтру.
+
+  ```json
+  db.collection.updateOne(
+     <filter>,
+     <update>
+  )
+  ```
+
+- Обновить все документы в коллекции, соответствующие фильтру
+
+  ```json
+  db.collection.updateMany(
+     <filter>,
+     <update>
+  )
+  ```
+
+  
+
+
+
+Параметры:
+
+- `filter` – это [query filter document](#query-filter-document), аналогичный операции [find](#read).
+
+- `update` – может передаваться:
+
+  - [update document](#update-document) – в виде документа
+
+    ```json
+    db.inventory.updateOne(
+       { item: "paper" },
+       {
+         $set: { "size.uom": "cm" },
+         $currentDate: { lastModified: true }
+       }
+    )
+    ```
+
+  - [aggregation pipeline](???) – в виде массива
+
+    Может включать стадии:
+
+    - `$set`
+    - `$unset`
+    - `$replaceWith`
+
+    Например, составить массив `comments` из полей `misc1` и `misc2`, а затем поля `misc1` и `misc2` удалить.
+
+    ```json
+    [
+          { $set: { comments: [ "$misc1", "$misc2" ] } },
+          { $unset: [ "misc1", "misc2" ] }
+    ]
+    ```
+
+
+В результате выполнения возвращается:
+
+```json
+{ 
+    "acknowledged" : true, 
+    "matchedCount" : 1, # Число совпавших документов 
+    "modifiedCount" : 1 # Число модифицированных документов
+}
 ```
 
 
@@ -933,6 +1011,13 @@ ISODate("2019-08-30T16:44:57Z")
 
 ### `$type`
 
+```json
+{ field: { $type: <BSON type> } }
+{ "zipCode" : { $type : "string" } }
+```
+
+Выбирает документы , где `field`является экземпляром указанного [BSON типа](https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types) (в виде *number* или *alias*). Если `field`массив, то хотя бы один элемент массива должен быть указанного типа. 
+
 ## Операторы над массивами
 
 ### `$all`
@@ -1019,6 +1104,65 @@ ISODate("2019-08-30T16:44:57Z")
 ```
 
 
+
+# Update document
+
+*Update document* – используется в [update](#update) методах, чтобы указать применяемые обновления.
+
+Имеет форму:
+
+```json
+{
+  <update_operator>: { <field1>: <value1>, ... },
+  <update_operator>: { <field2>: <value2>, ... },
+  ...
+}
+```
+
+## Операторы обновления поля
+
+Field update operators
+
+### $set
+
+Заменяет значения поля `field` на `value`. Массивы и объекты заменяются полностью новым значением. Если поле `field` не существует, то оно будет вставлено с указанным значением.
+
+```json
+{ $set: { <field>: <value>, ... } }
+{ $set: { quantity: 500 } }
+```
+
+Можно устанавливать значения в массивах и вложенных документах через `.` 
+
+```json
+{ $set: { <field.nestedField>: <value>, ... } }
+{ $set: { "details.make": "zzz" } }
+{ $set: { "tags.1": "rain gear" } } # изменение tags[1]
+```
+
+### $currentDate
+
+Установить значение поля `field` в текущую дату.
+
+```json
+{ $currentDate: { <field>: <typeSpecification>, ... } }
+```
+
+`typeSpecification` может иметь такие значения:
+
+- `true` – текущая дата записывается в формате `Date`
+
+  ```json
+  { $currentDate: { lastModified: true } }
+  ```
+
+- `{ $type: "timestamp" }` или `{ $type: "date" }`, для явного указания формата
+
+  ```json
+  { $currentDate: { "cancellation.date": { $type: "timestamp" } }
+  ```
+
+  
 
 
 

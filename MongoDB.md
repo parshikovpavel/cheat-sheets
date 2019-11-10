@@ -731,29 +731,45 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
 
 ### Update
 
-Доступные методы:
+#### `updateOne` и `updateMany`
 
-- Обновить только один, *первый* документ коллекции, соответствующий фильтру.
+- `updateOne` – обновить только один, *первый* документ коллекции, соответствующий фильтру.
 
-  ```json
-  db.collection.updateOne(
-     <filter>,
-     <update>
-  )
-  ```
+    ```json
+    db.collection.updateOne(
+       <filter>,
+       <update> 
+    )
+    ```
 
-- Обновить все документы в коллекции, соответствующие фильтру
+    ```json
+    db.inventory.updateOne(
+       { item: "paper" },
+       {
+         $set: { "size.uom": "cm", status: "P" },
+         $currentDate: { lastModified: true }
+       }
+    )
+    ```
 
-  ```json
-  db.collection.updateMany(
-     <filter>,
-     <update>
-  )
-  ```
+- `updateMany` – обновить все документы в коллекции, соответствующие фильтру
 
-  
+    ```json
+    db.collection.updateMany(
+       <filter>,
+       <update>
+   )
+   ```
 
-
+    ```json
+    db.inventory.updateMany(
+       { "qty": { $lt: 50 } },
+       {
+         $set: { "size.uom": "in", status: "P" },
+         $currentDate: { lastModified: true }
+       }
+   )
+    ```
 
 Параметры:
 
@@ -762,16 +778,6 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
 - `update` – может передаваться:
 
   - [update document](#update-document) – в виде документа
-
-    ```json
-    db.inventory.updateOne(
-       { item: "paper" },
-       {
-         $set: { "size.uom": "cm" },
-         $currentDate: { lastModified: true }
-       }
-    )
-    ```
 
   - [aggregation pipeline](???) – в виде массива
 
@@ -785,11 +791,76 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
 
     ```json
     [
-          { $set: { comments: [ "$misc1", "$misc2" ] } },
-          { $unset: [ "misc1", "misc2" ] }
+        { $set: { comments: [ "$misc1", "$misc2" ] } },
+        { $unset: [ "misc1", "misc2" ] }
     ]
     ```
 
+#### `replaceOne`
+
+Заменить один, первый документ целиком на другое документ, оставив его под тем же `_id`:
+
+```json
+db.collection.replaceOne(
+   <filter>,
+   <replacement_document>
+)
+```
+
+```json
+db.restaurant.replaceOne(
+      { "name" : "Central Perk Cafe" },
+      { "name" : "Central Pork Cafe", "Borough" : "Manhattan" }
+);
+```
+
+Параметры:
+
+- `filter` – это [query filter document](#query-filter-document), аналогичный операции [find](#read).
+- `replacement_document` – заменяющий документ, может содержать только пары `key: value`, не может включать операторы [update document](#update-document). Не может содержать поле `_id`, т.к. оно остается неизменным.
+
+#### `update`
+
+Обновить один (как `replaceOne`) или все (как `replaceMany`) документы, или заменить целиком документ (как `replaceOne`) (старая функция):
+
+```json
+db.collection.update(
+	<filter>,
+    <update>,
+    {
+		multi: <boolean>,
+        ...
+    }
+)
+```
+
+Параметры:
+
+- `filter` – это [query filter document](#query-filter-document), аналогичный операции [find](#read).
+- `update` может принимать:
+  - [update document](#update-document) – как [выше](#updateone-и-updatemany)
+  - [aggregation pipeline](???) – как [выше](#updateone-и-updatemany)
+  - replacement_document – как в [replaceOne](#replaceOne)
+- `multi` – при `false` (по умолчанию) обновляется один документ, при `true` обновляются все документы, соответствующие фильтру.
+
+Примеры:
+
+- Обновить один документ:
+
+    ```json
+    db.books.update(
+       { _id: 1 },
+       {
+         $inc: { stock: 5 },
+         $set: { item: "ABC123" }
+       }
+    )    
+    ```
+
+
+
+
+#### Результат
 
 В результате выполнения возвращается:
 
@@ -817,10 +888,10 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
          collation: <document>
        }
     )
-    ```
+  ```
 
     * `justOne` – при значении `true`, удаляется только один документ из выбранных
-    
+
 * db.collection.deleteOne (новый) – удаляет только один, первый документ
 
     ```javascript
@@ -1123,7 +1194,7 @@ ISODate("2019-08-30T16:44:57Z")
 
 Field update operators
 
-### $set
+### `$set`
 
 Заменяет значения поля `field` на `value`. Массивы и объекты заменяются полностью новым значением. Если поле `field` не существует, то оно будет вставлено с указанным значением.
 
@@ -1140,7 +1211,25 @@ Field update operators
 { $set: { "tags.1": "rain gear" } } # изменение tags[1]
 ```
 
-### $currentDate
+### `$unset`
+
+Удалить поле `field` из документа:
+
+```json
+{ $unset: { <field>: <value>, ... } }
+```
+
+```json
+{ $unset: { quantity: ""} }
+```
+
+Значение `value` может быть любое (здесь `""`).
+
+
+
+
+
+### `$currentDate`
 
 Установить значение поля `field` в текущую дату.
 
@@ -1162,7 +1251,17 @@ Field update operators
   { $currentDate: { "cancellation.date": { $type: "timestamp" } }
   ```
 
-  
+### `$push`
+
+Добавляет значение `value` в массив `field`
+
+```json
+{ $push: { <field>: <value>, ... } }
+```
+
+```json
+{ $push: { scores: 89 } }
+```
 
 
 

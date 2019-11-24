@@ -1,3 +1,34 @@
+# Настройка в Unix
+
+- Создать ключи:
+
+  ```bash
+  ssh-keygen -t rsa
+  ```
+
+  После это создаются файлы:
+
+  ```
+  ~/.ssh/id_rsa
+  ~/.ssh/id_rsa.pub
+  ```
+
+- скопировать публичный ключ в буфер обмена
+
+  ```bash
+  pbcopy < ~/.ssh/id_rsa.pub
+  ```
+
+- вставить ключ на github
+
+- клонировать репозиторий
+
+  ```bash
+  git clone git@github.com:AmirGhahrai/Rima.git
+  ```
+
+
+
 # Специальные файлы
 
 ## `.gitkeep`

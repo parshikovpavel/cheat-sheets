@@ -828,11 +828,14 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
 
     ```json
     db.collection.updateMany(
-       <filter>,
-       <update>
+        <filter>,
+        <update>,
+       {
+           upsert: <boolean>
+    }
    )
    ```
-
+   
     ```json
     db.inventory.updateMany(
        { "qty": { $lt: 50 } },
@@ -874,8 +877,11 @@ db.students.find( { semester: 1, grades: { $gte: 85 } },
 
 ```json
 db.collection.replaceOne(
-   <filter>,
-   <replacement_document>
+    <filter>,
+    <replacement_document>,
+    {
+        upsert: <boolean>
+    }
 )
 ```
 
@@ -900,6 +906,7 @@ db.collection.update(
 	<filter>,
     <update>,
     {
+    	upsert: <boolean>,
 		multi: <boolean>,
         ...
     }
@@ -952,7 +959,48 @@ db.collection.update(
   )
   ```
 
+#### Опция upsert
+
+Если `false` (по умолчанию), то просто выполнить обновление документов.
+
+Если `true`, то выполнить обновление/вставку (**up**date-in**sert**). Алгоритм:
+
+- если существует документ(ы), соответствующие фильтру, то выполнить обычное обновление документа (ов);
+- если нет документа (ов), соответствующих фильтру, то вставить *один* документ.
+
+Особенности вставки документа:
+
+- если `update` – *replacement_document*, то вставляется новый документ, с указанными парами `key: value`
+
+- если `update`  – *update document*, то создается документ из предложений равенства в `<filter>`параметре и к нему применяются выражения из `<update>`параметра.
+
+  Например, в результате такой операции:
+
+  ```javascript
+  db.books.update(
+     { item: "BLP921" },   // Query parameter
+     {                     // Update document
+        $set: { reorder: false },
+        $setOnInsert: { stock: 10 }
+     },
+     { upsert: true }      // Options
+  )
+  ```
+
+  получаем новый документ (подробнее [`$setOnInsert`](#setOnInsert)):
+
+  ```json
+  {
+    "_id" : ObjectId("5da79019835b2f1c75348a0a"),
+    "item" : "BLP921",
+    "reorder" : false,
+    "stock" : 10
+  }
+  ```
+
   
+
+
 
 
 #### Результат
@@ -1459,6 +1507,16 @@ db.players.find( { $where: function() {
   ```json
   { $currentDate: { "cancellation.date": { $type: "timestamp" } }
   ```
+
+#### `$setOnInsert`
+
+Если операция обновления с [`upsert: true`](#опция-upsert) приводит к вставке документа, то назначает указанные значения полям в документе. Если операция обновления не приводит к вставке, то ничего не происходит.
+
+```json
+{ $setOnInsert: { <field1>: <value1>, ... } },
+```
+
+
 
 ### Array update
 

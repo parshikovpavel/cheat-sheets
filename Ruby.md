@@ -47,7 +47,7 @@ RubyGems Environment:
 
 Важные настройки:
 
-- `INSTALLATION DIRECTORY` – центральная директория по умолчанию для инсталляции *gem*'ов.
+- `INSTALLATION DIRECTORY` – центральная директория по умолчанию для инсталляции *gem*'ов. По умолчанию здесь указана системная глобальная директория, доступ к которой требует `sudo`. 
 - `USER INSTALLATION DIRECTORY` – директория пользователя по умолчанию для инсталляции *gem*'ов.
 - `GEM PATHS` – пути, по которым выполняется поиск *gem*'ов для запуска.
 
@@ -55,10 +55,6 @@ RubyGems Environment:
 
 - `GEM_PATH` – задает настройку `GEM PATHS`.
 - `GEM_HOME` – задает настройку `INSTALLATION DIRECTORY`
-
-
-
-
 
 Узнать путь к *library file*:
 
@@ -82,6 +78,8 @@ gem install <gem_name>
 <u>Опции:</u>
 
 - `--user-install` – Установить *gem* в `USER INSTALLATION DIRECTORY`.  
+
+Смотреть [Избежать установки gem'ов глобально](#Избежать-установки-gem-ов-глобально).
 
 ##### `gem other`
 
@@ -165,7 +163,11 @@ bundle install # аналог `composer install`
 
 Также эта команда используется для установки *gem*'ов после изменения *Gemfile*. 
 
-По умолчанию, *gem*'ы устанавливаются в папку *rubygems*'а. Поэтому gem'ы, установленные через *bundler* без опции `--path`, будут выводиться командой `gem list`.
+<u>Папка для установки</u>
+
+По умолчанию, *gem*'ы устанавливаются в папку *rubygems*'а, которая указана в его настройке `INSTALLATION DIRECTORY`. Поэтому *gem*'ы, установленные через *bundler* без опции `--path`, будут выводиться командой `gem list`.
+
+Смотреть [Избежать установки gem'ов глобально](#Избежать-установки-gem-ов-глобально).
 
 Флаги не запоминаются между вызовами команд. И если их нужно запомнить, то следует использовать `bundle config` (например, `bundle config path <path>`).
 
@@ -195,7 +197,7 @@ bundle install # аналог `composer install`
 bundle exec <command>
 ```
 
-Можно попробовать запустить команду напрямую `<command>`. В этом случае используются глобальные *gem*'ы, установленные в системе. Такая команда может работать корректно в одной системе и не работать в другой, с gem'ами других версий.
+Можно попробовать запустить команду напрямую `<command>`. В этом случае используются глобальные *gem*'ы, установленные в системе. Такая команда может работать корректно в одной системе и не работать в другой, с *gem*'ами других версий.
 
 ##### `bundle config`
 
@@ -266,4 +268,38 @@ Bundler       1.17.2
 - `Gem Home` = `INSTALLATION DIRECTORY`
 - `Gem Path` =  `GEM PATHS`
 - `User Path` = `USER INSTALLATION DIRECTORY`
+
+##### `bundle init`
+
+Создает *Gemfile* в текущем каталоге. 
+
+#### Избежать установки gem'ов глобально
+
+По умолчанию gem'ы устанавливаются в системную папку глобально и поэтому требуют `sudo`. Избежать этого можно следующими способами
+
+<u>Установка gem'ов в user's home directory</u>
+
+Все *gem*'ы хранятся в одном экземпляре для каждого пользователя.
+
+Необходимо изменить в файле `~/.bash_profile` следующие *environment variables*:
+
+- `GEM_HOME` – задает настройку `INSTALLATION DIRECTORY` для *Rubygems*. А также принимается *bundler*'ом по умолчанию в качестве *installation directory*. Необходимо изменить на значение настройки `USER INSTALLATION DIRECTORY`.
+- `PATH` – необходимо добавить буть к `<USER INSTALLATION DIRECTORY>/bin`чтобы иметь возможность запускать *binaries* из *installation directory* напрямую.
+
+```bash
+export GEM_HOME=$(ruby -e 'puts Gem.user_dir')
+export PATH=$GEM_HOME/bin:$PATH
+```
+
+После этого консольная утилита *gem* и *bundler* будут устанавливать *gem*'ы в *user's home directory*.
+
+Можно для консольной утилиты *gem* использовать опцию `--user-install` (а можно и не использовать, т.к.`INSTALLATION DIRECTORY`= `USER INSTALLATION DIRECTORY`):
+
+```bash
+gem install <gem_name> --user-install
+```
+
+<u>Установка gem'ов в папку проекта</u>
+
+Все *gem*'ы устанавливаются отдельно для каждого проекта в его папку (аналогично поведению по умолчанию для `composer`). Например, в папку `./vendor/bundle`.
 

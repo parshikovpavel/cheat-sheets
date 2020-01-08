@@ -1,3 +1,5 @@
+https://guides.github.com/introduction/git-handbook/
+
 # Настройка в Unix
 
 - Создать ключи:

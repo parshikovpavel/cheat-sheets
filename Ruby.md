@@ -284,7 +284,7 @@ Bundler       1.17.2
 Необходимо изменить в файле `~/.bash_profile` следующие *environment variables*:
 
 - `GEM_HOME` – задает настройку `INSTALLATION DIRECTORY` для *Rubygems*. А также принимается *bundler*'ом по умолчанию в качестве *installation directory*. Необходимо изменить на значение настройки `USER INSTALLATION DIRECTORY`.
-- `PATH` – необходимо добавить буть к `<USER INSTALLATION DIRECTORY>/bin`чтобы иметь возможность запускать *binaries* из *installation directory* напрямую.
+- `PATH` – необходимо добавить путь к `<USER INSTALLATION DIRECTORY>/bin`чтобы иметь возможность запускать *binaries* из *installation directory* напрямую.
 
 ```bash
 export GEM_HOME=$(ruby -e 'puts Gem.user_dir')
@@ -292,6 +292,17 @@ export PATH=$GEM_HOME/bin:$PATH
 ```
 
 После этого консольная утилита *gem* и *bundler* будут устанавливать *gem*'ы в *user's home directory*.
+
+~~So what I did is to put in my bash profile:~~
+
+```
+export BUNDLE_PATH=$(ls -t -U | ruby -e 'puts Gem.user_dir')
+export PATH="$PATH:$BUNDLE_PATH/bin"
+```
+
+~~Now both `gem` and `bundle` install to the same user-wide location. The only issue is that `gem` installs executables in `~/bin` while `bundle` installs them in `$BUNDLE_PATH/bin`.~~
+
+
 
 Можно для консольной утилиты *gem* использовать опцию `--user-install` (а можно и не использовать, т.к.`INSTALLATION DIRECTORY`= `USER INSTALLATION DIRECTORY`):
 

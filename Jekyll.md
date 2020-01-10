@@ -17,7 +17,7 @@
   {{ page.title }}
   ```
 
-- *tag* (тег) – для управления потоком выполнения. Есть набор тегов. Используются символы `{%` и `%}` Например, условный оператор:
+- *tag* (тег) – для управления потоком выполнения. Используются символы `{%` и `%}` Например, условный оператор:
 
   ```
   {% if page.show_sidebar %}
@@ -32,7 +32,35 @@
   {{ "hi" | capitalize }}
   ```
 
+  Стандарные *Liquid filter*'ы – https://shopify.github.io/liquid/filters/ или https://jekyllrb.com/docs/liquid/filters/#standard-liquid-filters
+
+  Дополнительные *Jekyll tag*'и – https://jekyllrb.com/docs/liquid/tags/
+
 Чтобы *jekyll* обрабатывал блоки на языке *Liquid*, в начале шаблона необходимо разместить *front matter*.
+
+### Tag
+
+Стандарные *Liquid tag*'и – https://shopify.github.io/liquid/tags/
+
+Дополнительные *Jekyll tag*'и – https://jekyllrb.com/docs/liquid/tags/
+
+#### if
+
+```
+{% if <condition> %}
+  Body
+{% endif %}
+```
+
+#### for
+
+```
+{% for <variable> in <array> %}
+  {{ <variable> }}
+{% endfor %}
+```
+
+
 
 ### Front matter
 
@@ -55,7 +83,7 @@ title: My blog
 
 ### Layout
 
-*Layout* (макет) – удобны для общих макетов, внутрь которых вставляется контент более мелких страниц. Например, макет для общего шаблона всего сайта. Располагаются в папке `_layouts`.
+*Layout* (макет) – удобны для общих шаблонов, внутрь которых вставляется контент более мелких шаблонов. Например, макет для общего шаблона всего сайта. Располагаются в папке `_layouts`.
 
 В *layout* всегда определена переменная `content`:
 
@@ -86,4 +114,96 @@ title: Home
 ```
 {% include navigation.html %}
 ```
+
+### Data
+
+*Data* (данные) – файл данных в формате *YAML*, *JSON* или *CSV*. Размещается в папке `_data`.
+
+Данные из файла `_data/xxx.yml` будут доступны в переменной `site.data.xxx`.
+
+### Asset
+
+Asset (ресурс). Располагаются в папке `assets`, в которой размещаются:
+
+```
+.
+├── assets
+|   ├── css
+|   ├── images
+|   └── js
+```
+
+Папка `assets` просто копируется в папку сайта.
+
+Ссылка на *asset* имеет вид:
+
+```html
+<link rel="stylesheet" href="/assets/css/styles.css">
+```
+
+### Post
+
+Post (пост для блога). Размещаются в папке `_posts`. Имя файла для *post* имеет вид:
+
+```
+<дата_публикации>-<название>.<расширение>
+2018-08-20-bananas.md
+```
+
+<u>Файл post'а</u>
+
+Должен содержать *front matter*:
+
+```
+---
+layout: post
+# some user variables
+author: xxx
+---
+```
+
+Дата *post*'а из имени файла доступна в переменной `page.date`.
+
+<u>Список post'ов</u>
+
+*Post*'ы доступны через переменную `site.posts`.
+
+Пример перебора:
+
+```
+{% for post in site.posts %}
+    {{ post.xxx }}
+{% endfor %}
+```
+
+Доступны специальные свойства `post`:
+
+- `post.url`
+- `post.title` – заголовок из имени файла
+- `post.excerpt` – первый параграф текста
+
+Эти переменные могут быть предопределены в *front matter*.
+
+### Configuration
+
+Размещается в файле `./_config.yml`.
+
+После изменения конфигурации требуется рестарт *jekyll*.
+
+### Collection
+
+Collection – похожа на массив *post*'ов, но для нее можно установить имя и не нужно указывать дату.
+
+Определяются в *configuration file* в формате:
+
+```
+collections:
+  <collection_name>:
+```
+
+*Document* – элемент *collection*. Также как и post'ы, *document*'ы – это файлы. *Document*'ы размещаются в папке `_<collection_name>`
+
+### Документация
+
+Глобальные переменные – https://jekyllrb.com/docs/variables/
 

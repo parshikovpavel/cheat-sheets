@@ -1,10 +1,14 @@
 ### Команды
 
+`jekyll new PATH` – создать заготовку сайта с использование `Minima` *them*e'ы 
+
+`jekyll new PATH --blank` – создать заготовку сайта без *theme*'ы.
+
 `jekyll build` – построить сайт и вывести его код в каталог `_site`.
 
 `jekyll serve` – перестроить сайт (если были изменены файлы кода), вывести его код в каталог `_site`, запустить веб-сервер на `http://localhost:4000`.
 
-### Шаблоны
+### Шаблоны и liquid
 
 Язык шаблонов – *Liquid*.
 
@@ -38,13 +42,24 @@
 
 Чтобы *jekyll* обрабатывал блоки на языке *Liquid*, в начале шаблона необходимо разместить *front matter*.
 
-### Tag
+#### Tag
 
 Стандарные *Liquid tag*'и – https://shopify.github.io/liquid/tags/
 
 Дополнительные *Jekyll tag*'и – https://jekyllrb.com/docs/liquid/tags/
 
-#### if
+##### assign
+
+Задать переменную
+
+```
+{% assign <name> = <value> %}
+{% assign variable = false %}
+```
+
+
+
+##### if
 
 ```
 {% if <condition> %}
@@ -52,12 +67,32 @@
 {% endif %}
 ```
 
-#### for
+##### for
 
 ```
 {% for <variable> in <array> %}
   {{ <variable> }}
 {% endfor %}
+```
+
+#### Filter
+
+##### where
+
+Отфильтровать массив. Выбрать элементы, у которых выполняется `el.property == value`.
+
+```
+{% assign <variable> = <array> | where: "<property>", "<value>" %}
+{% assign author = site.authors | where: 'short_name', page.author %}
+```
+
+##### first
+
+Выбрать первый элемент в массиве. Часто используется с `where` фильтром, чтобы найти один элемент:
+
+```
+{% assign <variable> = <array> | first}
+{% assign author = site.authors | where: 'short_name', page.author | first %}
 ```
 
 
@@ -141,48 +176,88 @@ Asset (ресурс). Располагаются в папке `assets`, в ко
 <link rel="stylesheet" href="/assets/css/styles.css">
 ```
 
-### Post
+### Post'ы и Collection
 
-Post (пост для блога). Размещаются в папке `_posts`. Имя файла для *post* имеет вид:
+Общие особенности:
 
-```
-<дата_публикации>-<название>.<расширение>
-2018-08-20-bananas.md
-```
+- *post*'ы (для блога) следует рассматривать как *collection* с именем `posts`
+- *post*'ы состоят из *post*'ов, а *collection* – из *document*'ов
 
-<u>Файл post'а</u>
+Collection'ы (кроме *post*'ов) должны быть [определены в *configuration file*](#Настройка-collection).
 
-Должен содержать *front matter*:
+
+
+
+
+
+
+#### Файл с содержанием
+
+Общие особенности:
+
+- *post*'ы и *document*'ы размещаются в папке `_<collection_name>` (*post*'ы соответственно в папке `_posts`)
+- имеют формат *markdown* (`.md`).
+
+Имя файла:
+
+- *document* – любое имя
+
+- *post* – имя имеет вид:
+
+  ```
+  <date>-<title>.<ext>
+  2018-08-20-bananas.md
+  ```
+
+<u>Front matter</u>
+
+Может содержать *front matter* вида:
 
 ```
 ---
-layout: post
-# some user variables
-author: xxx
+layout: post   # Шаблон одиночного document'а (post'а)
+
+author: xxx    # Пользовательские переменные, которые будут доступны в шаблонах
 ---
 ```
 
-Дата *post*'а из имени файла доступна в переменной `page.date`.
+Либо может использоваться [front matter по умолчанию]() (часто для переменной `layout`).
 
-<u>Список post'ов</u>
+#### Шаблон одиночного document'а (post'а)
 
-*Post*'ы доступны через переменную `site.posts`.
+Доступны переменные:
+
+- `page.<variable>` – переменная `variable` из *front matter*.
+- `page.url` – URL страницы *document*'а (*post*'а)
+- `page.excerpt` – первый параграф текста
+- `content` –  содержимое *document*'а (*post*'а)
+
+Для *post*'ов предопределены переменные:
+
+- `page.date` –  `date` из имени файла
+- `page.title` – `title`  из имени файла
+
+#### Шаблон списка document'ов (post'ов)
+
+*Document*'ы (*post*'ы) доступны через переменную `site.<collection_name>` (`site.posts`).
 
 Пример перебора:
 
 ```
-{% for post in site.posts %}
-    {{ post.xxx }}
+{% for document in site.<collection_name> %}
+    {{ document.xxx }}
 {% endfor %}
 ```
 
-Доступны специальные свойства `post`:
+Доступные свойства `document` (и `post`):
 
-- `post.url`
-- `post.title` – заголовок из имени файла
-- `post.excerpt` – первый параграф текста
+- `document.content` – содержимое *document*'а (*post*'а)
+- `document.<variable>` – переменная `variable` из *front matter*.
+- и другие переменные `page.xxx` из [шаблона одиночного document'а (post'а)]() доступны как `document.xxx` 
 
-Эти переменные могут быть предопределены в *front matter*.
+
+
+- 
 
 ### Configuration
 
@@ -190,18 +265,96 @@ author: xxx
 
 После изменения конфигурации требуется рестарт *jekyll*.
 
-### Collection
+#### Настройки collection
 
-Collection – похожа на массив *post*'ов, но для нее можно установить имя и не нужно указывать дату.
-
-Определяются в *configuration file* в формате:
+Определение *collection*:
 
 ```
 collections:
   <collection_name>:
+    [ output: true ] 
 ```
 
-*Document* – элемент *collection*. Также как и post'ы, *document*'ы – это файлы. *Document*'ы размещаются в папке `_<collection_name>`
+<u>Опции:</u>
+
+- `output: true` – включить шаблон одиночного *document*'а:
+
+#### Front matter по умолчанию
+
+Front matter по умолчанию для page, document'ов, post'в задается так:
+
+```
+defaults:
+  # front matter для document'ов
+  - scope:
+      path: ""
+      type: "<collection_name>"
+    values:
+      layout: "author"
+  
+  # front matter для post'ов
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+  
+  # front matter для остальных
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+```
+
+Параметры:
+
+- `scope` – область 
+- `values` – значения по умолчанию
+
+### Plugin
+
+<u>Подключение</u>
+
+Добавить *plugin* в группу `jekyll_plugins` в `Gemfile`:
+
+```
+group :jekyll_plugins do
+  gem 'jekyll-sitemap'
+  # ...
+end
+```
+
+Добавить строку в *configuration*:
+
+```yaml
+plugins:
+  - jekyll-sitemap
+```
+
+#### `jekyll-sitemap`
+
+Автоматически генерирует файл `sitemap.xml` – карта сайта для роботов поисковых систем. 
+
+Настройка не требуется
+
+#### `jekyll-feed` 
+
+Генерирует RSS-ленту `./feed.xml` из *post*'ов.
+
+Необходимо в основной *layout* в блок `<head>` поместить `{% feed_meta %}` тег. В этом месте будет вставлен метает со ссылкой на RSS-ленту.
+
+```html
+<head>
+		...
+    {% feed_meta %}
+</head>
+```
+
+#### `jekyll-seo-tag`
+
+Добавляет SEO метатеги для поисковых роботов (вроде `og:title`).
+
+Необходимо в основной *layout* в блок `<head>` поместить `{% seo %}` тег. В этом месте будет вставлены SEO метатеги.
 
 ### Документация
 

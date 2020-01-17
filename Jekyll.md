@@ -1,12 +1,16 @@
-### Команды
+### Command line
 
 `jekyll new PATH` – создать заготовку сайта с использование `Minima` *them*e'ы 
 
 `jekyll new PATH --blank` – создать заготовку сайта без *theme*'ы.
 
-`jekyll build` – построить сайт и вывести его код в каталог `_site`.
+`jekyll build` – однократно сгенерировать код сайта и вывести в каталог `_site`.
 
-`jekyll serve` – перестроить сайт (если были изменены файлы кода), вывести его код в каталог `_site`, запустить веб-сервер на `http://localhost:4000`.
+`jekyll serve` – автоматически генерировать код сайта при изменении исходных файлов, вывести его в каталог `_site`, запустить веб-сервер на `http://localhost:4000`.
+
+`jekyll doctor` – вывести проблемы с *configuration*
+
+
 
 ### Шаблоны и liquid
 
@@ -44,11 +48,11 @@
 
 #### Tag
 
-Стандарные *Liquid tag*'и – https://shopify.github.io/liquid/tags/
+##### Стандартные *Liquid tag*'и
 
-Дополнительные *Jekyll tag*'и – https://jekyllrb.com/docs/liquid/tags/
+https://shopify.github.io/liquid/tags/
 
-##### assign
+###### assign
 
 Задать переменную
 
@@ -57,9 +61,7 @@
 {% assign variable = false %}
 ```
 
-
-
-##### if
+###### if
 
 ```
 {% if <condition> %}
@@ -67,13 +69,35 @@
 {% endif %}
 ```
 
-##### for
+###### for
 
 ```
 {% for <variable> in <array> %}
   {{ <variable> }}
 {% endfor %}
 ```
+
+##### Дополнительные *Jekyll tag*'и
+
+https://jekyllrb.com/docs/liquid/tags/
+
+###### link
+
+Сгенерировать постоянную ссылку на *post*, *page*, *document* или *file*. Указывается путь относительно *root directory*, расширение файла исходное (`.md`, а не `html`)
+
+```liquid
+{% link _posts/2016-07-26-name-of-post.md %}
+```
+
+###### post_url
+
+Сгенерировать постоянную ссылку на *post*
+
+```liquid
+{% post_url 2010-07-21-name-of-post %}
+```
+
+
 
 #### Filter
 
@@ -95,9 +119,22 @@
 {% assign author = site.authors | where: 'short_name', page.author | first %}
 ```
 
+### Page
 
+Используется для контента, который не привязан к дате (как *post*' ы) и который не является группой (как *collection*'ы). 
+
+*Page*'s копируются в целевую папку сайта `_site`. 
+
+Page's могут помещаться в корневую папку или подпапки. Структура подпапок сохраняется в `_site`.
+
+Возможны типы файлов:
+
+- HTML-файлы
+- `.md` файлы – при сборке конвертируются в `.html`
 
 ### Front matter
+
+Для того чтобы *Jekyll* обрабатывал файл (*object*'ы, *tag*'и, *filter*'ы), в начале файла должен быть размещен *front matter* (возможно пустой).
 
 Это YAML код, размещенный между символами `---`.
 
@@ -107,38 +144,45 @@
 ---
 ```
 
-Может использоваться для задания переменных (например, `title`), которые будут доступны как свойство объекта `page` (например, `page.title`).
+В нем задаются:
+
+- пользовательские переменные (например, `title`), которые будут доступны как свойство объекта `page` (например, `page.title`).
+- Специальные переменные:
+  - `layout` – *layout* для страницы. Задается без *extension*'а.
+  - `permalink` – URL для страницы, если нужно изменить URL по умолчанию.
+  - 
+  - и специальные переменные для [post'а](#post-ы-и-collection)
 
 ```
 ---
-title: My blog
+layout: post   # Layout для одиночного page, document'а, post'а, draft
+
+title: My blog # Пользовательские переменные, которые будут доступны в шаблонах
 ---
 {{ page.title }}
 ```
+
+Объявленные пользовательские переменные будут доступны:
+
+- ниже в этом файле
+- во всех *layout*'ах, в которые вставляет текущая страница. Например, переменная `title` будет доступна в *layout* (`post.html`).
+- во всех include'ах, которые включаются в текущую страницу.
+
+
+
+Могут быть [установлены значения front matter]() по умолчанию.
+
+
+
+
 
 ### Layout
 
 *Layout* (макет) – удобны для общих шаблонов, внутрь которых вставляется контент более мелких шаблонов. Например, макет для общего шаблона всего сайта. Располагаются в папке `_layouts`.
 
-В *layout* всегда определена переменная `content`:
+В *layout* всегда определена переменная `content`. В эту переменную подставляется контент страницы, для который установлен этот *layout*. 
 
-```html
-# layout.html
-{{ page.title }}
-{{ content }}
-```
-
-В эту переменную подставляется контент страницы, для который установлен этот *layout*. Чтобы установить `layout` для страницы, необходимо указать его в переменной `layout` в *front matter*.
-
-```
-# index.html
----
-layout: default
-title: Home
----
-```
-
-Переменная (`title`), определенная в *Front matter* `index.html`, будут доступна в *layout* (`layout.html`).
+*Layout* устанавливается в [front matter](#front-matter).
 
 ### Include
 
@@ -158,7 +202,14 @@ title: Home
 
 ### Asset
 
-Asset (ресурс). Располагаются в папке `assets`, в которой размещаются:
+Asset (ресурс).  Располагаются в папке `assets`. 
+
+В папку помещают: 
+
+- `css`
+- `js`
+- картинки
+- файлы (вроде `.pdf`)
 
 ```
 .
@@ -170,7 +221,7 @@ Asset (ресурс). Располагаются в папке `assets`, в ко
 
 Папка `assets` просто копируется в папку сайта.
 
-Ссылка на *asset* имеет вид:
+Пример ссылки:
 
 ```html
 <link rel="stylesheet" href="/assets/css/styles.css">
@@ -182,21 +233,16 @@ Asset (ресурс). Располагаются в папке `assets`, в ко
 
 - *post*'ы (для блога) следует рассматривать как *collection* с именем `posts`
 - *post*'ы состоят из *post*'ов, а *collection* – из *document*'ов
+- ресурсы (картинки, файлы) размещают в папке `assets`
 
 Collection'ы (кроме *post*'ов) должны быть [определены в *configuration file*](#Настройка-collection).
-
-
-
-
-
-
 
 #### Файл с содержанием
 
 Общие особенности:
 
 - *post*'ы и *document*'ы размещаются в папке `_<collection_name>` (*post*'ы соответственно в папке `_posts`)
-- имеют формат *markdown* (`.md`).
+- имеют формат *markdown* (`.md`) или `.html`.
 
 Имя файла:
 
@@ -205,37 +251,36 @@ Collection'ы (кроме *post*'ов) должны быть [определен
 - *post* – имя имеет вид:
 
   ```
-  <date>-<title>.<ext>
+  <year>-<month>-<day>-<title>.<ext>
   2018-08-20-bananas.md
   ```
 
-<u>Front matter</u>
-
-Может содержать *front matter* вида:
-
-```
----
-layout: post   # Шаблон одиночного document'а (post'а)
-
-author: xxx    # Пользовательские переменные, которые будут доступны в шаблонах
----
-```
-
-Либо может использоваться [front matter по умолчанию]() (часто для переменной `layout`).
+Шаблон задается через переменную `layout` в [front matter](#front-matter).
 
 #### Шаблон одиночного document'а (post'а)
 
 Доступны переменные:
 
 - `page.<variable>` – переменная `variable` из *front matter*.
+
 - `page.url` – URL страницы *document*'а (*post*'а)
-- `page.excerpt` – первый параграф текста
+
+- `page.excerpt` – аннотация текста. 
+
+  По умолчанию, первый абзац текста. Разделитель для аннотации можно настроить в переменной `excerpt_separator` в *front_matter* или `_config.yml`.
+
 - `content` –  содержимое *document*'а (*post*'а)
+
+<u>Post'ы</u>
 
 Для *post*'ов предопределены переменные:
 
 - `page.date` –  `date` из имени файла
 - `page.title` – `title`  из имени файла
+
+Для post'ов могут задаваться специальные переменные:
+
+
 
 #### Шаблон списка document'ов (post'ов)
 
@@ -255,9 +300,62 @@ author: xxx    # Пользовательские переменные, кото
 - `document.<variable>` – переменная `variable` из *front matter*.
 - и другие переменные `page.xxx` из [шаблона одиночного document'а (post'а)]() доступны как `document.xxx` 
 
+#### *Category* и *Tag* для *post*'ов
 
+В *collection*'ях не работает.
 
-- 
+Отличие:
+
+-  Все *category*'ии включаются в URL *post*'а (например, `/<category1>/<category2>/<year>/<month>/<day>/<title>.html`). 
+- *Tag*'и не включаются в URL *post*'a
+
+<u>Файл с содержанием</u>
+
+*Category*'и и *tag*'и указываются в *front matter*:
+
+```liquid
+categories: [blog, travel]
+tags: [hot, summer]
+```
+
+<u>Шаблон списка</u>
+
+Jekyll автоматически собирает из *post*'ов:
+
+-  *category*'ии – в массив `site.categories`
+- *tag*'и – в массив `site.tags` 
+
+Структура массивов `site.categories` и `site.tags`:
+
+```
+[
+	0 => <category_name> / <tag_name>
+	1 => [  # массив post'ов
+		<post1>,
+		<post2>,
+		...
+	]
+]
+```
+
+Пример построение списка:
+
+```liquid
+{% for category in site.categories %}
+	{{ category[0] }}                     # category_name
+  	{% for post in category[1] %}         # posts
+  		{{ post.xxx }}					
+    {% endfor %}
+{% endfor %}
+```
+
+#### Draft
+
+Draft (черновик). Располагаются в папке `_drafts`. В названии дата не указывается: `<title>.md`. Дата *draft*'а – дата изменения его файла.
+
+При обычном запуске `jekyll build` и `jekyll serve` – *draft'ы* не копируются в папку сайта `_site` и вообще нигде не фигурируют на сайте.
+
+При запуске с ключом `--drafts` *draft*'ы рассматриваются как обычные *post*'ы: помещаются в массив `site.posts` и копируются в те же подпапки в папке сайте `_site`. 
 
 ### Configuration
 
@@ -281,7 +379,7 @@ collections:
 
 #### Front matter по умолчанию
 
-Front matter по умолчанию для page, document'ов, post'в задается так:
+Значения по умолчанию для переменных во *Front matter* для *page*, *document*'ов, *post*'в задается в `defaults` свойстве:
 
 ```
 defaults:
@@ -299,6 +397,8 @@ defaults:
     values:
       layout: "post"
   
+ 
+  
   # front matter для остальных
   - scope:
       path: ""
@@ -309,6 +409,26 @@ defaults:
 Параметры:
 
 - `scope` – область 
+
+  Возможные опции:
+
+  - `path` (обязательный) – путь к файлам.
+
+    ```
+     # front matter для page's в папке `projects/`
+     scope:
+       path: "projects"
+       type: "pages"
+     values:
+        # ...
+    ```
+
+    Значение `path: ""` применяется ко всем файлам. `path` может содержать подстановочный символ `*`.
+
+  - `type` (необязательный) – тип файлов
+
+    Могут применяться следующие типы: `pages`, `posts`, `drafts` и *collection name*.
+
 - `values` – значения по умолчанию
 
 ### Plugin
@@ -355,6 +475,38 @@ plugins:
 Добавляет SEO метатеги для поисковых роботов (вроде `og:title`).
 
 Необходимо в основной *layout* в блок `<head>` поместить `{% seo %}` тег. В этом месте будет вставлены SEO метатеги.
+
+### Подсветка кода
+
+Подсветка кода реализована через библиотеку [Rouge](http://rouge.jneen.net/).
+
+Для обработки `.md` файла необходимо наличие *front matter*.
+
+Код должен быть окружен стандартными для *Markdown* символами ` ``` `  или специальными *tag*'ами:
+
+```liquid
+{% highlight php  %}
+	  # ...
+{% endhighlight %}
+```
+
+[Список поддерживаемых языков](https://github.com/jayferd/rouge/wiki/List-of-supported-languages-and-lexers)
+
+Чтобы отключить обработку специальных символов *Jekyll* в документе, необходимо указать в front matter:
+
+```liquid
+render_with_liquid: false
+```
+
+Отключаются и теги `{% highlight %}`, поэтому можно использовать только ` ``` `.
+
+Стили подсветки необходимо взять от библиотеки [Pygments](http://jwarby.github.io/jekyll-pygments-themes/languages/javascript.html). И загруженный файл `.css` необходимо подключить в `main.css`:
+
+```html
+@import "tango.css";
+```
+
+
 
 ### Документация
 

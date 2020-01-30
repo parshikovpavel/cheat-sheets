@@ -388,6 +388,19 @@ lrwxrwxrwx 1 root root 52 Nov 7 16:57 /etc/sphinx/sphinx.conf -> /www/fishki6.cu
 
 ## Системные команды
 
+### `open`
+
+Открыть каталог в *Finder*.
+
+```bash
+open <dir> # явное задание каталога
+open /etc
+open $(<command>) # открытие каталога, который возвращается командой
+open $(bundle info --path minima)
+```
+
+
+
 ### id
 
 ### sudo

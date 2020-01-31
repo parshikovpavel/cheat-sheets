@@ -13,32 +13,65 @@
 
 ```javascript
 var vm = new Vue({  // vm - View Model
-  el: <string | Element>,
-  data: <Object | Function>
+  [ el: <string | Element> ]
+  [ data: <Object | Function> ]
+  [  ]               
 })
+```
+
+Пример:
+
+```html
+<div id="app"></div>
+<script>
+var vm = new Vue({
+  el: '#app',
+  data: {
+      sitename: "Shop"
+  }  
+});  
+</script>
 ```
 
 - `el` – указывает в какой существующий DOM-элемент монтировать экземпляр `Vue`. Может быть как строковым CSS-селектором, так и объектом типа `HTMLElement`.
 
-  Пример:
-
-  ```html
-  <div id="app"></div>
-  <script>
-    var vm = new Vue({
-      el: '#app',
-      data: {
-          sitename: "Shop"
-      }  
-    });  
-  </script>
-  ```
-
 - `data` –  объект с данными  *Vue instance*'а. Данные из data, будут добавлены в  *reactivity system*  (систему реактивности) *Vue* и связаны (*bind*) с *View*. Поэтому *View* будет «реагировать» на их изменения, обновляясь в соответствии с новыми значениями.  
+
+  Для каждого `property` из объекта `data` автоматически создаются *getter* и *setter*. Поэтому *property* доступны через *Vue instance*:
+
+  ```javascript
+  console.log(vm.<property>)
+  vm.<property> = <value>            
+  ```
+  
+  
 
 На одной странице можно запустить несколько *Vue instance*'ов, которые примонтированы к разным элементам DOM. Это имеет смысл использовать, если *Vue instance* примонтирован к небольшим компонентам – карусель или веб-форма.
 
 `Vue` *instance*'ы доступен также через переменные `$vm<N>`.
+
+# Жизненный цикл
+
+Жизненный цикл *Vue instance*  состоит из нескольких этапов. 
+
+![lifecycle](https://ru.vuejs.org/images/lifecycle.png)
+
+Между этими этапами вызываются функции, называемые хуками жизненного цикла (*lifecycle hook*), с помощью которых можно выполнять свой код в определённый момент жизненного цикла.
+
+Список *Lifecycle hook*'ов:
+
+- `beforeCreate`
+- `created`
+- `beforeMount`
+- `mounted`
+- `beforeUpdate`
+- `updated`
+- `beforeDestroy`
+- `destroyed`
+
+Большую часть времени программа проводит в цикле событий (`beforeUpdate` и `updated` *hook*'и). 
+
+### beforeCreate
 
 # Template
 
@@ -47,6 +80,16 @@ Vue.js использует *template* синтаксис на основе HTML
 ## Интерполяции
 
 Интерполяции (*Interpolations*) – способ отражения данных *Vue* на элементы DOM.
+
+### Текст
+
+Позволяет вставить в *template* значение *expression*'а. *Expression* записывается в следующем виде (т.н. синтаксис *Mustache*):
+
+```html
+{{ expression }}
+```
+
+
 
 ### Директивы
 
@@ -58,8 +101,8 @@ Vue.js использует *template* синтаксис на основе HTML
 
 ```html
 <tag v-text="<expression>"></tag>
-<tag>{{ <expression> }}</tag> <!-- Аналогично -->
-<tag>Text {{ <expression> }}</tag> <!-- Изменяется часть текста -->    
+<tag>{{ expression }}</tag>      <!-- Аналогично -->
+<tag>Text {{ expression }}</tag> <!-- Изменяется часть текста -->    
 ```
 
 

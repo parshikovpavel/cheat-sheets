@@ -27,7 +27,11 @@ var vm = new Vue({  // vm - View Model
 var vm = new Vue({
   el: '#app',
   data: {
-      sitename: "Shop"
+      sitename: "Shop",
+      product: {
+          id: 1,
+          
+      }
   }  
 });  
 </script>
@@ -71,19 +75,32 @@ var vm = new Vue({
 
 Большую часть времени программа проводит в цикле событий (`beforeUpdate` и `updated` *hook*'и). 
 
-### beforeCreate
-
 # Template
 
 Vue.js использует *template* синтаксис на основе HTML, который позволяет связывать (*bind*) элементы DOM с `data` данными *Vue instance*'а. 
 
 ## Интерполяции
 
-Интерполяции (*Interpolations*) – способ отражения данных *Vue* на элементы DOM.
+Интерполяции (*Interpolations*) – способ отражения данных *Vue* на элементы DOM. 
+
+Все *interpolation*'s принимают в качестве параметра *JavaScript expression*, например:
+
+```html
+{{ sitename }}
+{{ product.id }}
+```
+
+Сложные *JavaScript expression* не рекомендуются, т.к. переносят часть бизнес-логики в *View*:
+
+```html
+{{ product.title.substr(1,4) }}
+```
+
+
 
 ### Текст
 
-Позволяет вставить в *template* значение *expression*'а. *Expression* записывается в следующем виде (т.н. синтаксис *Mustache*):
+Вставляет текстовое значение параметра напрямую в HTML-код, при этом выполняет экранирование специальных символов? *Expression* записывается в следующем виде (т.н. синтаксис *Mustache*):
 
 ```html
 {{ expression }}
@@ -93,11 +110,11 @@ Vue.js использует *template* синтаксис на основе HTML
 
 ### Директивы
 
-Директивы (*directive*) – это атрибуты, которые *bind*'ят данные *Vue* (или Javascript выражение с этими данными) с некоторым состоянием элемента DOM. Начинаются с префикса `v-`. В качестве значения принимают выражение JavaScript.  
+Директивы (*directive*) – это атрибуты, которые *bind*'ят данные *Vue* (или Javascript выражение с этими данными) с некоторым состоянием элемента DOM. Начинаются с префикса `v-`. 
 
 #### `v-text`
 
-Управляет текстовым содержимым элемента (`textContent`). Эквивалентно, можно использовать текстовую *interpolation*. Текстовую *interpolation* нужно использовать, если требуется изменять только часть текста.  
+Связывает текстовое содержимое элемента (`textContent`). Эквивалентно, можно использовать текстовую *interpolation*. Текстовую *interpolation* нужно использовать, если требуется изменять только часть текста.  
 
 ```html
 <tag v-text="<expression>"></tag>
@@ -105,7 +122,54 @@ Vue.js использует *template* синтаксис на основе HTML
 <tag>Text {{ expression }}</tag> <!-- Изменяется часть текста -->    
 ```
 
+#### `v-bind`
 
+Связывает атрибуты тега.  Т.к. текстовая *interpolation* не работает с  HTML-атрибутами. 
+
+```html
+<tag v-bind:<attr>="<expression>">
+<img v-bind:src="imageSrc">
+```
+
+Поддерживает сокращенная запись
+
+```html
+<tag :<attr>="<expression>">
+<img :src="imageSrc">
+```
+
+#### `v-html`
+
+Связывает HTML-содержимое элемента (`innerHTML`), экранирование специальных символов не выполняется.  
+
+```html
+<tag v-html="<value>"></tag>
+<div v-html="html"></div>
+```
+
+## Фильтры
+
+Фильтры используются для форматирования текста.
+
+Могут использоваться в текстовой *interpolation*  или с `v-bind`:
+
+```html
+{{ message | capitalize }}
+<div v-bind:id="rawId | formatId"></div>
+```
+
+Сам фильтр – *Javascript function*. Может задаваться либо в момент создания [Vue instance](#vue-instance) или через метод `filter`:
+
+```javascript
+Vue.filter( {string} id, [ {Function} definition ])
+Vue.filter( 'my-filter', function (value) { /* return ... */  })
+```
+
+# События
+
+*Binding to event's* (привязка к событиям) позволяет обрабатывать наступление события.
+
+Используется `v-on` *directive*.
 
 # Инструменты
 

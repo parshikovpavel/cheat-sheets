@@ -68,7 +68,7 @@ var vm = new Vue({
 
 ```javascript
   computed: {
-    <property>: function() {
+    <property>() {
 	  return ...;
     }
   }
@@ -350,7 +350,13 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
 
   
 
+#  tiptap
 
+ https://github.com/scrumpy/tiptap 
+
+ https://tiptap.scrumpy.io/
+
+ https://tiptap.scrumpy.io/docs 
 
 # Инструменты
 

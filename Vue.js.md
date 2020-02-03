@@ -15,7 +15,9 @@
 var vm = new Vue({  // vm - View Model
   [ el: <string | Element> ]
   [ data: <Object | Function> ]
-  [  ]               
+  [ methods: { [key: string]: Function } ] 
+  [ computed: { [key: string]: Function } ]
+  [ watch: { [key: string]: Function } ]
 })
 ```
 
@@ -47,7 +49,47 @@ var vm = new Vue({
   console.log(vm.<property>)
   vm.<property> = <value>            
   ```
+
+- `methods` – методы, которые будут подмешаны (*mixed*) к *Vue instance*. *Method*'ы доступны через *Vue instance*:
+
+  ```javascript
+  vm.<method>()
+  ```
+
+  Внутри *method*'а' переменная `this` указывает на *Vue instance*. Поэтому для доступа к *property* в `data` необходимо писать `this.<property>`.
+
+  Используются в качестве [*handler*'а *event*'ов](#события)
+
+## Вычисляемые свойства
+
+- `computed` – определение вычисляемых свойств – динамических, рассчитываемых свойств. Позволяют логику вычислений убрать из *View* и перенести в *ViewModel*. 
+
+Определение:
+
+```javascript
+  computed: {
+    <property>: function() {
+	  return ...;
+    }
+  }
+```
+
+## Наблюдатели (watcher)
+
+- `watch` – объект, ключи которого – выражения для наблюдения, а значения – *callback*'и, вызываемые при их изменении. 
+
+  ```javascript
+  watch: {
+    <property>: function (newVal, oldVal) {
+      /* ... */
+    }
+  }
+  ```
+
   
+
+ 
+
   
 
 На одной странице можно запустить несколько *Vue instance*'ов, которые примонтированы к разным элементам DOM. Это имеет смысл использовать, если *Vue instance* примонтирован к небольшим компонентам – карусель или веб-форма.
@@ -143,9 +185,48 @@ Vue.js использует *template* синтаксис на основе HTML
 Связывает HTML-содержимое элемента (`innerHTML`), экранирование специальных символов не выполняется.  
 
 ```html
-<tag v-html="<value>"></tag>
+<tag v-html="<expression>"></tag>
 <div v-html="html"></div>
 ```
+
+#### `v-show`
+
+Переключает CSS-свойство `display` элемента, в зависимости от того, истинно ли указанное выражение.
+
+```html
+<tag v-show="<expression>"></tag>
+<div v-show="isVisible"></div>
+```
+
+#### `v-if`, `v-else-if`, `v-else`
+
+*Directive*'s используются для вставки *tag*'а (или блока) в HTML по условию. В DOM присутствуют только те *tag*'и, которые соответствуют условию. Хорошо подходят, когда есть альтернативные блоки и один из них всегда должен быть виден.
+
+`v-if` – *tag* отображается при значении `true` условия
+
+```html
+<tag v-if="<expression>"></tag>
+<div v-if="isVisible"></div>
+```
+
+`v-else-if` – аналог `v-if`, должен следовать сразу после `v-if` или `v-else-if`
+
+```html
+<tag v-if="<expression"></tag>
+<tag v-else-if="<expression>"></tag>
+```
+
+`v-else` – без аргументов, должен следовать сразу после `v-if` или `v-else-if`
+
+```html
+<tag v-if="<expression"></tag>
+<tag v-else-if="<expression>"></tag>
+<tag v-else></tag>
+```
+
+Tag'и с атрибутами `v-if`, `v-else-if`, `v-else` должны идти строго друг за другом. 
+
+
 
 ## Фильтры
 
@@ -169,7 +250,107 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
 
 *Binding to event's* (привязка к событиям) позволяет обрабатывать наступление события.
 
-Используется `v-on` *directive*.
+Для *binding*'а *handler*'а используется `v-on` *directive*.
+
+```html
+<tag v-on:<eventname>="<Function | Expression>"></tag>    
+```
+
+Возможна сокращенная запись *directive* через `@`:
+
+```html
+<tag @<eventname>="<Function | Expression>"></tag>  
+```
+
+Типы аргументов:
+
+- Привязка *expression*:
+
+  ```html
+  <button v-on:click="counter+=1">+1</button>
+  <button @click="counter+=1">+1</button>
+  ```
+
+- Привязка *Function*:
+
+  ```html
+  <button v-on:click="func">+1</button>
+  <script>
+  new Vue({
+    /* ... */
+    methods: {
+      func: function (event) { /* ... */ }
+    }
+  });
+  </script>
+  ```
+
+# Формы
+
+С помощью `v-model` организуется двунаправленный *binding* – *ViewModel* **↔** с атрибутами элементов формы (`input`, `textarea`, `select`). В зависимости от HTML *tag*'а, Vue автоматически управляет одним из атрибутов: `value`, `checked`, `selected`.
+
+Поддерживаемые *tag*'и:
+
+- `input type="text"`:
+
+  ```html
+  <input v-model="<property>">
+  ```
+
+- `textarea`
+
+  ```html
+  <textarea v-model="<property>"></textarea>
+  ```
+
+- `input type="checkbox"`:
+
+  - скалярное *property*, одиночный  `input`
+
+    ```html
+    <input type="checkbox" id="<id>" v-model="<property>">
+    <label for="<id>">Name</label>
+    ```
+
+  - *property*-массив, множественные `input`
+
+    ```html
+    <input type="checkbox" id="<id1>" v-model="<property>">
+    <label for="<id1>">Name1</label>
+    <input type="checkbox" id="<id2>" v-model="<property>">
+    <label for="<id2>">Name2</label>
+    ```
+
+- `input type="radio"`
+
+  ```html
+  <input type="radio" id="<id1>" v-model="<property>">
+  <label for="<id1>">Name1</label>
+  <input type="radio" id="<id2>" v-model="<property>">
+  <label for="<id2>">Name2</label>
+  ```
+
+- `select`
+
+  ```html
+  <select v-model="<property>">
+    <!-- рекомендуется добавлять disabled вариант со значением "" -->
+    <option disabled value="">Выберите один из вариантов:</option>
+    <option value="<value1>">Text1</option>
+    <option value="<value2>">Text2</option>
+  </select>
+  <script>
+  new Vue({
+    data: {
+      selected: ''
+    }
+  })
+  </script>
+  ```
+
+  
+
+
 
 # Инструменты
 

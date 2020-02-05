@@ -16,8 +16,10 @@ var vm = new Vue({  // vm - View Model
   [ el: <string | Element> ]
   [ data: <Object | Function> ]
   [ methods: { [key: string]: Function } ] 
+  [ filters: { [key: string]: Function } ]
   [ computed: { [key: string]: Function } ]
   [ watch: { [key: string]: Function } ]
+  
 })
 ```
 
@@ -59,6 +61,8 @@ var vm = new Vue({
   Внутри *method*'а' переменная `this` указывает на *Vue instance*. Поэтому для доступа к *property* в `data` необходимо писать `this.<property>`.
 
   Используются в качестве [*handler*'а *event*'ов](#события)
+  
+- `filters` – [фильтры](#фильтры).
 
 ## Вычисляемые свойства
 
@@ -287,7 +291,7 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
 
 # Формы
 
-С помощью `v-model` организуется двунаправленный *binding* – *ViewModel* **↔** с атрибутами элементов формы (`input`, `textarea`, `select`). В зависимости от HTML *tag*'а, Vue автоматически управляет одним из атрибутов: `value`, `checked`, `selected`.
+С помощью `v-model` организуется двунаправленный *binding* – *ViewModel* **↔** с атрибутами элементов формы (`input`, `textarea`, `select`). В зависимости от HTML *tag*'а, Vue автоматически управляет одним из атрибутов: `value`, `checked`, `selected`. Работа `v-model` *directive* основана на `v-bind` *directive*, которая *bind*'ит атрибуты тегов. И `v-model` может быть заменена на `v-bind` со сложным *expression*.
 
 Поддерживаемые *tag*'и:
 
@@ -315,18 +319,20 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
   - *property*-массив, множественные `input`
 
     ```html
-    <input type="checkbox" id="<id1>" v-model="<property>">
+    <input type="checkbox" id="<id1>" value="<value1>" v-model="<property>">
     <label for="<id1>">Name1</label>
-    <input type="checkbox" id="<id2>" v-model="<property>">
+    <input type="checkbox" id="<id2>" value="<value2>" v-model="<property>">
     <label for="<id2>">Name2</label>
     ```
+
+  
 
 - `input type="radio"`
 
   ```html
-  <input type="radio" id="<id1>" v-model="<property>">
+  <input type="radio" id="<id1>" value="<value1>" v-model="<property>">
   <label for="<id1>">Name1</label>
-  <input type="radio" id="<id2>" v-model="<property>">
+  <input type="radio" id="<id2>" value="<value2>" v-model="<property>">
   <label for="<id2>">Name2</label>
   ```
 
@@ -348,7 +354,80 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
   </script>
   ```
 
+<u>*Binding* произвольного *expression* на атрибут `value`</u>
+
+По умолчанию, на состояния одиночного `checkbox` сделан *binding* значений `true/false`. Можно сделать *binding* произвольных *expression*'s через атрибуты `bind:true-value` и `bind:false-value`:
+
+```html
+<input type="checkbox" bind:true-value="<expr1>" bind::false-value="<expr2>" ...>
+```
+
+Вместо конкретных значений `value` для `input` и `select` можно сделать *binding* произвольных *expression*'s через атрибут `v-bind:value`:
+
+```html
+<input type="radio" v-bind:value="<expr>">
+```
+
+```html
+<select>
+    <option v-bind:value="<expr>">Name</option>
+</select>
+```
+
+<u>Модификаторы</u>
+
+Используются для автоматической обработки введенного в `input` значения.
+
+- `.number` – привести строку к числу
+
+  ```html
+  <input v-model.number="<property>" type="number">
+  ```
+
+- `.trim` – удалить пробелы в начале и конце строки
+
+  ```html
+  <input v-model.trim="<property>">
+  ```
+
   
+
+   
+
+# `v-for`
+
+Многократно отрисовывает *tag* или блок шаблона. 
+
+Формат `v-for` *directive* :
+
+```
+v-for="<value> in <array>"
+v-for="(<value>, <index>) in <array>"
+v-for="(<value>, <key>) in <object>"
+```
+
+где в `<value>`, `<key>`, `<index>` – подставляются значения для текущей итерации. 
+
+Примеры:
+
+```html
+<ul>
+  <li v-for="value in object">
+    {{ value }}
+  </li>
+</ul>
+```
+
+```html
+<select v-model="<property>">
+  <option disabled value="">Выберите один из вариантов:</option>  
+  <option v-for="(value, key) in object" v-bind:value="key">
+    {{ value }}
+  </option>
+</select>
+```
+
+
 
 #  tiptap
 

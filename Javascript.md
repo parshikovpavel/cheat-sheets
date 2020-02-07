@@ -19,7 +19,7 @@ Object.assign(target, ...sources)
 var o1 = { a: 1 };
 var o2 = { b: 2 };
 
-var obj = Object.assign(o1, o2, o3); // obj = o1 = { a: 1, b: 2}
+var obj = Object.assign(o1, o2); // obj = o1 = { a: 1, b: 2}
 ```
 
 Клонирование объекта:

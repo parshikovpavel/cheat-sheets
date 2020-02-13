@@ -464,6 +464,83 @@ v-for="(<value>, <key>) in <object>"
 
 Переменная `variable` примет значения `1 ... <count>`. Переменная `variable` может участвовать в любых *expression*, передаваться в качестве аргумента в *method*'ы
 
+# Component
+
+## Изменение состояния *parent component*'а из *child component*'а
+
+*Parent component* должен сделать *binding*'а *handler*'а к *custom event*'у, аналогично как для обычных [событий](#события):
+
+ ```html
+<component @<eventname>="<Function | Expression>"></tag>
+ ```
+
+Теперь в *Javascript component*'а мы можем вызвать этот *handler* через `this.$emit`:
+
+```javascript
+this.$emit('<eventname>')
+```
+
+Также в 1, 2... аргументах `this.$emit` можно передать аргументы в *handler* для *parent component*'а
+
+```html
+<-- Child component -->
+<script>
+this.$emit('<eventname>', <arg1>, <arg2>)
+</script>
+    
+<-- Parent component -->
+<component @<eventname>="<method>"></tag> 
+<script>
+...
+	methods: {
+        <method>(<arg1>, <arg2>) {
+            ...
+        }
+        
+    }
+	
+...
+</script>    
+```
+
+
+
+## Доступ к экземплярам дочерних tag'ов или component'ов из Javascript
+
+Необходимо назначить ID дочернему *tag*'у или *component*'у с помощью атрибута `ref`:
+
+```html
+<component ref="<id>">
+<tag ref="<id>">
+```
+
+Теперь в этом же файле, где используется этот `<component>`, мы можем получить из *Javascript* доступ к экземпляру дочернего *tag*'а или *component*'а:
+
+```
+this.$refs.<id>
+```
+
+Можно вызывать методы у дочернего компонента:
+
+```html
+this.$refs.<component>.<method>
+```
+
+Пример для *tag*'а:
+
+```html
+<input ref="input">
+<script>
+    ...
+    this.$refs.input.focus()
+    ...
+</script>
+```
+
+
+
+
+
 # HTML class
 
 Можно вручную работать со строками целиком в атрибутах `class` и `style` для *HTML tag*'ов, через `v-bind` *directive*. Однако гораздо удобнее передавать в `v-bind` объекты и массивы.
@@ -652,6 +729,7 @@ new Vue({
 
 
 # Axios
+
 
 Axios – HTTP-клиент для браузера и *node.js* на основе *Promise*.
 

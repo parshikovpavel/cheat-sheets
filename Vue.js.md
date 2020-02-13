@@ -17,6 +17,7 @@ var vm = new Vue({  // vm - View Model
   [ data: <Object | Function> ]
   [ methods: { [key: string]: Function } ] 
   [ filters: { [key: string]: Function } ]
+  [ components: { [id: string]: [definition: Object] }]
   [ computed: { [key: string]: Function } ]
   [ watch: { [key: string]: Function } ]
   
@@ -58,11 +59,13 @@ var vm = new Vue({
   vm.<method>()
   ```
 
-  Внутри *method*'а' переменная `this` указывает на *Vue instance*. Поэтому для доступа к *property* в `data` необходимо писать `this.<property>`.
+  Внутри *method*'а' переменная `this` указывает на *Vue instance*. 
 
   Используются в качестве [*handler*'а *event*'ов](#события)
   
 - `filters` – [фильтры](#фильтры).
+
+- `components` – регистрация [*local component*'s](#local-регистрация)
 
 ## Вычисляемые свойства
 
@@ -77,6 +80,15 @@ var vm = new Vue({
     }
   }
 ```
+
+## Method'ы и computed свойства
+
+*Method*'ы и *Computed* свойства по сути очень похожи, т.к. доступны через *Vue instance* и определяются через `function`.
+
+Различия:
+
+- *method*'ы могут принимать параметры, *computed* свойства – нет?
+- *computed* свойства кэшируются и пересчитываются заново, когда изменяется какая-либо  реактивная зависимость (например, счетчик вызовов внутри работать не будет). *Method* выполняется полностью при каждом вызове.
 
 ## Наблюдатели (watcher)
 
@@ -111,12 +123,19 @@ var vm = new Vue({
 Список *Lifecycle hook*'ов:
 
 - `beforeCreate`
-- `created`
+
+- `created`. 
+
 - `beforeMount`
+
 - `mounted`
+
 - `beforeUpdate`
+
 - `updated`
+
 - `beforeDestroy`
+
 - `destroyed`
 
 Большую часть времени программа проводит в цикле событий (`beforeUpdate` и `updated` *hook*'и). 
@@ -129,7 +148,14 @@ Vue.js использует *template* синтаксис на основе HTML
 
 Интерполяции (*Interpolations*) – способ отражения данных *Vue* на элементы DOM. 
 
-Все *interpolation*'s принимают в качестве параметра *JavaScript expression*, например:
+Все *interpolation*'s принимают в качестве параметра *JavaScript expression*. 
+
+Особенности *Javascript expression* в *interpolation*:
+
+- *Property*'s из `data` текущего *Vue instance*'а в *expression* доступны без `this`. 
+- В *expression* можно использовать ограниченный набор стандартных глобальных объектов (вроде,  `Math` и `Date`). Невозможно напрямую обращаться к пользовательским глобальным объектам. Нужно использовать промежуточный доступ через *computed* свойства.
+
+Например:
 
 ```html
 {{ sitename }}
@@ -427,80 +453,319 @@ v-for="(<value>, <key>) in <object>"
 </select>
 ```
 
+<u>Повторение tag'а фиксированное число раз</u>
+
+Для этого нужно указать в `v-for` целое число `<count>`
+
+```html
+<tag v-for="<variable> in <count>">
+<span v-for="n in 10">{{ n }} </span>
+```
+
+Переменная `variable` примет значения `1 ... <count>`. Переменная `variable` может участвовать в любых *expression*, передаваться в качестве аргумента в *method*'ы
+
+# HTML class
+
+Можно вручную работать со строками целиком в атрибутах `class` и `style` для *HTML tag*'ов, через `v-bind` *directive*. Однако гораздо удобнее передавать в `v-bind` объекты и массивы.
+
+Способы указания *HTML class*'ов:
+
+- через объект, объявленный в `v-bind:class` атрибуте.
+
+- ```html
+  <tag [class="..."] v-bind:class="{'<class1>': <bool_expr>, <class2>: <bool_expr>, ... }"/>
+  
+  <div v-bind:class="{ a: isA, b: isB }"></div>   
+  <script>
+      data: {
+        isA: true,
+        isB: false
+      }
+  </script>    
+  ```
+
+- через указания имени объекта, объявленного вне `v-bind:class` атрибута:
+
+  ```html
+  <tag [class="..."] v-bind:class="<object>"/>
+  
+  <div v-bind:class="obj"></div>   
+  <script>
+    data: {
+      obj: {
+        isA: true,
+        isB: false        
+      }  
+    }
+  </script>    
+  ```
+
+- через указание *method*'а или *computed* свойства, возвращающего объект
+
+  ```html
+  <div v-bind:class="computedProperty"></div>   
+  <script>
+    computed: {
+     computedProperty: function () {
+      return {
+        ...
+      }
+    }
+  </script> 
+  ```
+
 # Component
 
-## Изменение состояния *parent component*'а из *child component*'а
+Компоненты — это переиспользуемые *Vue instance*'s со своим именем. 
 
-*Parent component* должен сделать *binding*'а *handler*'а к *custom event*'у, аналогично как для обычных [событий](#события):
+Преимущества использования *component*'ов:
 
- ```html
-<component @<eventname>="<Function | Expression>"></tag>
- ```
+- разделение кода на автономные части. 
+- многократное переиспользование *component*'ов
+- используют параметры и вызывают события
 
-Теперь в *Javascript component*'а мы можем вызвать этот *handler* через `this.$emit`:
+## Создание *component*'а
+
+Так как компоненты это переиспользуемые *Vue instance*'s, то они принимают те же опции что и `new Vue`, такие как `data`, `computed`, `watch`, `methods`, хуки жизненного цикла. За исключением нескольких специфичных для корневого *Vue instance* опций, например `el`.
+
+Рекомендуется именовать *component*'ы в стиле *kebab-case*.
+
+Есть два способа регистрации *component*'ов: *global* и *local*.
+
+### *global* регистрация
+
+При *global* регистрации, *component* регистрируется один раз и может далее использоваться в шаблоне любого *Vue instance*'а. *Global* регистрация *component*'а должна быть выполнена до создания *Vue instance*'а. 
+
+Используется метод:
 
 ```javascript
-this.$emit('<eventname>')
+Vue.component(id, definition)
 ```
 
-Также в 1, 2... аргументах `this.$emit` можно передать аргументы в *handler* для *parent component*'а
+```javascript
+Vue.component('button-counter', {
+  template: '<div>...</div>',
+  data () {
+    return {
+      <prop>: <value>,
+      ...
+    }    
+  },
+  ...  
+})
+```
 
-```html
-<-- Child component -->
-<script>
-this.$emit('<eventname>', <arg1>, <arg2>)
-</script>
-    
-<-- Parent component -->
-<component @<eventname>="<method>"></tag> 
-<script>
-...
-	methods: {
-        <method>(<arg1>, <arg2>) {
-            ...
-        }
-        
+### *local* регистрация
+
+При *local* регистрации, *component* регистрируется в опциях конкретного *Vue instance*, внутри которого будет использоваться. *Component* доступен только тому *Vue instance*, в опциях которого он зарегистрирован.
+
+- определение *component*'а сохраняется в константу (или переменную):
+
+  ```javascript
+  const MyComponent = {
+    template: '...',
+    ...  
+  };
+  ```
+
+- *component* регистрируется в опции `components`:
+
+  ```javascript
+  new Vue({
+    ...
+    components: {
+      '<id>': <definition>,  
+      'my-component': MyComponent
     }
-	
-...
-</script>    
+  });
+  ```
+
+  
+
+### Свойства
+
+#### `data`
+
+Свойство `data` должно быть функцией, а не объектом:
+
+```json
+data () {
+  return {
+    <prop>: <value>,
+    ...
+  }  
+}
 ```
 
+В этом случае каждый *component instance* получает свой экземпляр `data`. Если использовать не функцию, а объект, то все *component instance*'s будут делить один экземпляр `data`.
 
+#### `template`
 
-## Доступ к экземплярам дочерних tag'ов или component'ов из Javascript
+Определяет HTML-шаблон *component*'а. Шаблон должен быть заключен внутри какого-нибудь тега (например, `div`):
 
-Необходимо назначить ID дочернему *tag*'у или *component*'у с помощью атрибута `ref`:
+```json
+template: '<div>...</div>'
+```
+
+#### Входные параметры `props`
+
+*Component* должен явно задекларировать свои входные параметры в опции `props`. Входные параметры передаются только от родительского *component*'а к дочернему, дочерний *component* не может их использовать для возврата результата. ОДНАКО! Т.к. значения передаются в дочерний *component* по ссылке, при изменении объекта или массива в дочернем *component*'е – его значение изменится и в родительском *component*'е. 
+
+<u>Без проверки</u>
+
+```
+props: ['name1', 'name2', ...]
+```
+
+## Использование *component*'а
+
+*Component* используется как пользовательский тег внутри некоторого родительского *template* (вплоть до корневого *Vue instance*).
+
+Например, для корневого *Vue instance*:
 
 ```html
-<component ref="<id>">
-<tag ref="<id>">
-```
+<div id="app">
+  <my-component></my-component>
+</div>
 
-Теперь в этом же файле, где используется этот `<component>`, мы можем получить из *Javascript* доступ к экземпляру дочернего *tag*'а или *component*'а:
-
-```
-this.$refs.<id>
-```
-
-Можно вызывать методы у дочернего компонента:
-
-```html
-this.$refs.<component>.<method>
-```
-
-Пример для *tag*'а:
-
-```html
-<input ref="input">
 <script>
-    ...
-    this.$refs.input.focus()
-    ...
+new Vue({
+  el: '#app',
+  ... 
+});  
 </script>
 ```
 
+### Входные параметры
 
+Входные параметры передаются в *component* через пользовательский атрибут. 
+
+<u>Передача статического текстового значения</u> 
+
+```javascript
+<my-component
+  name1="value1"
+  name2="value2"
+></my-component>
+```
+
+
+
+# Axios
+
+Axios – HTTP-клиент для браузера и *node.js* на основе *Promise*.
+
+## `axios(config)`
+
+Выполнение запроса:
+
+```javascript
+axios(config);
+```
+
+```javascript
+axios({
+  method: '<method>',
+  url: '<data>',
+  /* Заголовки */
+  headers: {
+    '<header_name>': '<value>',
+    ...  
+  },
+  /* Параметры запроса (GET, POST...) */    
+  params: {
+    <param>: <value>,
+    ...  
+  },
+  /* Полезные данные, отправляемые в теле запроса. 
+     Применимо только к 'PUT', 'POST', 'PATCH' */    
+  data: {
+    <prop>: '<value>',
+    ...
+  }
+})
+  .then(function (response) {
+    // success
+  })
+  .catch(function (error) {
+    // error
+  })
+  .then(function () {
+    // always executed
+  });
+```
+
+Возможные *method*'ы:
+
+- `get`
+- `post`
+- ...
+
+Структура `response`:
+
+```json
+{
+  // Данные от сервера
+  data: {},
+
+  // Код состояния (status code) от сервера
+  status: 200,
+
+  // Пояснение к коду состояния (reason phrase)
+  statusText: 'OK',
+
+  // Заголовки ответа
+  headers: {},
+
+  // `config` из запроса
+  config: {},
+
+  // `request` - XMLHttpRequest instance, созданный для запроса
+  request: {}
+}
+```
+
+## `axios.<method>`
+
+Для удобства можно использовать отдельные методы-псевдонимы для каждого *method*'а: 
+
+- `axios.get (url [, config])`
+
+  ```javascript
+  axios.get('/user', {
+      ...
+  })
+      .then(...)
+  ```
+
+- `axios.post(url[, data[, config]])`
+
+  ```javascript
+  axios.post('/user', {
+      <prop>: '<value>',
+      ...
+    }, {
+      ...
+  })
+      .then(...)
+  ```
+
+## hook'и для использования
+
+Для загрузки данных с сервера и записи их в данные *Vue instance*'а можно использовать:
+
+- `created` *hook* (из книги): 
+
+  - ``` javascript
+created: function() {
+       axios.get('...')
+         .then((response) => { 
+           this.<property> = response.data.<property>;
+       })
+     }         
+    ```
+
+- `mounted` *hook* (из документации)
 
 #  tiptap
 
@@ -509,6 +774,8 @@ this.$refs.<component>.<method>
  https://tiptap.scrumpy.io/
 
  https://tiptap.scrumpy.io/docs 
+
+
 
 # Инструменты
 

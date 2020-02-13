@@ -107,7 +107,7 @@ end
 
 ## Порядок загрузки пакета
 
-- выдать команду на установку
+- выдать команду на установку (при этом автоматически выполняется обновление [`brew update`](#brew-update))
 
   ```bash
   $ brew install <formula>
@@ -142,13 +142,9 @@ end
 
 Алгоритм:
 
-- Обновить *formulae* в *taps* и сам *homebrew* через `git pull`.
+- [`brew update`](#brew-update).
 
-    ```bash
-    brew update
-    ```
-
-- Узнать, какие пакеты устарели
+-   Узнать, какие пакеты устарели
 
   ```bash
   brew outdated
@@ -160,7 +156,23 @@ end
   brew upgrade [<formula>]
   ```
 
-  
+### `brew update`
+
+Обновить сам *Homebrew* и все *formula*'e в *taps*, получая их из *GitHub* с помощью `git pull`.
+
+```bash
+brew update
+```
+
+### `brew doctor`
+
+Проверьте *Homebrew* на возможные проблемы:
+
+```
+brew doctor
+```
+
+
 
 ### `brew uninstall`
 

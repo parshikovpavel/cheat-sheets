@@ -182,7 +182,7 @@ Vue.js использует *template* синтаксис на основе HTML
 
 ### Директивы
 
-Директивы (*directive*) – это атрибуты, которые *bind*'ят данные *Vue* (или Javascript выражение с этими данными) с некоторым состоянием элемента DOM. Начинаются с префикса `v-`. 
+Директивы (*directive*) – это атрибуты, которые *bind*'ят динамическое *Javascript expression* с некоторым состоянием элемента DOM. Начинаются с префикса `v-`. 
 
 #### `v-text`
 
@@ -464,83 +464,6 @@ v-for="(<value>, <key>) in <object>"
 
 Переменная `variable` примет значения `1 ... <count>`. Переменная `variable` может участвовать в любых *expression*, передаваться в качестве аргумента в *method*'ы
 
-# Component
-
-## Изменение состояния *parent component*'а из *child component*'а
-
-*Parent component* должен сделать *binding*'а *handler*'а к *custom event*'у, аналогично как для обычных [событий](#события):
-
- ```html
-<component @<eventname>="<Function | Expression>"></tag>
- ```
-
-Теперь в *Javascript component*'а мы можем вызвать этот *handler* через `this.$emit`:
-
-```javascript
-this.$emit('<eventname>')
-```
-
-Также в 1, 2... аргументах `this.$emit` можно передать аргументы в *handler* для *parent component*'а
-
-```html
-<-- Child component -->
-<script>
-this.$emit('<eventname>', <arg1>, <arg2>)
-</script>
-    
-<-- Parent component -->
-<component @<eventname>="<method>"></tag> 
-<script>
-...
-	methods: {
-        <method>(<arg1>, <arg2>) {
-            ...
-        }
-        
-    }
-	
-...
-</script>    
-```
-
-
-
-## Доступ к экземплярам дочерних tag'ов или component'ов из Javascript
-
-Необходимо назначить ID дочернему *tag*'у или *component*'у с помощью атрибута `ref`:
-
-```html
-<component ref="<id>">
-<tag ref="<id>">
-```
-
-Теперь в этом же файле, где используется этот `<component>`, мы можем получить из *Javascript* доступ к экземпляру дочернего *tag*'а или *component*'а:
-
-```
-this.$refs.<id>
-```
-
-Можно вызывать методы у дочернего компонента:
-
-```html
-this.$refs.<component>.<method>
-```
-
-Пример для *tag*'а:
-
-```html
-<input ref="input">
-<script>
-    ...
-    this.$refs.input.focus()
-    ...
-</script>
-```
-
-
-
-
-
 # HTML class
 
 Можно вручную работать со строками целиком в атрибутах `class` и `style` для *HTML tag*'ов, через `v-bind` *directive*. Однако гораздо удобнее передавать в `v-bind` объекты и массивы.
@@ -678,7 +601,9 @@ data () {
 
 #### `template`
 
-Определяет HTML-шаблон *component*'а. Шаблон должен быть заключен внутри какого-нибудь тега (например, `div`):
+Определяет HTML-шаблон *component*'а. 
+
+Шаблон должен иметь один корневой элемент. Поэтому весь шаблон должен быть заключен внутри какого-нибудь тега (например, `div`):
 
 ```json
 template: '<div>...</div>'
@@ -686,13 +611,48 @@ template: '<div>...</div>'
 
 #### Входные параметры `props`
 
-*Component* должен явно задекларировать свои входные параметры в опции `props`. Входные параметры передаются только от родительского *component*'а к дочернему, дочерний *component* не может их использовать для возврата результата. ОДНАКО! Т.к. значения передаются в дочерний *component* по ссылке, при изменении объекта или массива в дочернем *component*'е – его значение изменится и в родительском *component*'е. 
+*Component* должен явно задекларировать свои входные параметры в опции `props`. 
 
-<u>Без проверки</u>
+Рекомендуется именовать входные параметры в стиле *kebab-case*.
+
+Входные параметры передаются только от родительского *component*'а к дочернему, дочерний *component* не может их использовать для возврата результата. ОДНАКО! Т.к. значения передаются в дочерний *component* по ссылке, при изменении объекта или массива в дочернем *component*'е – его значение изменится и в родительском *component*'е. 
+
+<u>Без валидации</u>
 
 ```
 props: ['name1', 'name2', ...]
 ```
+
+<u>С валидацией</u>
+
+Возможные способы задания:
+
+```javascript
+props: {
+    // Проверка одного типа
+    prop1: Number,
+    // Проверка типа и дополнительные проверки
+    prop2: {
+      type: Number,
+      required: true,
+      default: 100
+    }
+}
+```
+
+- `type`. Возможные типы:
+  - `String`
+  - `Number`
+  - `Boolean`
+  - `Array`
+  - `Object`
+  - `Date`
+  - `Function`
+  - `Symbol`
+- `default` – значение по умолчанию, если входной параметр не инициализирован. 
+- `required` – параметр должен быть указан при использовании *component*'а.
+
+
 
 ## Использование *component*'а
 
@@ -721,10 +681,99 @@ new Vue({
 
 ```javascript
 <my-component
-  name1="value1"
-  name2="value2"
+  prop1="value1"
+  prop2="value2"
 ></my-component>
 ```
+
+<u>Динамический входной параметр</u>
+
+Динамические входные параметры привязаны к динамическому *Javascript expression* (как [директивы](#директивы)) .  Для привязывания используется `v-bind` *directive*:
+
+```html
+<my-component v-bind:prop1="value1">
+```
+
+Или сокращенная запись:
+
+```html
+<my-component :prop1="value1">
+```
+
+#### 
+
+## Изменение состояния *parent component*'а из *child component*'а
+
+*Parent component* должен сделать *binding*'а *handler*'а к *custom event*'у, аналогично как для обычных [событий](#события):
+
+ ```html
+<component @<eventname>="<Function | Expression>"></tag>
+ ```
+
+Теперь в *Javascript component*'а мы можем вызвать этот *handler* через `this.$emit`:
+
+```javascript
+this.$emit('<eventname>')
+```
+
+Также в 1, 2... аргументах `this.$emit` можно передать аргументы в *handler* для *parent component*'а
+
+```html
+<-- Child component -->
+<script>
+this.$emit('<eventname>', <arg1>, <arg2>)
+</script>
+    
+<-- Parent component -->
+<component @<eventname>="<method>"></tag> 
+<script>
+...
+	methods: {
+        <method>(<arg1>, <arg2>) {
+            ...
+        }
+        
+    }
+	
+...
+</script>    
+```
+
+
+
+## Доступ к экземплярам дочерних tag'ов или component'ов из Javascript
+
+Необходимо назначить ID дочернему *tag*'у или *component*'у с помощью атрибута `ref`:
+
+```html
+<component ref="<id>">
+<tag ref="<id>">
+```
+
+Теперь в этом же файле, где используется этот `<component>`, мы можем получить из *Javascript* доступ к экземпляру дочернего *tag*'а или *component*'а:
+
+```
+this.$refs.<id>
+```
+
+Можно вызывать методы у дочернего компонента:
+
+```html
+this.$refs.<component>.<method>
+```
+
+Пример для *tag*'а:
+
+```html
+<input ref="input">
+<script>
+    ...
+    this.$refs.input.focus()
+    ...
+</script>
+```
+
+
 
 
 
@@ -860,3 +909,7 @@ created: function() {
 Расширение для Google Chrome – [vue-devtools](). Необходимо в настройках включить "Разрешить открывать локальные файлы по ссылкам". Добавляет в консоль закладку *Vue*.
 
 github.com/ErikCH/VuejsInActionCode
+
+# ECMAScript 2015
+
+https://babeljs.io/docs/en/learn

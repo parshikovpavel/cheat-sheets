@@ -118,7 +118,13 @@ var vm = new Vue({
 
 ![lifecycle](https://ru.vuejs.org/images/lifecycle.png)
 
-Между этими этапами вызываются функции, называемые хуками жизненного цикла (*lifecycle hook*), с помощью которых можно выполнять свой код в определённый момент жизненного цикла.
+Смотреть [Lifecycle hook](#Lifecycles-hook)
+
+# Lifecycle hook
+
+Жизненный цикл имеется у *Vue instance* и *component*'ов.
+
+Между этапами жизненного цикла вызываются функции, называемые хуками жизненного цикла (*lifecycle hook*), с помощью которых можно выполнять свой код в определённый момент жизненного цикла.
 
 Список *Lifecycle hook*'ов:
 
@@ -128,7 +134,24 @@ var vm = new Vue({
 
 - `beforeMount`
 
-- `mounted`
+- `mounted`.  В хуке `mounted` вы получите полный доступ к реактивному компоненту, шаблонам и отрисованному DOM (через `this.$el`). `mounted` — самый популярный хук жизненного цикла. Обычно его используют для извлечения данных для компонента (вместо этого применяйте `created`) и изменения DOM, зачастую ради интегрирования не-Vue библиотек. 
+
+  ```html
+  ExampleComponent.vue
+  <template>
+    <p>I'm text inside the component.</p>
+  </template>
+  
+  <script>
+  export default {
+    mounted() {
+      console.log(this.$el.textContent) // I'm text inside the component.
+    }
+  }
+  </script>
+  ```
+
+  
 
 - `beforeUpdate`
 
@@ -139,6 +162,10 @@ var vm = new Vue({
 - `destroyed`
 
 Большую часть времени программа проводит в цикле событий (`beforeUpdate` и `updated` *hook*'и). 
+
+Все хуки жизненного цикла автоматически привязывают контекст `this` к *Vue instance*. 
+
+ https://habr.com/ru/company/mailru/blog/350962/ 
 
 # Template
 
@@ -524,6 +551,8 @@ v-for="(<value>, <key>) in <object>"
 - многократное переиспользование *component*'ов
 - используют параметры и вызывают события
 
+Так же как *Vue instance* имеет жизненный цикл, также и каждый *component* имеет жизненный цикл. Так же можно создать [hook'и жизненного цикла](#lifecycle-hook). 
+
 ## Создание *component*'а
 
 Так как компоненты это переиспользуемые *Vue instance*'s, то они принимают те же опции что и `new Vue`, такие как `data`, `computed`, `watch`, `methods`, хуки жизненного цикла. За исключением нескольких специфичных для корневого *Vue instance* опций, например `el`.
@@ -700,7 +729,7 @@ new Vue({
 <my-component :prop1="value1">
 ```
 
-#### 
+
 
 ## Изменение состояния *parent component*'а из *child component*'а
 

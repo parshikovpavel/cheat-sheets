@@ -804,7 +804,32 @@ this.$refs.<component>.<method>
 
 
 
+# Система сборки
 
+Порядок подключение нового *npm*-пакета:
+
+- добавить описание пакета в *package.json*:
+
+  ```json
+  "dependencies": {
+      "fabric": "^3.5.0",
+      ...
+    },
+  ```
+
+- переустановить пакеты (возможно, вначале удалить целиком `node_modules`):
+
+  ```bash
+  yarn install
+  ```
+
+- подключить пакет в нужном *Vue*-компоненте  `.vue`:
+
+  ```javascript
+  import fabric from 'fabric'
+  ```
+
+  
 
 # Axios
 
@@ -942,3 +967,5 @@ github.com/ErikCH/VuejsInActionCode
 # ECMAScript 2015
 
 https://babeljs.io/docs/en/learn
+
+ https://learn.javascript.ru/import-export 

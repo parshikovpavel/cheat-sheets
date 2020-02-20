@@ -1,3 +1,5 @@
+**Остановился на 6.4. Определение шаблона для компонента**
+
 *Vue* называют прогрессивным фреймворком (*progressive framework*), так как его можно использовать:
 
 - для выполнения простых задач на отдельных страницах, по аналогии с *Jquery*
@@ -328,7 +330,7 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
   <button @click="counter+=1">+1</button>
   ```
 
-- Привязка *Function*:
+- Привязка *Function*. Для доступа к элементу, на котором произошло событие следует использовать `event.target`.
 
   ```html
   <button v-on:click="func">+1</button>
@@ -336,7 +338,9 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
   new Vue({
     /* ... */
     methods: {
-      func: function (event) { /* ... */ }
+      func (event) { 
+          event.target....
+      }
     }
   });
   </script>

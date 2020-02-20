@@ -58,6 +58,20 @@ brew untap <vendor_name>/<repository_name>
 - `/usr/local/Homebrew/Library/Taps/homebrew/homebrew-core` – локальный клон *default git* репозитория c *Formulae* по адресу `https://github.com/Homebrew/homebrew-core`
 - `/usr/local/Homebrew/Library/Taps/mongodb/homebrew-brew` – локальный клон *Git* репозитория с *Formulae* по адресу `https://github.com/mongodb/homebrew-brew`
 
+#### Приоритеты загрузки
+
+При установке пакета через `brew install` поиск *formul*'ы по имени выполняется в следующем порядке:
+
+- *core formul*'ы из `homebrew/core` *tap*'а
+- другие *tap*'ы
+
+Если нужно установить *formul*'у с некоторым именем из конкретного *tap*'а, нужно указан полный путь к этой *formul*'е:
+
+```
+brew install vim                       # установить из homebrew/core
+brew install <vendor>/<repository>/vim # установить из другого tap'а
+```
+
 ### Formula (формула)
 
  Файл на *Ruby* (**.rb*) с определением пакета. Файл описывает программу и как ее устанавливать.
@@ -103,7 +117,9 @@ end
 - `/usr/local/Cellar/foo/0.1`
 - `/usr/local/Cellar/mongodb-community/4.2.1`
 
+### Cask (бочка)
 
+[Расширение Homebrew](https://github.com/Homebrew/homebrew-cask), которое позволяет устанавливать *native MacOS Application* (такие как *Google Chrome, Dropbox, VLC*) из командной строки. При этом не требуется скачивать `.dmg` файлы и перетаскивать их в папку «Приложения», достаточно запустить команду `install` из командной строки.
 
 ## Порядок загрузки пакета
 
@@ -172,11 +188,41 @@ brew update
 brew doctor
 ```
 
-
-
 ### `brew uninstall`
 
 Деинстраллировать *Formula*. Удаляет созданные ранее *symlinks* и стирает *Keg* каталог.
 
+### Информация о пакетах
 
+#### `brew list`
 
+```bash
+brew list [ formula ]
+```
+
+- если `formula` не указана – вывести список всех установленных *formula*'s.
+- если `formula` указана – вывести пути, соответствующие этой установленной *formul*'е
+
+#### `brew search`
+
+```bash
+brew search [ text |
+```
+
+Выполните поиск подстроки `text` в названиях *cask*'s и *formula*'s. Поиск выполняется в *tap*'ах: `homebrew/core` и `homebrew/cask`.
+
+#### `brew info`
+
+```bash
+brew info [ formula ]
+```
+
+Показать краткую информацию о *formul*'е.
+
+#### `brew cat`
+
+```bash
+brew cat [ formula ]
+```
+
+Показать содержание *formul*'ы.

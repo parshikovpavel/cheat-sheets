@@ -348,7 +348,9 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
 
 # Формы
 
-С помощью `v-model` организуется двунаправленный *binding* – *ViewModel* **↔** с атрибутами элементов формы (`input`, `textarea`, `select`). В зависимости от HTML *tag*'а, Vue автоматически управляет одним из атрибутов: `value`, `checked`, `selected`. Работа `v-model` *directive* основана на `v-bind` *directive*, которая *bind*'ит атрибуты тегов. И `v-model` может быть заменена на `v-bind` со сложным *expression*.
+С помощью `v-model` организуется двунаправленный *binding* – *ViewModel* ↔ с атрибутами элементов формы (`input`, `textarea`, `select`). В зависимости от HTML *tag*'а, Vue автоматически управляет одним из атрибутов: `value`, `checked`, `selected`. Работа `v-model` *directive* основана на `v-bind` *directive*, которая *bind*'ит атрибуты тегов. И `v-model` может быть заменена на `v-bind` со сложным *expression*.
+
+ `v-model` игнорирует начальное значение атрибутов `value`, `checked` или `selected`. В качестве значения для `v-model` необходимо использовать *property* из `data`. Значение этого *property* с самого начала определяет состояние элемента управления.
 
 Поддерживаемые *tag*'и:
 
@@ -413,13 +415,13 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
 
 <u>*Binding* произвольного *expression* на атрибут `value`</u>
 
-По умолчанию, на состояния одиночного `checkbox` сделан *binding* значений `true/false`. Можно сделать *binding* произвольных *expression*'s через атрибуты `bind:true-value` и `bind:false-value`:
+По умолчанию, при переключении состояния `checkbox` в *ViewModel* подставляются значения `true` и `false`. Можно сделать *binding* произвольных *expression*'s на состояния `checkbox` через атрибуты `bind:true-value` и `bind:false-value`:
 
 ```html
 <input type="checkbox" bind:true-value="<expr1>" bind::false-value="<expr2>" ...>
 ```
 
-Вместо конкретных значений `value` для `input` и `select` можно сделать *binding* произвольных *expression*'s через атрибут `v-bind:value`:
+Вместо конкретных значений `value` для `input` и `select`, которые при выборе подставляются в *ViewModel* можно сделать *binding* произвольных *expression*'s через атрибут `v-bind:value`:
 
 ```html
 <input type="radio" v-bind:value="<expr>">

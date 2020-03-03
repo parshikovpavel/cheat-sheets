@@ -232,7 +232,7 @@ Vue.js использует *template* синтаксис на основе HTML
 <img v-bind:src="imageSrc">
 ```
 
-Поддерживает сокращенная запись
+Поддерживается сокращенная запись
 
 ```html
 <tag :<attr>="<expression>">
@@ -808,7 +808,81 @@ this.$refs.<component>.<method>
 </script>
 ```
 
+# Mixin
 
+Mixin (примесь) – это объект с методами и свойствами, которые могут быть  «подмешаны» (*mixed*)  к свойствам *component*'а. Могут использоваться любые методы и свойства, которые поддерживаются для *component*'ов Vue (и *Vue instanc*'а). 
+
+Алгоритм слияния (*merging*) свойств, если они перекрываются:
+
+- объекты объединяются, причем приоритет имеют свойства *component*'а. Например, объекты `data`, `methods`. Объединение выполняется рекурсивно.
+- *hook*'и не заменяются, а объединяются в массив и все из них вызываются. *Hook*'и *mixin*'а вызываются перед *hook*'ами *component*'а.
+
+*Mixin* подключается к *component*'у через свойство `mixins`.
+
+```javascript
+// Примесь
+var myMixin = {
+  created () {
+    ...
+  },
+  methods: {
+    ...
+  },
+  data () {
+    return {
+      ...
+    }
+  }  
+}
+
+// Компонент
+var Component = Vue.extend({
+  mixins: [ myMixin ]
+})
+```
+
+## Глобальный mixin
+
+Глобальный mixin подмешивается во все *Vue instanc*'ы, созданные после его объявления. 
+
+```javascript
+// Объявление глобального mixin'а
+Vue.mixin({
+  methods: {
+    ...
+  },
+})
+```
+
+## Mixin в однофайловых component'ах
+
+При использовании однофайловых компонентов каждый *component* и *mixin* должны быть в отдельных файлах.
+
+`mixin.js`
+
+```javascript
+export default {
+  data () {
+    return {
+      ...  
+    }
+  },
+  methods: {
+    ...
+  }  
+}
+```
+
+`Component.vue`
+
+```javascript
+import mixin from '../mixin';
+
+export default {
+  mixins: [ mixin ],
+  ...  
+}
+```
 
 # Система сборки
 

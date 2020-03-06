@@ -808,6 +808,16 @@ this.$refs.<component>.<method>
 </script>
 ```
 
+## Доступ к данным, свойствам и методам дочернего component'а
+
+(Мое) Возможен из Javascript через точку, по ссылке на component:
+
+```javascript
+this.$refs.<component>.<property>
+```
+
+
+
 # Mixin
 
 Mixin (примесь) – это объект с методами и свойствами, которые могут быть  «подмешаны» (*mixed*)  к свойствам *component*'а. Могут использоваться любые методы и свойства, которые поддерживаются для *component*'ов Vue (и *Vue instanc*'а). 

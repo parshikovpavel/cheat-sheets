@@ -608,6 +608,13 @@ $obj->{'0'} = 1;  # OK
 
 Если значение скалярного типа преобразуется в `object`, создается новый экземпляр встроенного класса `stdClass`. Значение переменной будет помещено в поле с именем `scalar`.
 
+```php
+$a = 1;
+var_dump((object)$a); # object(stdClass)#1 (1) {
+                      #   ["scalar"] => int(1)
+                      # }
+```
+
 `stdClass` это пустой класс, который используется при преобразовании других типов в объект. Он полезен для анонимных объектов, динамических свойств и т. д.
 
 #### `callable`
@@ -616,118 +623,150 @@ $obj->{'0'} = 1;  # OK
 
 <u>Способы создания callable:</u>
 
-1. Анонимная функция ([подробнее](#анонимные-функции)). PHP автоматически преобразует анонимные функции в экземпляры внутреннего класса Closure. 
+1. Анонимная функция ([подробнее](#анонимные-функции)). PHP автоматически преобразует анонимные функции в экземпляры внутреннего класса `Closure`. 
 
-$closure = function() {};
+   ```php
+   $closure = function() {};
+   
+   var_dump(is_object($closure));  # true
+   var_dump($closure);             # object(Closure)#1 (0) {}
+   ```
 
- var_dump(is_object($closure));  //true
+2. `string`. 
 
- var_dump($closure); //object(Closure)#1 (0) {}
+   1. `'functionName'`. 
 
-\2.      Строка. 
+      В этом случае интерпретатор будет искать обычную, неанонимную функцию с именем, совпадающим с данной строкой и, в случае успеха, вызовет такую функцию. Есть ряд ограничений — нельзя вызвать `isset()`, `empty()` и другие функции, которые фактически являются конструкциями языка. Важная особенность — скобки списка аргументов в таком случае не пишутся!
 
-2.1.   Строка вида **"****func****"**. В этом случае интерпретатор будет искать обычную, неанонимную функцию с именем, совпадающим с данной строкой и, в случае успеха, вызовет такую функцию. Есть ряд ограничений — нельзя вызвать isset(), empty() и другие функции, которые фактически являются конструкциями языка. Обратите внимание на особенность — скобки списка аргументов в таком случае не пишутся!
+      Интересно, что функция `create_function()` создает именованную функцию с именем вроде `lambda_1` и возвращает ее имя. И вызов такой функции выполняет аналогично через `string`.
 
-Современный синтаксис анонимных функций появился в версии 5.3, а ранее, со времен PHP 4, существовал способ создания анонимных функций с помощью функции create_function(). Разумеется, сейчас этот способ имеет лишь исторический интерес. На самом деле create_function() не создавала лямбда-функцию, а создавала именованную функцию с именем наподобие «lambda_1» и возвращала ее имя. А дальше работал уже знакомый нам механизм, когда string является callable.
+      ```php
+      function func() {}
+      
+      $str = 'func';
+      
+      $str();
+      ```
 
-**function** func() {}
+   2. `'ClassName::method'`
 
- $str = **'func'**;
+      Используется для вызова статических методов. 
 
- $str();
+      ```php
+      class A {
+          static function b() {}
+      }
+      
+      $str = 'A::b';
+      
+      $str();
+      ```
 
-2.2.   Строка вида "ClassName::method" для вызова статических методов. 
+   3. Строки вида:
 
-**class** A {
-     **static function** b() {}
- }
+      - `'parent::method'`–  вызов метода в родительском классе
+      - ` ‘self::method'` – вызов метода в том же классе
+      -  `'static::method'` – вызов метода через позднее статическое связывание.
 
- $str = **'A::b'**;
+      Вызовы этих `callable` не работают через простой синтаксис `$str()`, а работают только через специальную функцию `call_user_func()`. Эта функция позволяет делать вызовы как в статическом контексте (через класс), так и в динамическом (через объект):
 
- $str();
+      ```php
+      class A {
+          static function name() {
+              return 'A';
+          }
+      
+          static function fSelf() {
+              return call_user_func('self::name');
+          }
+      
+          static function fStatic() {
+              return call_user_func('static::name');
+          }
+      
+      }
+      
+      class B extends A {
+          static function name() {
+              return 'B';
+          }
+      }
+      
+      $b = new B;
+      
+      # 1. parent::name
+      #    1.1. Статический вызов
+      var_dump(call_user_func(['B', 'parent::name'])); # string(1) "A"
+      
+      #    1.2. Динамический вызов
+      var_dump(call_user_func([$b, 'parent::name'])); # string(1) "A"
+      
+      # 2. self::name
+      var_dump(call_user_func(['B', 'fSelf'])); # string(1) "A"
+      
+      # 3. static::name
+      var_dump(call_user_func(['B', 'fStatic'])); # string(1) "B"
+      
+      # Вызов через простой синтаксис
+      $str = ['B', 'parent::name'];
+      var_dump($str()); # PHP Fatal error:  Uncaught Error: Call to undefined method B::parent::f()
+      ```
 
-2.3.   Строки вида 
+3. `array`. 
 
-o   'parent::func'–  вызов метода в родительском классе
+   Структура массива:
 
-o   ‘self::stat' – вызов метода в том же классе
+   ```
+   [
+   	0 => имя класса,
+   	1 => имя статического метода
+   ]
+   ```
 
-o   'static::func' – вызов метода, информация о котором получена через позднее статическое связывание.
+   или
 
-Возможен вызов как в статическом контексте (через класс), так и в динамическом (через объект).
+   ```
+   [
+   	0 => объект,
+   	1 => имя статического / динамического метода
+   ]
+   ```
 
-Причем вызовы таких callable не работают через простой синтаксис ($func()), а работают только через специальную функцию call_user_func(). В PHP5 некоторые из других типов callable работали тоже только через call_user_func().
+   Доступ к `protected` и `private` методам разрешен изнутри класса.
 
-class A {
-    static function name() {
-        return 'A';
-    }
+   ```php
+   class A {
+       static function b() {}
+   }
+   
+   $a = new A;
+   
+   $arr1 = ['A', 'b'];
+   $arr2 = [$a, 'b'];
+   
+   $arr1();
+   $arr2();
+   ```
 
-    static function fSelf() {
-        return call_user_func('self::name');
-    }
+4. `object`. 
 
-    static function fStatic() {
-        return call_user_func('static::name');
-    }
+   Чтобы `object` был `callable` необходимо определить в классе магический метод `__invoke()`:
 
-}
+   ```php
+   class A {
+       public function __invoke($val) {
+           return $val*2;
+       }
+   }
+   
+   var_dump((new A)(2)); # int(4)
+   ```
 
-class B extends A {
-    static function name() {
-        return 'B';
-    }
-}
+<u>Функция `is_callable()`</u>
 
-$b = new B;
+Функция `is_callable()` проверяет — принадлежит ли переданное ей значение `callable` типу.
 
-# 1. parent::name
-#    1.1. Статический вызов
-var_dump(call_user_func(['B', 'parent::name'])); # string(1) "A"
-#    1.2. Динамический вызов
-var_dump(call_user_func([$b, 'parent::name'])); # string(1) "A"
-# 2. self::name
-var_dump(call_user_func(['B', 'fSelf'])); # string(1) "A"
-# 3. static::name
-var_dump(call_user_func(['B', 'fStatic'])); # string(1) "B"
-
-# Вызов через простой синтаксис
-$str =
-['B',
-'parent::name'];
-var_dump($str()); # PHP Fatal
-error:  Uncaught Error: Call to undefined
-method B::parent::f()
-
-\3.      Массивы. Для этого в нулевом элементе указывается имя класса, а в первом — имя статического метода. Либо массив, состоящий из объекта и имени его динамического метода. Доступ к приватным и защищенным методам разрешен изнутри класса.
-
-**class** A {
-     **static function** b() {}
- }
-
- $a = **new** A;
-
- $arr1 = [**'A'**, **'b'**];
- $arr2 = [$a, **'b'**];
-
- $arr1();
- $arr2();
-
-\4.      Объект. Чтобы объект был callable, достаточно лишь определить в классе магический метод __invoke():
-
-**class** A {
-     **public function** __invoke($val) {
-         **return** $val*2;
-     }
- }
-
- *var_dump*((**new** A)(2)); *# int(4)*
-
-Функция is_callable()
-
-Функция is_callable() проверяет — принадлежит ли переданное ей значение псевдотипу callable. С PHP 5.4 псевдотип callable можно указывать в качестве тайпхинта.
-
-Если в классе Foo определен метод __call() или __callStatic(), то is_callable($foo, 'bar') или is_callable(‘Foo’, 'bar') соответственно всегда будет true. Что, в общем-то, вполне логично.
+Если в классе `Foo` определен метод `__call()` или `__callStatic()`, то `is_callable($foo, 'bar')` или `is_callable(‘Foo’, 'bar')` всегда будет `true`. 
 
 ## Манипуляции с типами
 
@@ -2235,6 +2274,8 @@ echo $class::CONSTANT;
      *var_dump*(bar::**class**); *# string(7) "foo\bar"     var_dump*($bar::**class**); *# Fatal error* }
 
  
+
+
 
 
 

@@ -77,7 +77,7 @@ var vm = new Vue({
 
 ```javascript
   computed: {
-    <property>() {
+    <property> () {
 	  return ...;
     }
   }

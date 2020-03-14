@@ -2583,6 +2583,7 @@ echo $class::CONSTANT;
 
 
 
+
 Константы можно переопределять в дочерних классах:
 
 **class** A
@@ -4113,8 +4114,8 @@ typedef struct _zend_object_value {
 
 | PHP                    | Под капотом                                                  |
 | ---------------------- | ------------------------------------------------------------ |
-| `$a = 1`<br/>`$b = $a` | `a, b: {`<br/>`.      value: 1`<br/>`.      is_ref: 0`<br/>`.      refcount: 1`<br/> `}` |
-| `$b = 2`               | `a: {`<br/>`.      value: 1`<br/>`.      is_ref: 0`<br/>`.      refcount: 1`<br/> `}`<br/>`b: {`<br/>`.      value: 2`<br/>`.      is_ref: 0`<br/>`.      refcount: 1`<br/> `}` |
+| `$a = 1`<br/>`$b = $a` | `a, b: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`s_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
+| `$b = 2`               | `a: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}`<br/>`b: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 2`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
 
 Эта техника называется copy-on-write (копирования-при-записи). Она позволяет снизить потребление памяти. 
 

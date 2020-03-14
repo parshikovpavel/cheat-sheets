@@ -4,6 +4,22 @@
 
 - низкий порог вхождения.  Удобен для набора команд, которые зачастую состоят из *junior* и *middle*.
 
+## Xdebug
+
+### Установка
+
+- `pecl install xdebug`
+
+  Автоматически в `php.ini` добавляются строки:
+
+  ```
+  zend_extension="xdebug.so"
+  extension_dir = "/usr/local/lib/php/pecl/20190902"
+  ```
+
+  Путь к расширению `/usr/local/Cellar/php/7.4.2/pecl/20190902/xdebug.so'`
+
+- 
 
 ## PHP.ini
 
@@ -16,6 +32,10 @@
 - ` /etc/php7/apache2/php.ini` — конфигурационный файл для модуля РНР встроенного в Apache;
 
 - `/etc/php7/fpm/php.ini` — конфигурационный файл для PHP-FPM , используемый *nginx*.
+
+Расположение для *Mac*:
+
+- `/usr/local/etc/php/<version>/php.ini`
 
 Узнать местоположение используемого файла можно в отчете с настройками. Отчет можно получить через:
 
@@ -2404,20 +2424,25 @@ $b->bar();   # Notice
   $object = new $className(); 
   ```
 
+- в контексте класса, используя ключевые слова `new` и `parent`.
+
+  ```php
+  class B extends A
+  {
+      public function method()
+      {
+          $object1 = new self;
+          $object2 = new parent;
+      }
+  }
   
+  ```
+
+## Присваивание объекта
+
+Когда происходит присвоение объекта переменной, эта переменная будет указывать на этот же экземпляр.
 
 
-
-В контексте класса можно создать новый объект используя ключевые слова new и parent.
-
-**class** B **extends** A
- {
-     **public function** method()
-     {
-         **new self**;
-         **new parent**;
-     }
- }
 
 При создании ссылки на объект, создается zval с типом IS_REFERENCE, содержащий в себе исходный zval с указателем на объект zend_object. Т.е. обе переменные $b и $d ссылаются на один zval типа IS_REFERENCE:
 
@@ -2541,6 +2566,7 @@ echo $class::CONSTANT;
      *var_dump*(bar::**class**); *# string(7) "foo\bar"     var_dump*($bar::**class**); *# Fatal error* }
 
  
+
 
 
 
@@ -3970,60 +3996,79 @@ false));
 
 ### Структура zval
 
-Переменные в PHP выражены в виде неких контейнеров, которые хранят в себе тип переменной, значение, кол-во ссылающихся переменных на этот контейнер, и флаг — является ли эта переменная ссылочной. При присваивании все имена переменных хранятся в таблице имен, отдельной для каждой области видимости переменных. Такая область видимости существует для главного скрипта, а также для каждой функции и метода.
+Каждая PHP переменная хранится в виде структуры:
 
-Когда вызывается unset($var) в таблице символов удаляется имя $var, в структуре zval в поле число ссылок уменьшается на 1 и если оно равно 0, то PHP уничтожает данное значение. Если вместо unset присвоим переменной значение null, то произойдёт разрыв связи между именем $var и её zval, число ссылок на значение в этом случае тоже станет равно 0 и оно будет уничтожено.
+```c
+struct zval {
+    zvalue_value value;   // Значение
+    unsigned char type;   // Тип переменной
+    unsigned char is_ref; // Флаг - существуют ли переменные-ссылки, определенные через `&`, 
+                          // на этот zval или нет (аналог symlink)
+    short refcount;       // Количество переменных, которые напрямую связаны с этим zval 
+                          // (аналог `hardlink`)
+};
+```
 
-Контейнером служит структура под названием zval, она выглядит так:
+Объединение `zvalue_value`:
+
+```c
+typedef union _zvalue_value {
+    long lval;                 // int, bool
+    double dval;               // float
+    struct {                   // string
+        char *val;             //   сама строка
+        int len;               //   ее длина
+    } str;
+    HashTable *ht;             // array
+    zend_object_value obj;     // object
+} zvalue_value;
+```
+
+Перечень констант для указания типа в поле `zval.type`. Константы также определяют, какие из полей `zvalue_value` используется для хранения значения:
+
+```c
+#define IS_NULL     0      /* Значение не нужно хранить */
+#define IS_LONG     1      /* Значение в lval */
+#define IS_DOUBLE   2      /* Значение в dval */
+#define IS_BOOL     3      /* В lval значения 0 или 1 */
+#define IS_ARRAY    4      /* Хранится в ht */
+#define IS_OBJECT   5      /* Хранится в obj */
+#define IS_STRING   6      /* Хранится в str */
+#define IS_RESOURCE 7      /* В lval хранится resource_ID */
+```
+
+Имена созданных переменных хранятся в специальной таблице имен (*symbol table*), отдельной для каждой области видимости: одной глобальной (*global scope*) и множества локальных для каждой функции и метода (*local scope*). 
+
+Алгоритм выполнения `$var = <value>`:
+
+- в *symbol table* создается имя `$var`
+
+- оно связывает с `zval` вида:
+
+  ```json
+  zval {
+      value: <value>
+      type: <type>
+      is_ref: 0
+      refcount: 1
+  }
+  ```
+
+Алгоритм выполнения `unset($var)`:
+
+- в *symbol table* удаляется имя `$var`
+- в структуре `zval` уменьшается `refcount--`
+- если `refcount == 0`, то PHP уничтожает `zval`.
+
+Алгоритм выполнения `$var = <another_value>`:
+
+- имя `$var`  в *symbol table* связывается с новым `zval`.
+- у старого `zval` уменьшается `refcount--`
+- если `refcount == 0`, то PHP уничтожает `zval`.
 
  
 
-struct zval {
 
-​    zvalue_value value;   // Значение
-
-​    zend_uchar type;      // Тип
-
-​    zend_uchar is_ref;    // Флаг существования нескольких ссылок на один zval
-
-​    zend_ushort refcount; // Количество таких ссылок
-
-};
-
-Структура zvalue_value
-
-typedef union _zvalue_value { 
-
-long lval; 
-
-double dval; 
-
-struct { 
-
-​     char *val; 
-
-​     int len; 
-
-} str; 
-
-HashTable *ht; 
-
-zend_object_value obj; 
-
-} zvalue_value;
-
-Перечень доступных типов:
-
-| **Type tag** | **Storage location**               |
-| ------------ | ---------------------------------- |
-| IS_NULL      | none                               |
-| IS_BOOL      | long lval                          |
-| IS_LONG      | long lval                          |
-| IS_DOUBLE    | double   dval                      |
-| IS_STRING    | struct { char *val; int len; } str |
-| IS_ARRAY     | HashTable   *ht                    |
-| IS_OBJECT    | zend_object_value   obj            |
-| IS_RESOURCE  | long lval                          |
 
 Cтрока (IS_STRING) хранится как указатель на строку char * и целочисленная длина строки int. Но несмотря на это, строки используемые в PHP все равно заканчиваются нулевым байтом (NUL-terminated), чтобы обеспечить совместимость с библиотечными функциями. 
 
@@ -4031,10 +4076,10 @@ Cтрока (IS_STRING) хранится как указатель на стро
 
 При присвоении переменной значение другой переменной они обе начинают ссылаются на один zval, а refcount инкрементируется.  При изменении значения одной из этих переменных, PHP обнаружит, что refcount больше 1, скопирует zval, сделает изменения там, и переменная будет указывать уже на новый zval.
 
-| **PHP**                      | **Под капотом**                                              |
-| ---------------------------- | ------------------------------------------------------------ |
-| $foo = "asd";   $bar = $foo; | bar,foo: {         is_ref: 0         refcount: 2   }         |
-| $bar .= "q";                 | foo: {       value:             str:                 val: "asd"                 len: 3         is_ref: 0         refcount: 1   }   bar: {       value:             str:                 val: "asdq"                 len: 4         is_ref: 0         refcount: 1   } |
+| **PHP**                                                  | **Под капотом**                                              |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| `$foo = "asd";   $bar = $foo;`<br/>`dvds`<br/>`dsdsadsa` | bar,foo: {         is_ref: 0         refcount: 2   }         |
+| $bar .= "q";                                             | foo: {       value:             str:                 val: "asd"                 len: 3         is_ref: 0         refcount: 1   }   bar: {       value:             str:                 val: "asdq"                 len: 4         is_ref: 0         refcount: 1   } |
 
 Эта техника называется copy on write копирования-при-записи и она позволяет неплохо снизить потребление памяти. 
 

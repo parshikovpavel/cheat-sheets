@@ -478,6 +478,8 @@ $len = strlen($a)+strlen($b);
 
 #### `array`
 
+Ключи массива могут иметь тип `array` или `string`.
+
 При удалении элемента из середины массива ключи не пересчитываются.
 
 При использовании в качестве ключей следующих типов выполняется преобразование:
@@ -2584,6 +2586,12 @@ echo $class::CONSTANT;
 
 
 
+
+
+
+
+
+
 Константы можно переопределять в дочерних классах:
 
 **class** A
@@ -3997,6 +4005,8 @@ false));
 
 ### Структура zval
 
+#### PHP5
+
 Каждая PHP переменная хранится в виде структуры:
 
 ```c
@@ -4010,7 +4020,7 @@ struct zval {
 };
 ```
 
-Объединение `zvalue_value`:
+Объединение `zend_value`:
 
 ```c
 typedef union _zvalue_value {
@@ -4022,7 +4032,7 @@ typedef union _zvalue_value {
     } str;
     HashTable *ht;             // array
     zend_object_value obj;     // object
-} zvalue_value;
+} zend_value;
 ```
 
 Перечень констант для указания типа в поле `zval.type`. Константы также определяют, какие из полей `zvalue_value` используется для хранения значения:
@@ -4038,69 +4048,242 @@ typedef union _zvalue_value {
 #define IS_RESOURCE 7      /* В lval хранится resource_ID */
 ```
 
+<u>Размещение в памяти</u>
+
 Имена созданных переменных хранятся в специальной таблице имен (*symbol table*), отдельной для каждой области видимости: одной глобальной (*global scope*) и множества локальных для каждой функции и метода (*local scope*). 
 
-###  Хранение разных типов
+*Symbol table* размещается на стеке (*vm stack*) и хранит указатели (pointers) на `zval`'ы.  `zval`'ы хранятся в куче (*heap*) и в `zval` хранится счетчик ссылок `refcount`.
 
-#### `string`
+Пример программы с 4 переменными и количество CPU инструкций для доступа к данным:
 
-Структура `str` для строки состоит из:
+![доступ к zval](https://parshikovpavel.github.io/img/php/zval1.png)
 
-- указатель на строку `char *val` 
-- целочисленная длина строки `int len`. 
+Недостатки:
 
-Хотя длина строки хранится, строки все равно заканчиваются нулевым байтом (*NUL-terminated*), чтобы обеспечить совместимость с библиотечными функциями. 
+- большой размер структуры `zval`
+- `zval` хранится отдельно и доступен по *pointer*'у
+- требуется отдельная *CPU instruction* для доступа по *pointer*'у к `zval`'у, даже для элементарных типов вроде `int`
 
-#### `object`
+Подробную информацию по структуре `zval` можно получить утилитой *XDebug*.
 
-Структура `zend_object_value` для объектов имеет вид:
+#### PHP7
 
-```php
-typedef struct _zend_object_value {
-    zend_object_handle handle;
-    const zend_object_handlers *handlers;
-} zend_object_value;
+Каждая PHP переменная хранится в виде структуры (128 бит):
+
+```c
+struct _zval_struct {
+    zend_value value;            // Значение (64 бит)
+    union {
+        struct {
+            unsigned char type,       // Тип переменной
+            unsigned char type_flags  // Флаги типа
+            /* ... */    
+        } v;
+     /* ... */
+    } u1;
+    union {
+        uint32_t next;                 // индекс следующего bucket'а в цепочке коллизий
+        /* ... */
+    } u2;
+};
 ```
 
-- `handle` – уникальный ID объекта, используемый для его поиска в хранилище объектов.
-- `handlers` – служебный массив, с какими-то обработчиками разных событий объектов
+Объединение `zvalue_value` (64 бит, т.к. *pointer*'ы 64 битные и *scalar* типы тоже 64-битные):
+
+```c
+typedef union _zend_value {
+    zend_long         lval;    // int
+    double            dval;    // float
+ /* zend_refcounted  *counted; ??? */
+    zend_string      *str;     // string
+    zend_array       *arr;     // array
+    zend_object      *obj;     // object
+    zend_resource    *res;     // resource
+    zend_reference   *ref;     // ссылка
+} zend_value;
+
+```
+
+Перечень констант для указания типа в поле `zval.type`. Константы также определяют, какие из полей `zend_value` используется для хранения значения:
+
+```c
+#define IS_UNDEF                    0  // неинициализированная переменная
+#define IS_NULL                     1
+#define IS_FALSE                    2  // bool разделен на два типа, это позволяет читать
+#define IS_TRUE                     3  // только тип и не читать значение
+#define IS_LONG                     4
+#define IS_DOUBLE                   5
+#define IS_STRING                   6
+#define IS_ARRAY                    7
+#define IS_OBJECT                   8
+#define IS_RESOURCE                 9
+#define IS_REFERENCE                10 // новый тип, ссылка
+```
+
+`type_flags` – флаги, набор битов, каждый из которых указывает что поддерживает этот тип. Например, один из флагов `IS_TYPE_REFCOUNTED` – *refcounted* переменная.
+
+Все типы делятся на:
+
+- скалярные (*scalar*). Особенности:
+
+  - значение хранится прямо внутри `zval`
+  - не используют подсчёт ссылок (всегда относятся к одной переменной)
+  - не имеют подчиненной структуры.
+  - значение изменяется прямо внутри `zval`, не требуется доступ к подчиненной структуре
+
+- подсчитываемые (*refcounted*). К ним относятся `array`, `string`, `object`, ссылки.
+
+  Особенности:
+
+  - хранят в `zval` ссылку на подчиненную структуру-значение на *heap*'е. 
+
+  - в `type_flags` флаг `IS_TYPE_REFCOUNTED == 1`.
+
+  - подчиненная структура-значение содержит следующую структуру для подсчета ссылок:
+
+    ```c
+    struct _zend_refcounted {
+        uint32_t refcount;
+        // и служебные данные
+    };
+    ```
+
+    
+
+  
+
+![](https://parshikovpavel.github.io/img/php/zval3.png)
+
+<u>Размещение в памяти</u>
+
+Особенности:
+
+- `zval`  хранится прямо на *stack*'е. 
+-  `refcount` убран из `zval`.
+
+Преимущества:
+
+- не требуется отдельная *CPU instruction* для доступа к `zval`, `zval` хранится прямо на *stack*'е.
+- Поэтому возможно привязывать такую подчиненную структуру-значение любого *refcounted* типа к нескольким `zval`. Например, привязывать `zend_string` к ключам `array`.
+
+Пример программы с 4 переменными и количество CPU инструкций для доступа к данным:
+
+![доступ к zval](https://parshikovpavel.github.io/img/php/zval2.png)
+
+
+
+**Введен отдельный тип для представления reference. Этот тип не доступен для скриптов. Скрипты видят тот zval, который ныходится внутри этого reference.** 
+
+****  
+
+**На этот тип ссылается несколько ссылок, refcount определяет их количество, когда refcount становится равным 1, эта структура удаляется, а zval из него переносится в последнюю оставшуюся ссылку.** 
+
+
 
 ### Основные сценарии
 
 #### Инициализация переменной
 
-Алгоритм выполнения `$var = <value>`:
+Алгоритм выполнения `$var = <value>`.
 
 - в *symbol table* создается имя `$var`
 
-- оно связывает с `zval` вида:
+- оно связывается с `zval` вида:
 
   ```
   zval {
       value: <value>
       type: <type>
-      is_ref: 0
-      refcount: 1
+      /* ... */
   }
   ```
+  
+  - *scalar* значения не имеют подчиненную структуры-значения и хранятся прямо в поле `zval.value`. Это обозначается символом `=` вместо `→`. 
+  
+    ```php
+    $a = 42;                  # $a = zval_1(type=IS_LONG, value=42)
+    xdebug_debug_zval('a');   # a: (refcount=0, is_ref=0)=42
+    ```
+  
+  - *refcounted* типы имеют подчиненную структуру-значение, доступную по указателю. Это обозначается символом `→`:
+  
+    ```php
+    $a = [];
+    $a[] = 1;   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=1, value=[1])
+    xdebug_debug_zval('a'); # a: (refcount=1, is_ref=0)=
+                            #.                array (0 => (refcount=0, is_ref=0)=1)
+    ```
 
 #### Удаление переменной
 
-Алгоритм выполнения `unset($var)`:
+Алгоритм выполнения `unset($var)`
 
 - в *symbol table* удаляется имя `$var`
-- в структуре `zval` уменьшается `refcount--`
-- если `refcount == 0`, то PHP уничтожает `zval`.
+
+- в структуре `zval` изменяется `type = IS_UNDEF`
+
+  - для *scalar* типов, больше никаких действий:
+
+    ```php
+    $a = 1;
+    unset($a); # $a = zval_1(type=IS_UNDEF)
+    ```
+
+  - для *refcounted* типов, дополнительные действия:
+    - в подчиненной структуре-значении выполняется `refcount--`
+
+    - если `refcount == 0`, то PHP уничтожает подчиненную структуру.
+
+      ```php
+      $a = [];   // $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=1, value=[])
+      unset($a); // $a = zval_1(type=IS_UNDEF) и zend_array_1 уничтожен
+      ```
+
+      
 
 #### Изменение значения переменной
 
 Алгоритм выполнения `$var = <another_value>`:
 
 - имя `$var`  в *symbol table* связывается с новым `zval`.
-- у старого `zval` уменьшается `refcount--`
-- если `refcount == 0`, то PHP уничтожает `zval`.
+- в старой структуре `zval` изменяется `type = IS_UNDEF`
+- дополнительные действия для *refcounted* типов:
+  - в подчиненной структуре-значении выполняется `refcount--`
+  - если `refcount == 0`, то PHP уничтожает подчиненную структуру.
 
 #### Присвоение одной переменной значения другой переменной
+
+##### *Scalar* тип
+
+*Scalar* значения не имеют подчиненной структуры-значения и хранятся прямо в поле `zval.value`.          Поэтому *scalar* переменные не могут иметь общую подчиненную структуру, каждая *scalar* переменная независима от другой переменной.
+
+```php
+$a = 42;   # $a = zval_1(type=IS_LONG, value=42)
+
+$b = $a;   # Никакой подчиненной структуры нет, каждый zval независим от другого
+           # $a = zval_1(type=IS_LONG, value=42)
+           # $b = zval_2(type=IS_LONG, value=42)
+
+$a += 1;   # $a = zval_1(type=IS_LONG, value=43)
+           # $b = zval_2(type=IS_LONG, value=42)
+```
+
+##### *Refcounted* тип
+
+Используется оптимизация *Сopy-on-write* (копирование-при-записи), которая позволяет снизить потребление памяти.  
+
+```php
+$a = [];   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=1, value=[])
+$b = $a;   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=2, value=[])
+           # $b = zval_2(type=IS_ARRAY) ---^
+         
+$a[] = 1; # Здесь происходит разделение zval 
+          # $a = zval_1(type=IS_ARRAY) -> zend_array_2(refcount=1, value=[1])
+          # $b = zval_2(type=IS_ARRAY) -> zend_array_1(refcount=1, value=[])
+
+```
+
+
 
 Алгоритм присвоении одной переменной значения другой переменной:
 
@@ -4114,126 +4297,441 @@ typedef struct _zend_object_value {
 
 | PHP                    | Под капотом                                                  |
 | ---------------------- | ------------------------------------------------------------ |
-| `$a = 1`<br/>`$b = $a` | `a, b: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`s_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
-| `$b = 2`               | `a: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}`<br/>`b: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 2`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
+| `$a = 1`<br/>`$b = $a` | `a, b: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 2`<br/> `}` |
+| `$b = 2`               | `a: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}`<br/>`b: {&nbsp;&nbsp;&nbsp;# zval разделился`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 2`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
 
-Эта техника называется copy-on-write (копирования-при-записи). Она позволяет снизить потребление памяти. 
+
 
 В момент передачи аргумента в функцию также происходит присваивание, т.е. связывание аргумента функции с тем же `zval`, что и передаваемая переменная.
 
-#### Создание ссылки на переменную
 
-При создании ссылки на переменную флаг is_ref становится равным 1, и больше вышеописанная оптимизация для этого zval-а применяться не будет. Если refcount равен 1, то is_ref будет всегда равен FALSE.  Подробную информацию по структуре zval можно получить утилитой XDebug.
 
- 
 
-| PHP                                                   | Под капотом                                                  |
-| ----------------------------------------------------- | ------------------------------------------------------------ |
-| $foo = "asd";   $bar = $foo;                          | bar,foo: {         is_ref: 0         refcount: 2   }         |
-| $zxc = &$foo;                                         | zxc,foo: {         is_ref: 1         refcount: 2   }   bar: {   // переменная bar была выделена в отдельный zval       is_ref: 0         refcount: 1   } |
-| $qwe = $foo;   (аналогично     как и     $qwe = $zxc) | zxc,foo: {         is_ref: 1         refcount: 2   }   bar: {       is_ref: 0       refcount: 1   }   qwe: {   // эта переменная тоже была выделена в отдельный zval       is_ref: 0         refcount: 1   } |
 
-Все это относится к PHP5. В PHP7 было переделано, в частности присвоение по ссылке без изменения не приводит к созданию копии переменной.
+### Пример работы с массивами. 
 
-Объекты на самом деле не передаются и не копируются по ссылке по умолчанию. Значение объекта в структуре zval представляет собой лишь идентификатор объекта, а этот идентификатор используется для поиска данных этого объекта. Поэтому есть разница при передаче объекта по значению и по ссылке:
+Работает одинаково в PHP5 и PHP7. В примере ниже, каждая переменная всё ещё имеет отдельный (встроенный) zval, но оба указателя ссылаются на одну и ту же структуру zend_array. При изменении массива его нужно продублировать (copy-on-write). 
 
-// Функция, в которую передано
-значение, не изменила $obj
-function fnByVal($val) { 
-# $obj, $val {
-                          #   is_ref: 0,
-                          #   refcount: 2
-                          # }
+$a = [];   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=1,
+value=[])
+$b = $a;   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=2,
+value=[])
 
-    $val = 100;           # Происходит разделение
-                          # $obj {
-                          #   value: zend_object_value,
-                          #   is_ref: 0,
-                          #   refcount: 1
-                          #  }
-                          # $val {
-                          #   value: 100,
-                          #   is_ref: 0,
-                          #   refcount: 1
-                          #  }
+           # $b = zval_2(type=IS_ARRAY) ---^
+
+$a[] = 1; # Здесь происходит
+разделение zval 
+
+          # $a = zval_1(type=IS_ARRAY) ->
+
+zend_array_2(refcount=1, value=[1])
+
+          # $b = zval_2(type=IS_ARRAY) ->
+
+zend_array_1(refcount=1, value=[])
+unset($a); # $a =
+zval_1(type=IS_UNDEF) и zend_array_2 уничтожен
+
+           # $b = zval_2(type=IS_ARRAY)
+
+-> zend_array_1(refcount=1, value=[])
+
+
+
+###  Хранение разных типов
+
+#### Ссылки
+
+##### PHP5
+
+При создании ссылки на переменную устанавливается флаг `is_ref = 1`, и далее оптимизация *copy-on-write* для этого *zval*'а применяться не будет. Т.е. присвоение переменной с `is_ref=1` приводит к ее копированию, `zval` разделяться между ссылкой и нессылкой не может.
+
+| PHP                             | Под капотом                                                  |
+| ------------------------------- | ------------------------------------------------------------ |
+| `$a = 1`<br/>`$b = $a`          | `a, b: {`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 2`<br/> `}` |
+| `$ref = &$a`                    | `a, ref: {` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 2`<br/> `}` <br/> `b: { # переменная b выделена в отдельный zval` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
+| `$c = $a`<br/>(или `$c = $ref`) | `a, ref: {` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 2`<br/> `}` <br/> `b: {` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` <br/> `c: {        # оптимизация copy-on-write не применяется`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 0 # переменная была выделена в отдельный zval` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 1`<br/> `}` |
+
+В итоге, при использовании ссылок производительность оказывается ниже, чем без их использования. Например:
+
+```php
+$array = range(0, 1000000);  # $array → zval (is_ref=0)
+$ref =& $array;              # $array, $ref → zval (is_ref=1)    
+count($array);               # Здесь происходит дублирование огромного массива
+```
+
+`count()` принимает аргумент *by value*, а `$array` является PHP-ссылкой, а `zval` не может быть одновременно значением (`is_ref=0`) и ссылкой (`is_ref=1`) поэтому полная копия массива создаётся до того, как он передается в `count()`. Если бы `$array` не был ссылкой, то `zval` был бы расшарен между формальным (formal) и фактическим (*actual*) параметрами.
+
+Создание ссылки и затем изменение значения по ссылке
+
+| PHP                       | Под капотом                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `$a = 1`<br/>`$ref = &$a` | `a, ref: {` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 2`<br/> `}` |
+| `$ref = 2`                | `a, ref: {` <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`value: 2`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`is_ref: 1`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`refcount: 2`<br/> `}` |
+
+##### PHP7
+
+Для работы со ссылками введен новый `type = IS_REFERENCE`. Для этого типа введена подчиненная структура-значение:
+
+```c
+struct _zend_reference {
+    zend_refcounted   gc;
+    zval              val;
+};
+```
+
+В `zend_reference` вложен `zval` переменной и добавлен подсчёт ссылок. 
+
+###### Создание ссылки на `zval`
+
+При определении ссылки, создается `zval` с `type = IS_REFERENCE` и в его подчиненную структуру-значение `zend_reference` вкладывается `zval` самой переменной:
+
+```php
+$a = [];  # $a -> zend_array_1(refcount=1, value=[]) 
+$b =& $a; # $a, $b -> zend_reference_1(refcount=2) -> zend_array_1(refcount=1, value=[]) 
+$b[] = 1; # $a, $b -> zend_reference_1(refcount=2) -> zend_array_1(refcount=1, value=[1])
+```
+
+Важно: что у ссылки `refcount = 2` (потому что две переменные являются ссылками на одно значение), но у `zval` значение `refcount = 1`, поскольку на него ссылается одна структура `zend_reference`. 
+
+В подчиненной структуре-значении `zend_reference` всегда `refcount > 1`.
+
+###### Одновременное использование `zval` *by value* и *by reference*
+
+В отличии от PHP5, возможно одновременное использование `zval` для *refcounted* типов, вне зависимости присвоены они *by value* или *by reference*. 
+
+В примере, массив будет отделён только после внесения некоторых изменений. То есть можно безопасно передать в `count()` большой массив-ссылку, и он не будет продублирован в памяти. 
+
+```php
+$a = [];  # $a         -> zend_array_1(refcount=1, value=[])
+$b = $a;  # $a, $b,    -> zend_array_1(refcount=2, value=[])
+$c = $b   # $a, $b, $c -> zend_array_1(refcount=3, value=[])
+
+$d =& $c; # Переменные, присвоенные by value и by reference, используют один zend_array.
+          # В PHP5 на этом шаге произошла бы дупликация zend_array, 
+          # т.к. он не может быть сразу и ссылкой и не ссылкой
+          # $a, $b                                 -> zend_array_1(refcount=3, value=[])
+          # $c, $d -> zend_reference_1(refcount=2) ---^
+          
+
+$d[] = 1; # Только в данный момент происходит дупликация zend_array,
+          # после операции присваивания.
+          # $a, $b                                 -> zend_array_1(refcount=2, value=[])
+          # $c, $d -> zend_reference_1(refcount=2) -> zend_array_2(refcount=1, value=[1])
+
+```
+
+
+
+
+
+#### `string`
+
+##### PHP5
+
+Cтруктура `str` для строки:
+
+```c
+struct {                   // string
+    char *val;             //   сама строка
+    int len;               //   ее длина
+} str;
+```
+
+##### PHP7
+
+Подчиненная структура-значение `zend_string` для строки:
+
+```c
+struct _zend_string {
+    zend_refcounted   gc;   // структура для подсчета
+    zend_ulong        h;    // хеш строки
+    size_t            len;  // длина строки
+    char             *val;
+};
+```
+
+Хотя длина строки хранится, строки все равно заканчиваются нулевым байтом (*NUL-terminated*), чтобы обеспечить совместимость с библиотечными функциями. 
+
+#### `object`
+
+##### PHP5
+
+Структура `zend_object_value` для объектов имеет вид:
+
+```php
+typedef struct _zend_object_value {
+    zend_object_handle handle;
+    const zend_object_handlers *handlers;
+} zend_object_value;
+```
+
+- `handle` – уникальный ID объекта, используемый для его поиска в хранилище объектов (*object store*).
+- `handlers` – массив указателей на методы.
+
+![](https://parshikovpavel.github.io/img/php/zval4.png)
+
+Объекты на самом деле не передаются и не копируются по ссылке по умолчанию. В структуре `zval`  хранится только только `handle` – идентификатор объекта, используемый для его поиска в хранилище объектов. 
+
+
+
+Часто можно услышать, что в PHP 5 объекты автоматически передаются по ссылке, но пример выше показывает, что это не так. Функция, в которую передается значение не может изменить значение переданной переменной, только функция, в которую передается ссылка, может сделать это.
+
+Это так и есть, хотя объекты действительно ведут себя так, будто они переданы по ссылке. Вы не можете присвоить переменной другое значение, но вы можете менять свойства объекта. Это возможно потому, что значением объекта является ID, который используется для поиска «реальных данных» объекта. Семантика передачи по значению не даст вам изменить этот ID на другой или поменять тип переменной, но она не помешает вам изменить «реальные данные» объекта.
+
+https://habr.com/ru/post/226707/
+
+
+
+
+
+**Написать, что возможен доступ по ссылке к полям объекта. Но при этом разные zval.** 
+
+Есть разница при передаче объекта по значению и по ссылке:
+
+```php
+// Функция, в которую передано значение, не изменила $obj
+function fnByVal($val) {  # $obj, $val {
+                          #   is_ref: 0,
+                          #   refcount: 2
+                          # }
+
+    $val = 100;           # Происходит разделение
+                          # $obj {
+                          #   value: zend_object_value,
+                          #   is_ref: 0,
+                          #   refcount: 1
+                          #  }
+                          # $val {
+                          #   value: 100,
+                          #   is_ref: 0,
+                          #   refcount: 1
+                          #  }
 }
-// Функция, в которую передана ссылка
-— изменила значение
+// Функция, в которую передана ссылка — изменила значение
 function fnByRef(&$ref) { # $obj, $ref {
-
-                          #   value: zend_object_value,
-                          #   is_ref: 1,
-                          #   refcount: 2
-                          # }
-    $ref = 100;           # $obj, $ref
-{
-                          #   value: 100,
-                          #   is_ref: 1,
-                          #   refcount: 2
-                          #  }
+                          #   value: zend_object_value,
+                          #   is_ref: 1,
+                          #   refcount: 2
+                          # }
+    $ref = 100;           # $obj, $ref {
+                          #   value: 100,
+                          #   is_ref: 1,
+                          #   refcount: 2
+                          #  }
 }
 
-$obj = (object) ['value'
-=> 1];
+$obj = (object) ['value' => 1];
 
 fnByVal($obj);
-var_dump($obj);  # object(stdClass)#1 (1) {
-                 #      ["value"] => int(1)
-                 # }
+var_dump($obj);  # object(stdClass)#1 (1) {
+                 #      ["value"] => int(1)
+                 # }
 
 fnByRef($obj);
-var_dump($obj);  # int(100)
+var_dump($obj);  # int(100)
 
- Соответственно функция, в которую объект передан по значению, не может изменить сам объект. 
+```
+
+Соответственно функция, в которую объект передан по значению, не может повлиять на переменную, в которой хранится объект. Но может изменять содержимое объекта.
 
 Ниже показано, что присвоение объекта по значению также не создает истинную ссылку на исходный экземпляр. Изменение присвоенного значения не приводит к изменению исходного экземпляра.
 
+```php
 $a = new stdClass;
-var_dump($a);   
-# object(stdClass)#1 (0) {}
+var_dump($a);    # object(stdClass)#1 (0) {}
 
 $c = $a;
-var_dump($c);   
-# Тот же экземпляр
-                 # object(stdClass)#1 (0) {}
+var_dump($c);    # Тот же экземпляр
+                 # object(stdClass)#1 (0) {}
 
 $c = new stdClass;
-                 # Происходит разделение zval
-var_dump($a);   
-# object(stdClass)#1 (0) {}
-var_dump($c);   
+                 # Происходит разделение zval
+var_dump($a);    # object(stdClass)#1 (0) {}
+var_dump($c);    # object(stdClass)#2 (0) {}
+```
 
-# object(stdClass)#2 (0) {}
+##### PHP7
 
-При использовании переменной-ссылки в foreach изменяется значение в zval, на который ведет эта ссылка, это подобно присвоению значения этой ссылке.
+Структура `zend_object`:
 
-$ref = 0;
- $row =& $ref;
- **foreach** (**array**(1, 2, 3) **as** $row) {}
- *var_dump*($ref); *// int(3) - последний элемент массива*
+```c
+struct _zend_object {
+    zend_refcounted   gc;      // счетчик ссылок
+    const zend_object_handlers *handlers;  // массив указателей на методы
+    HashTable        *properties;          // массив свойств
+    HashTable        *guards;              // массив динамически добавленных property's
+    /* ... */
+};
+```
 
-Поведение отдельных элементов массива не зависит от типа присвоения этого массива. Если элемент массива IS_REFERENCE, то при копировании массива этот элемент останется IS_REFERENCE и в обоих массивах будет ссылка на один zval.
+![](https://parshikovpavel.github.io/img/php/zval5.png)
 
+
+
+#### `array`
+
+##### PHP5
+
+Для реализации `array` используется *HashTable* с [методом цепочек и связанными списками](Algorithm.md#метод-цепочек).
+
+В `zval` хранится ссылка на `Hashtable`:
+
+```c
+HashTable *ht;
+```
+
+Структура `HashTable`:
+
+```c
+typedef struct _hashtable {
+    uint nTableSize; //размер таблицы, при превышении которого размер таблицы увеличивается в 2 раза
+    uint nTableMask; //значение nTableSize-1 как маска для выделения последних битов из хеша
+    uint nNumOfElements; //число элементов
+    ulong nNextFreeElement; //следующий целочисленный ключ, с которым будет вставлен $a[]
+    Bucket *pInternalPointer; //текущий бакет для итерирования
+    Bucket *pListHead; //стартовый бакет
+    Bucket *pListTail; //конечный бакет
+    Bucket **arBuckets; //связанные списки бакетов
+...................//есть еще несколько
+} HashTable;
+```
+
+В PHP терминология отличается. `Bucket` – это элемент *linked list* (в другой терминологии, это *entry*). Массив, содержащий заголовки *linked list*'s, называется `arBuckets`. 
+
+![](https://parshikovpavel.github.io/img/algorithm/hashtable2.png)
+
+Структура `Bucket`:
+
+```c
+typedef struct bucket {
+    ulong h; //для целого ключа само значение, для строкового его хеш
+    uint nKeyLength;  //длина хеша для строковых ключей
+    void *pData; //указатель на данные
+    void *pDataPtr; //если элемент указатель, то здесь он хранится, а pData ссылается на pDataPtr
+    struct bucket *pListNext;  // для обхода массива в порядке добавления элементов
+    struct bucket *pListLast;
+    struct bucket *pNext;      // для организации linked list'а bucket'ов,
+    struct bucket *pLast;      // которые отражаются хеш-функцией на один index.
+    char *arKey; //исходный ключ для строковых ключей
+} Bucket;
+```
+
+Каждый `Bucket` включен в два двусвязных *linked list*'а:
+
+- *linked list of bucket*'ов, которые отражаются хеш-функцией на один *index*. `Bucket` хранит указатель на следующий (`pNext`) и предыдущий (`pLast`) *bucket*'ы. Это позволяет легко производить поиск, добавление и удаление *bucket*'ов.
+
+  ![](https://parshikovpavel.github.io/img/algorithm/hashtable6.png?1)
+
+- *linked list* в порядке добавления *entry*'s в `array`, т.к. `array` в PHP упорядочен. Если вы обходите `array`, то вы будете получать *entry*'s в том порядке, в котором они были вставлены. `Bucket` хранить указатель на следующий элемент (`pListNext`) и на предыдущий (`pListLast`). `HashTable` хранить указатели на начало списка (`pListHead`) и конец (`pListLast`). 
+
+  Например, для массива `['a', 'b', 'c']` *linked list* имеет вид:
+
+  ![](https://parshikovpavel.github.io/img/algorithm/hashtable3.png?1)
+
+В PHP структура `HashTable` используется для хранения многих служебных списков:
+
+- списки переменных в *scop*'e
+- методы и поля классов
+- определение классов.
+- ...
+
+Поэтому это важнейшая структура для производительности PHP.
+
+##### PHP7
+
+Основная причина увеличения производительности – вся *hash table* размещена локально в памяти, многие обращения к памяти выбираются из кеша ЦП. В PHP5 требовался проход по нескольким указателям, разбросанным по памяти, возникали cache miss и ожидание чтения данных из ОП.
+
+В `zval` хранится ссылка на `zend_array`:
+
+```c
+zend_array       *arr;     // array
+```
+
+Структура `zend_array`:
+
+```c
+struct _zend_array {
+    zend_refcounted   gc; //  счетчик ссылок
+    Bucket      *arData;  // массив bucket'ов
+	/* ... */
+};
+```
+
+В `zend_array` теперь хранится сам массив *bucket*'ов, а не указатели на указатели. 
+
+Структура `Bucket`:
+
+```c
+typedef struct _Bucket {
+    zval              val; /* значение */
+    zend_ulong        h;   /* хэш (или числовой индекс)   */
+    zend_string      *key; /* строковый ключ или NULL для числовых значений */
+} Bucket;
+```
+
+`zval` хранится прямо внутри `Bucket`.  Убраны все *linked list*'ы. 
+
+`Bucket`'ы хранятся в *slot*'ах непрерывном фрагменте памяти `arData`, в порядке добавления, что позволяет быстро их итерировать. 
+
+Например, для массива `[3 => 'foo', 8 => 'bar', 'baz' => []]`  массив `arData` имеет вид:
+
+![](https://parshikovpavel.github.io/img/algorithm/hashtable4.png)
+
+При удалении  элемента из массива, соответствующему `zval` в `arData` устанавливается `type = IS_UNDEF`:
+
+![](https://parshikovpavel.github.io/img/algorithm/hashtable5.png)
+
+<u>Поиск в *hash table*</u>
+
+Вначале, по ключу с использованием *hash function* находим *index bucket*'а. Для преобразования *index*'а *bucket*'а в *slot* в массиве `arData` используется таблица перевода (*translation table*). *Translation table* размещается в памяти непосредственно перед `arData`, использует отрицательные смещения от  начала `arData`.
+
+Например, для массива:
+
+```php
+[
+    'bar' => 'bar-val',  # index = 3 (расчитан с использованием hash function)
+    'foo' => 42          # index = 5
+]
+```
+
+в памяти получаем:
+
+![](https://parshikovpavel.github.io/img/algorithm/hashtable7.png)
+
+Если массив использует только числовые ключи, вида:
+
+```php
+[
+    0 => ...,
+    1 => ...
+]
+```
+
+то создается *packed hashtable* (упакованная) без *translation table*. Доступ к элементам осуществляется по индексу в `arData` со скоростью, сравнимой с массивами C. 
+
+<u>Разрешение *collision*</u>
+
+Если возникает *collision*, и *index* элемента совпадает с *index*'ом уже существующего элемента (т.е. ячейка в *translation table* для этого *index* уже занята). Тогда мы записываем *slot* элемента в поле `zval.u2.next`, *bucket*'а с тем же *index*'ом. Т.е. в поле `zval.u2.next` хранится *slot* элемента с тем же значением *index*'а.  Т.е. получаем *linked list*, построенный не через указатели, а через поля `zval.u2.next`.  При этом мы читаем локальный массив `arData`, а не разбросанные по памяти указатели.
+
+##### Элементы `array`
+
+Элементы массива следует рассматривать как отдельные, независимые переменные, которые находятся внутри контейнера-массива. Их поведение не зависит от типа присвоения этого массива. Если элемент массива `IS_REFERENCE`, то при копировании массива этот элемент останется `IS_REFERENCE` и в обоих массивах будет ссылка на один `zval`.
+
+```php
 $arr = array(0, 0);
-$a =&
-$arr[0];  
-# $arr[0] становится IS_REFERENCE
-$arr2 =
-$arr;    # Присвоение не по ссылке, а по значению
-$arr2[0]++;      # Изменение элементов массива в копии
+$a =& $arr[0];   # $arr[0] становится IS_REFERENCE
+$arr2 = $arr;    # Присвоение не по ссылке, а по значению
+$arr2[0]++;      # Изменение элементов массива в копии
 $arr2[1]++;
-var_dump($a);   
-# int(1) - изменилась переменная-ссылка на первый
-элемент
+var_dump($a);    # int(1) - изменилась переменная-ссылка на первый элемент
 
-var_dump($arr); 
-# Содержимое $arr изменилось, хотя было
-присвоено не по ссылке! 
-                 # array(2) {
-                 #   [0] => &int(1)  - здесь
-явно показано амперсандом, что это IS_REFERENCE
-                 #   [1] => int(0)
-                 # }
+var_dump($arr);  # Содержимое $arr изменилось, хотя было присвоено не по ссылке! 
+                 # array(2) {
+                 #   [0] => &int(1)  - здесь явно показано амперсандом, что это IS_REFERENCE
+                 #   [1] => int(0)
+                 # }
+```
 
 ### Присваивание ссылке ссылки:
 
@@ -4244,6 +4742,7 @@ var_dump($arr); 
 **function** foo(&$inner)
  {               # $outer, $inner -> zend_reference_1(refcount=2) -> zval_1
      
+
      $var =& $GLOBALS[**"baz"**]; # $outer -> zval_1
                               \# $inner -> zend_reference_2(refcount=2) -> zval_2
  }
@@ -4407,286 +4906,11 @@ $array[] = [**'one'**];
 
 Сборку мусора можно включить и выключить в настройках. Применение сборщика мусора позволяет уменьшить использование памяти за счет удаления циклических ссылок, при этом замедление работы по тестам около 7%. Оценить используемую память можно функциями memory_get_usage и memory_get_peak_usage.
 
-## Изменения в хранении переменных в PHP7
 
-Основные недостатки: большой размер структуры zval и union языка C для хранения данных, накладные расходы на подсчет циклов и ведения root buffer. В PHP5 zval хранятся в куче, поэтому необходимо вести их подсчет и учет, также размещение в куче требует дополнительной памяти. 
 
-В PHP7 zval больше не нужно отдельно размещать в куче. Также refcount теперь хранится не в самом zval, а в любом из комплексных значений, на которые он указывает — в строках, массивах или объектах. 
 
-·         Простые значения не требуют размещения в куче и не используют подсчёт ссылок.
 
-·         Больше нет никакого двойного подсчёта в объектах. В случае с объектами используется счётчик только внутри самого объекта.
 
-·         Поскольку refcount теперь хранится в самом значении, то оно может быть использовано независимо от самого zval. Например, строка может использоваться и в zval как значение, и быть ключом в хэш-таблице.
-
-Теперь zval хранятся в куче в составе структур. Скомпилированная таблица переменных функции и таблица свойств объекта будут представлять собой zval-массивы (т.е. zval встроены в нее а не размещены отделено со ссылкой по указателю).
-
-Внутри zval поле zvalue содержит непосредственно только простые значения, остальные определяются указателями (что позволило сократить размер в 2 раза):
-
-typedef union _zend_value {
-
-​    zend_long         lval;
-
-​    double            dval;
-
-​    zend_refcounted  *counted;
-
-​    zend_string      *str;
-
-​    zend_array       *arr;
-
-​    zend_object      *obj;
-
-​    zend_resource    *res;
-
-​    zend_reference   *ref;
-
-} zend_value;
-
-Целые числа (lval) и числа с плавающей запятой (dval) хранятся непосредственно в структуре. Всё остальное — это указатель.  Все типы указателей используют подсчёт ссылок и содержат заголовок, определяемый zend_refcounted:
-
-struct _zend_refcounted {
-
-​    uint32_t refcount;
-
-​    // и различные данные для сборщика мусора
-
-};
-
-Полный список типов:
-
-// обычные типы данных
-
-\#define IS_UNDEF                    0
-
-\#define IS_NULL                     1
-
-\#define IS_FALSE                    2
-
-\#define IS_TRUE                     3
-
-\#define IS_LONG                     4
-
-\#define IS_DOUBLE                   5
-
-\#define IS_STRING                   6
-
-\#define IS_ARRAY                    7
-
-\#define IS_OBJECT                   8
-
-\#define IS_RESOURCE                 9
-
-\#define IS_REFERENCE                10
-
- 
-
-// константные выражения
-
-\#define IS_CONSTANT                 11
-
-\#define IS_CONSTANT_AST             12
-
- 
-
-// внутренние типы
-
-\#define IS_INDIRECT                 15
-
-\#define IS_PTR                      17
-
-### Пример работы с целыми числами:
-
-$a = 42;   # $a = zval_1(type=IS_LONG, value=42)
- $b = $a;   # $a = zval_1(type=IS_LONG, value=42)
-            \# $b = zval_2(type=IS_LONG, value=42)
- $a += 1;   # $a = zval_1(type=IS_LONG, value=43)
-            \# $b = zval_2(type=IS_LONG, value=42)
- **unset**($a); # $a = zval_1(type=IS_UNDEF)
-            \# $b = zval_2(type=IS_LONG, value=42)
-
-Поскольку целочисленные значения больше не расшариваются, то обе переменные используют разные zval. Значения встроены в zval, а не размещены в памяти отдельно. Это подчёркивается и использованием = вместо ->. При очистке переменной тип соответствующего zvalизменится на IS_UNDEF.
-
-### Пример работы с массивами. 
-
-Работает одинаково в PHP5 и PHP7. В примере ниже, каждая переменная всё ещё имеет отдельный (встроенный) zval, но оба указателя ссылаются на одну и ту же структуру zend_array. При изменении массива его нужно продублировать (copy-on-write). 
-
-$a = [];   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=1,
-value=[])
-$b = $a;   # $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=2,
-value=[])
-           # $b = zval_2(type=IS_ARRAY) ---^
-
-$a[] = 1; # Здесь происходит
-разделение zval 
-          # $a = zval_1(type=IS_ARRAY) ->
-zend_array_2(refcount=1, value=[1])
-          # $b = zval_2(type=IS_ARRAY) ->
-zend_array_1(refcount=1, value=[])
-unset($a); # $a =
-zval_1(type=IS_UNDEF) и zend_array_2 уничтожен
-           # $b = zval_2(type=IS_ARRAY)
--> zend_array_1(refcount=1, value=[])
-
-### Хранение ссылок
-
-#### PHP5
-
-В PHP5 невозможно расшаривать значение между двумя переменными, одна из которых является PHP-ссылкой, а другая нет.  В итоге, при использовании ссылок производительность оказывается ниже, чем при использовании нормальных значений. Например:
-
-$array = range(0, 1000000);
- $ref =& $array;
- count($array); # Здесь происходит дублирование огромного массива
-
-count() принимает значение, но $array является PHP-ссылкой, а zval не может быть одновременно значением (is_ref=0) и ссылкой (is_ref=1) поэтому полная копия массива создаётся до того, как он передается в count(). Если бы $array не был ссылкой, то значение было бы расшарено.
-
-#### PHP7
-
-Для работы со ссылками используется новый тип IS_REFERENCE, использующий в качестве значения структуру zend_reference:
-
-struct _zend_reference {
-
-​    zend_refcounted   gc;
-
-​    zval              val;
-
-};
-
-По сути, zend_reference представляет собой zval с подсчётом ссылок. Во всех переменных набора ссылок zval будет храниться с типом IS_REFERENCE, указывающим на тот же самый инстанс zend_reference. Поведение val ничем не отличается от любого другого zval, в том числе с точки зрения возможности расшаривания сложного значения, на которое он указывает.
-
-$a = [];  # $a -> zend_array_1(refcount=1, value=[]) 
- $b =& $a; # $a, $b -> zend_reference_1(refcount=2) -> zend_array_1(refcount=1, value=[]) 
- $b[] = 1; # $a, $b -> zend_reference_1(refcount=2) -> zend_array_1(refcount=1, value=[1])
-
-Новый zend_reference был создан присваиванием по ссылке. Обратите внимание, что у ссылки refcount равен 2 (потому что две переменные являются частью набора PHP-ссылок), но у самого значения refcount равен 1, поскольку на него ссылается одна структура zend_reference. 
-
-Теперь рассмотрим ситуацию, когда используются ссылки и не-ссылки. 
-
-$a = [];  # $a         -> zend_array_1(refcount=1, value=[])
- $b = $a;  # $a, $b,    -> zend_array_1(refcount=2, value=[])
- $c = $b   # $a, $b, $c -> zend_array_1(refcount=3, value=[])
-
- $d =& $c; # Все переменные, как являющиеся PHP-ссылками, так и не являющиеся, 
-
-​          \# используют один zend_array.
-​           \# В PHP5 на этом шаге произошла бы дупликация zend_array, 
-
-​          \# т.к. он не может быть сразу и ссылкой и не ссылкой
-​           \# $a, $b                                 -> zend_array_1(refcount=3, value=[])
-​           \# $c, $d -> zend_reference_1(refcount=2) ---^
-​           
-
- $d[] = 1; # В PHP7 только в данный момент происходит дупликация zend_array, 
-
-​          \# после операции присваивания.
-​           \# $a, $b                                 -> zend_array_1(refcount=2, value=[])
-​           \# $c, $d -> zend_reference_1(refcount=2) -> zend_array_2(refcount=1, value=[1])
-
-Важное различие между седьмой и пятой версиями заключается в том, что все переменные теперь могут использовать один и тот же массив, вне зависимости от того, являются ли они PHP-ссылками или нет. Массив будет отделён только после внесения некоторых изменений. 
-
-## Реализация массивов
-
-Массивы в PHP поддерживают строковые и числовые ключи. Реализовать такую структуру на языке C можно: через binary search tree, в этом алгоритме и поиск, и вставка значений имеют сложность O(log n).  Второй способ — хеш-таблица, этот алгоритм в среднем имеет сложность поиска/вставки равную O(1), то есть элементы могут быть вставлены и извлечены за постоянное время. Таким образом, хеш-таблицы предпочтительны в большинстве случаев и именно эта техника использована в PHP. 
-
-Cложный ключ (такой как строка) преобразуется в число с помощью хеш-функции. Это число может быть использовано как смещение в обычном C-массиве. Проблема в том, что максимальное число ключей (2^32 или 2^64) гораздо меньше чем число строк (их множество бесконечно). По этому неизбежно хеш-функция будет иметь коллизии, то есть случаи, в которых две разных строки будут иметь одинаковые значения хеш-функции. 
-
-Причем вероятность коллизии быстро нарастает с увеличением числа элементов. Эта проблема называется, парадоксом дней рождений. В группе, состоящей из 23 или более человек, вероятность совпадения дней рождения (число и месяц) хотя бы у двух людей превышает 50 %. В данном случае хеш таблица из 365 ячеек и 23 элемента записаны в них. Число хранимых элементов, делённое на размер массива H (число возможных значений хеш-функции), называется коэффициентом заполнения хеш-таблицы (load factor) и является важным параметром, от которого зависит среднее время выполнения операций. 
-
-При этом не гарантируется, что время выполнения отдельной операции мало́. Это связано с тем, что при достижении некоторого значения коэффициента заполнения необходимо осуществлять перестройку индекса хеш-таблицы: увеличить значение размера массива H  и заново добавить в пустую хеш-таблицу все пары. То, что происходит после переполнения массива, называется rehashю\.
-
-В HashTable  должен быть реализован механизм разрешения коллизий. Есть два основных алгоритма решения этой проблемы, первый — *открытая адресация* (он не рассмотрен здесь). Второй алгоритм — *метод цепочек (chaining),* он и реализован в PHP. Этот метод просто хранит все элементы имеющие один и тот же хеш в связанном списке (linked list). Когда ищется ключ, PHP вычисляет его хеш, а затем проходит по связанному списку "возможных" значений до тех пор пока не найдет нужное.
-
-   
-
-Элементы этого связанного списка назыветюся бакетами (bucket), массив C содержащий заголовки связанных списков называется arBuckets. Каждый бакет содержит указатель на следующий (pNext) и предыдущий (pLast) бакеты. Это позволяет легко производить удаление бакетов
-
-   
-
-Кроме того, хеш-таблицы в PHP упорядочены. Если вы обходите массив, то вы будете получать элементы в том порядке, в котором они были вставлены. Для реализации этого бакеты должны быть частью другого связанного списка, который определяет их порядок. То есть мы имеем двойной связанный список. Указатель на следующий элемент хранится в pListNext, на предыдущий в pListLast. Дополнительно хеш-таблица содержит указатели на начало списка (pListHead) и его конец (pListLast). Например если порядок "a", "b", "c":
-
-   
-
-Другими словами, pNext и pLast это указатели на следующий и предыдущий бакеты в пределах одного значения хеша (в примере выше a ссылается на c и наоборот). pListNext и pListLast — указатели не следующий и предыдущий бакеты в пределах всей хеш-таблицы, в том порядке, в котором элементы были добавлены.
-
-Структура Bucket:
-
-typedef struct bucket {
-
-​    ulong h; //для целого ключа само значение, для строкового его хеш
-
-​    uint nKeyLength;  //длина хеша для строковых ключей
-
-​    void *pData; //указатель на данные
-
-​    void *pDataPtr; //если элемент указатель, то здесь он хранится, а pData ссылается на pDataPtr
-
-​    struct bucket *pListNext; 
-
-​    struct bucket *pListLast;
-
-​    struct bucket *pNext;
-
-​    struct bucket *pLast;
-
-​    char *arKey; //исходный ключ для строковых ключей
-
-} Bucket;
-
-Структура хеш таблицы
-
-typedef struct _hashtable {
-
-​    uint nTableSize; //размер таблицы, при превышении которого размер таблицы увеличивается в 2 раза
-
-​    uint nTableMask; //значение nTableSize-1 как маска для выделения последних битов из хеша
-
-​    uint nNumOfElements; //число элементов
-
-​    ulong nNextFreeElement; //следующий целочисленный ключ, с которым будет вставлен $a[]
-
-​    Bucket *pInternalPointer; //текущий бакет для итерирования
-
-​    Bucket *pListHead; //стартовый бакет
-
-​    Bucket *pListTail; //конечный бакет
-
-​    Bucket **arBuckets; //связанные списки бакетов
-
-...................//есть еще несколько
-
-} HashTable;
-
-Позицию бакета в массиве arBuckets можно найти по его хешу на который накладывается маска nTableMask.
-
- PHP почти все посторено на структуре HashTable. Списки переменных, лежащие в каком-либо scope-е, методы и поля классов и даже сами дефинишины классов.
-
-В PHP7 в Hashtable хранится не указатель на список указателей на бакеты, а сам массив бакетов arData. Структура самого бакета упростилась:
-
-typedef struct _Bucket {
-
-​    zval              val; /* значение */
-
-​    zend_ulong        h;   /* хэш (или числовой индекс)   */
-
-​    zend_string      *key; /* строковый ключ или NULL для числовых значений */
-
-} Bucket;
-
-Убраны все двухсвязные списки. Бакеты хранятся в arData в порядке добавления, что позволяет быстро их итерировать. 
-
-$a = [3=> **'****foo****'**, 8 => **'****bar****'**, **'****baz****'** => []];
-
-   
-
-При удалении значения массив arData не уменьшается и не перегруппируется. В противном случае производительность бы катастрофически упала, поскольку нам бы приходилось перемещать данные в памяти. Поэтому при удалении данных из хэш-таблицы соответствующая ячейка в arData просто помечается специальным образом: zval UNDEF.
-
-   
-
-Для того поиска элемента в arData по его хешу используется таблица преобразования arHash. Индекс первого элемента в списке, соответствующем одному хешу можно найти так:
-
-   
-
-Если хранимый там ключ соответствует требуемому, то заканчиваем поиск. В противном случае следуем к следующему элементу до тех пор пока не найдем искомый или не получим INVALID_IDX, что будет означать что данный ключ не существует.
 
 ## Суперглобальные переменные
 

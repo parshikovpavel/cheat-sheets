@@ -287,6 +287,63 @@ brew unlink [options] formula
 
 - `-n`, `--dry-run`: список *symlink*'ов, которые будут удалены из `/usr/local `. При этом самого удаления по этой команде не выполняется. 
 
+# Homebrew services
+
+Позволяет запускать *homebrew formul*'ы через `launchctl`.
+
+## `sudo`
+
+- Если использовано `sudo`, то помещается в `/Library/LaunchDaemons` (как *daemon*, *start* при загрузке *at boot*).
+- Если не указано `sudo`, то помещается в `~/Library/LaunchAgents` (как *agent*, *start* при входе в систему *at login*).
+
+## `start`
+
+*Start* `<service>` немедленно и зарегистрировать его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+
+```
+[sudo] brew services start <service>
+```
+
+## `stop`
+
+*Stop* `<service>` немедленно и отменить регистрацию его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+
+```
+[sudo] brew services stop <service>
+```
+
+## `run`
+
+*Start* `<service>`, но не регистрировать его для запуска ни *at login*, ни *at boot*:
+
+```
+brew services run <service>
+```
+
+## `restart`
+
+*Stop* и *start* `<service>` немедленно и зарегистрировать его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+
+```
+[sudo] brew services restart <service>
+```
+
+## `list`
+
+Список всех *servic*'ов под управлением `brew services`:
+
+```
+brew services list
+```
+
+## `cleanup`
+
+Удалите все неиспользуемые *servic*'ы:
+
+```
+[sudo] brew services cleanup
+```
+
 # Launch
 
 `launchd` - это *daemon*, который управляет запуском *servic*'ов (*process*'ов). Все процессы в MacOS запускаются `launchd`. При загрузке `launchd` вызывается ядром как первый процесс с `PID = 1` и дальше вся система стартует с помощью него. Так же `launchd` следит за тем чтобы процесс был запущен. Если он вдруг упадет, `launchd` ему поможет и поднимет его.
@@ -362,7 +419,7 @@ launchctl unload
 
 ------
 
-*Load* и *start job*'у, а также помечает ее как `not disabled`. *Job*'а будет заново запущена при следующем *login/reboot*.
+*Load* и *start job*'у, а также пометить ее как `not disabled`. *Job*'а будет заново запущена при следующем *login/reboot*.
 
 ```bash
 launchctl load -w
@@ -388,5 +445,13 @@ launchctl start
 
 ```bash
 launchctl stop
+```
+
+# `hosts`
+
+Команда:
+
+```bash
+sudo nano /private/etc/hosts
 ```
 

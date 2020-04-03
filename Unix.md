@@ -1301,3 +1301,16 @@ vmstat: si ­ so ­ swpd не важно
 vmstat: r=0, b=0 idle=100%
 
 ## `iotop`
+
+
+
+## `nano`
+
+Открыть файл
+
+```bash
+[sudo] nano <file.ext>
+```
+
+Сохранить изменения – `Ctrl+X` + `Y` + `Enter`
+

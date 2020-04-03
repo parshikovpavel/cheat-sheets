@@ -4,11 +4,14 @@
 
 Выделяют три уровня конфигурации Apache:
 
-·  Конфигурация сервера (httpd.conf).
+- Конфигурация сервера (`/usr/local/etc/httpd/httpd.conf`).
 
-·  Конфигурация виртуального хоста (httpd.conf c версии 2.2, extra/httpd-vhosts.conf).
 
-·  Конфигурация уровня директории (.htaccess).
+- Конфигурация виртуального хоста (`/usr/local/etc/httpd/extra/httpd-vhosts.conf`).
+
+
+- Конфигурация уровня директории (.htaccess).
+
 
 Конфигурационные файлы состоят из блоков директив. 
 
@@ -24,7 +27,73 @@
 | -------- | -------------------------------------------------- |
 |          |                                                    |
 
- 
+###  Опции
+
+#### `AllowOverride `
+
+**Контекст**: `<Directory>` секция
+
+Указывает, какие директивы в файле `.htaccess` могут переопределять более ранние директивы конфигурации.
+
+Любые директивы в `.htaccess`  будут переопределять более ранние:
+
+```apache
+AllowOverride All
+```
+
+### Установка
+
+С помощью *Homebrew*:
+
+```bash
+brew install httpd
+```
+
+Настройки в `http.conf`:
+
+- Включить `rewrite_module`:
+
+  ```apache
+  LoadModule rewrite_module lib/httpd/modules/mod_rewrite.so
+  ```
+
+- Дописать:
+
+  ```apache
+  # Charset
+  AddDefaultCharset utf-8
+  
+  #PHP
+  LoadModule php7_module /usr/local/Cellar/php/<version>/lib/httpd/modules/libphp7.so
+  ```
+
+- Исправить:
+
+  ```apache
+  <IfModule dir_module>
+      DirectoryIndex index.php index.html
+  </IfModule>
+  ```
+
+- Исправить:
+
+  ```apache
+  <Directory />
+      Options Indexes Includes FollowSymLinks
+      AllowOverride All
+      Allow from all
+  </Directory>
+  ```
+
+  
+
+- Включить:
+
+  ```
+  Include /usr/local/etc/httpd/extra/httpd-vhosts.conf
+  ```
+
+  
 
 ### Возможности
 
@@ -93,6 +162,8 @@ worker
 event
 
 Используется событийная модель, похожую на ту, что применяется в nginx. Один поток может обрабатывать одновременно несколько запросов. Отлично подходит для клиентов, которые поддерживают долгие keep-alive соединения. Наиболее производительный MPM, но и наименее стабильный (находится в экспериментальной стадии разработки).
+
+- 
 
 ## Nginx
 
@@ -1633,53 +1704,39 @@ pm.max_spare_servers = 3
 
 ### Подключение к nginx
 
-Если PHP-FPM расположен удаленно от Nginx, то передача запросов от Nginx к PHP-FPM должна производится через директиву fastcgi_pass как написано в описании директивы location (смотреть Секция location (местоположение)).
+Если *PHP-FPM* расположен удаленно от *nginx*, то передача запросов от *nginx* к *PHP-FPM* должна производится через директиву `fastcgi_pass` как написано в описании директивы [`location`](#секция-location-местоположение)).
 
-Если Nginx и PHP-FPM находятся на одном узле, то взаимодействие лучше организовать через сокеты.
+Если *nginx* и *PHP-FPM* находятся на одном узле, то взаимодействие лучше организовать через сокеты.
 
 Проксирование напрямую:
 
+```nginx
 location - \.php$ { 
-
-   try_files $uri =404;
-
-   fastcgi_pass unix:/var/www/localhost/fastcgi.sock; 
-
-   fastcgi_index index.php; 
-
-   include fastcgi_params;
-
-   fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-
+	try_files $uri =404;
+	fastcgi_pass unix:/var/www/localhost/fastcgi.sock; 
+	fastcgi_index index.php; 
+	include fastcgi_params;
+	fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
 }
+```
 
-Через upstream:
+Через `upstream`:
 
+```nginx
 upstream dynamic {
-
-   server unix:/var/www/localhost/fastcgi.sock fail_timeout=0;
-
+	server unix:/var/www/localhost/fastcgi.sock fail_timeout=0;
 }
-
- 
 
 server {
-
-   ...
-
-   location ~* \.php$ {
-
-​     fastcgi_pass dynamic; 
-
-​     include fastcgi_params; 
-
-​     fastcgi_index index.php;
-
-​     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-
-   }
-
+	...
+	location ~* \.php$ {
+		fastcgi_pass dynamic; 
+		include fastcgi_params; 
+		fastcgi_index index.php;
+		fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+	}
 }
+```
 
 ## Технологии
 

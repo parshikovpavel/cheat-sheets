@@ -286,3 +286,172 @@ brew unlink [options] formula
 Опции:
 
 - `-n`, `--dry-run`: список *symlink*'ов, которые будут удалены из `/usr/local `. При этом самого удаления по этой команде не выполняется. 
+
+# Homebrew services
+
+Позволяет запускать *homebrew formul*'ы через `launchctl`.
+
+## `sudo`
+
+- Если использовано `sudo`, то помещается в `/Library/LaunchDaemons` (как *daemon*, *start* при загрузке *at boot*).
+- Если не указано `sudo`, то помещается в `~/Library/LaunchAgents` (как *agent*, *start* при входе в систему *at login*).
+
+## `start`
+
+*Start* `<service>` немедленно и зарегистрировать его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+
+```
+[sudo] brew services start <service>
+```
+
+## `stop`
+
+*Stop* `<service>` немедленно и отменить регистрацию его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+
+```
+[sudo] brew services stop <service>
+```
+
+## `run`
+
+*Start* `<service>`, но не регистрировать его для запуска ни *at login*, ни *at boot*:
+
+```
+brew services run <service>
+```
+
+## `restart`
+
+*Stop* и *start* `<service>` немедленно и зарегистрировать его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+
+```
+[sudo] brew services restart <service>
+```
+
+## `list`
+
+Список всех *servic*'ов под управлением `brew services`:
+
+```
+brew services list
+```
+
+## `cleanup`
+
+Удалите все неиспользуемые *servic*'ы:
+
+```
+[sudo] brew services cleanup
+```
+
+# Launch
+
+`launchd` - это *daemon*, который управляет запуском *servic*'ов (*process*'ов). Все процессы в MacOS запускаются `launchd`. При загрузке `launchd` вызывается ядром как первый процесс с `PID = 1` и дальше вся система стартует с помощью него. Так же `launchd` следит за тем чтобы процесс был запущен. Если он вдруг упадет, `launchd` ему поможет и поднимет его.
+
+## Типы *servic*'ов
+
+Servic'ы делятся на:
+
+- *daemon*'ы – запускаются после запуска системы до входа в систему, от имени `root`. 
+- *agent*'ы – запускаются после входа в систему, от имени вошедшего в систему пользователя. 
+
+## Job definition
+
+*Job definition* – `.plist` файл, который определяет порядок запуска *servic*'а. `.plist` имеет стандартизованный формат в виде *XML*. Файлы  `.plist` размещаются в каталогах:
+
+| Type           | Location                        | Run on behalf of                                             |
+| -------------- | ------------------------------- | ------------------------------------------------------------ |
+| User Agents    | `~/Library/LaunchAgents`        | *agent*'ы конкретного пользователя. Исполняются при авторизации конкретного пользователя |
+| Global Agents  | `/Library/LaunchAgents`         | *agent*'ы всех пользователей. Исполняются при авторизации любого пользователя. |
+| Global Daemons | `/Library/LaunchDaemons`        | *daemon*'ы всех пользователей. Исполняются после запуска системы. |
+| System Agents  | `/System/Library/LaunchAgents`  | Создаются операционной системой, пользователь не должен их изменять |
+| System Daemons | `/System/Library/LaunchDaemons` | Создаются операционной системой, пользователь не должен их изменять |
+
+После запуска системы `lanchd` запускает *daemon*'ы из каталогов `/System/Library/LaunchDaemons` и `/Library/LaunchDaemons`. Когда пользователь входит в систему, `lanchd` запускает *agent*'ы из каталогов `/System/Library/LaunchAgents`, `/Library/LaunchAgents` и `~/Library/LaunchAgents`.
+
+## `launchctl`
+
+Приложение командной строки, через которое можно управлять работой `launchd`.
+
+Наиболее частые случаи использования:
+
+- *Load* и *start job*'ы
+
+  ```bash
+  launchctl load -w
+  ```
+
+- *Stop* и *unload job*'ы
+
+  ```bash
+  launchctl unload -w
+  ```
+
+  
+
+### `list`
+
+Посмотреть список загруженных *job*'s:
+
+```bash
+$ launchctl list
+PID	Status	Label
+-	0	    com.apple.SafariHistoryServiceAgent
+-	-9	    com.apple.progressd
+845	0	    abnerworks.Typora.6092
+```
+
+`PID` – PID *job*'ы, если она *is running*.
+
+### `load` и `unload`
+
+*Load* и *start job*'у до тех пор пока *job*'а не будет помечена как `disabled`:
+
+```bash
+launchctl load
+```
+
+*Stop* и *unload job*'у. *Job*'а будет заново запущена при следующем *login/reboot*.
+
+```bash
+launchctl unload
+```
+
+------
+
+*Load* и *start job*'у, а также пометить ее как `not disabled`. *Job*'а будет заново запущена при следующем *login/reboot*.
+
+```bash
+launchctl load -w
+```
+
+Stop и unload job'у, а также помечает ее как `disabled`. *Job*'а НЕ будет заново запущена при следующем *login/reboot*.
+
+```bash
+launchctl unload -w
+```
+
+### `start` и `stop`
+
+Используются только для ручного start и stop job'ы при тестировании и отладке.
+
+*Start job*'ы:
+
+```bash
+launchctl start
+```
+
+*Stop job*'ы:
+
+```bash
+launchctl stop
+```
+
+# `hosts`
+
+Команда:
+
+```bash
+sudo nano /private/etc/hosts
+```
+

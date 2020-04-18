@@ -1038,6 +1038,16 @@ created: function() {
 
 - `mounted` *hook* (из документации)
 
+# Vue-cli
+
+Установка:
+
+```bash
+npm install -g @vue/cli
+```
+
+
+
 #  tiptap
 
  https://github.com/scrumpy/tiptap 

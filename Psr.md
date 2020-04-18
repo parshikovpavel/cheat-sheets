@@ -328,19 +328,23 @@ if (
 
 ```
 
-### if, elseif, else
+### `if`, `elseif`, `else`
 
 Особенности написания условных операторов:
 
-·      else и elseif находятся на той же строке, что и предшествующая закрывающая фигурная скобка
+- `else` и `elseif` находятся на той же строке, что и предшествующая закрывающая фигурная скобка
 
-·      `elseif` следует использовать вместо `else if`, чтобы все ключевые слова выглядели как одно слово.
+- `elseif` следует использовать вместо `else if`, чтобы все ключевые слова выглядели как одно слово.
 
-**if** ($expr1) {
-     // if body
- } **elseif** ($expr2) {
-     // elseif body } **else** {
-     // else body; }
+```php
+if ($expr1) {
+    // if body
+} elseif ($expr2) {
+    // elseif body
+} else {
+    // else body;
+}
+```
 
 ### switch, case
 
@@ -411,15 +415,21 @@ for (
 **foreach** ($iterable **as** $key => $value) {
      *// foreach body* }
 
-### try, catch, finally
+### `try`, `catch`, `finally`
 
 Синтаксис:
 
-**try** {
-     *// try body* } **catch** (FirstThrowableType $e) {
-     *// catch body* } **catch** (OtherThrowableType $e) {
-     *// catch body* } **finally** {
-     *// finally body* }
+```php
+try {
+    // try body
+} catch (FirstThrowableType $e) {
+    // catch body
+} catch (OtherThrowableType $e) {
+    // catch body
+} finally {
+    // finally body
+}
+```
 
 ## Операторы
 

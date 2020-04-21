@@ -298,7 +298,7 @@ brew unlink [options] formula
 
 ## `start`
 
-*Start* `<service>` немедленно и зарегистрировать его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+*Start* `<service>` немедленно и зарегистрировать его для запуска *at login* (если без `sudo`, как *agent*) или *at boot* (если с `sudo`, как *daemon*):
 
 ```
 [sudo] brew services start <service>
@@ -306,7 +306,7 @@ brew unlink [options] formula
 
 ## `stop`
 
-*Stop* `<service>` немедленно и отменить регистрацию его для запуска *at login* (как *agent*) или *at boot* (как *daemon*):
+*Stop* `<service>` немедленно и отменить регистрацию его для запуска *at login* (если без `sudo`, как *agent*) или *at boot* (если с `sudo`, как *daemon*):
 
 ```
 [sudo] brew services stop <service>

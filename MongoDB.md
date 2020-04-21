@@ -1,4 +1,44 @@
-#  Состав приложения
+
+
+# Конфигурирование
+
+## Установка
+
+- Подключить *mongodb tap*:
+
+  ```bash
+  brew tap mongodb/brew
+  ```
+
+- установить:
+
+  ```php
+  brew install mongodb-community
+  ```
+
+- запустить:
+
+  ```bash
+  brew services start mongodb-community
+  ```
+
+### Возможные проблемы
+
+Ошибка в `mongo.log`:
+
+```
+Attempted to create a lock file on a read-only directory: /usr/local/var/mongodb, terminating
+```
+
+Необходимо изменить *file owner*'а для *directory*:
+
+```bash
+sudo chown -Rv <user_name> /usr/local/var/mongodb
+```
+
+
+
+##  Состав приложения
 
 Бинарные файлы находятся в папке `/usr/local/bin/`:
 
@@ -12,17 +52,13 @@
 * `/usr/local/var/log/mongodb` – директория для логов
 * `/usr/local/var/mongodb` – директория для данных
 
+## `mongod.conf`
+
 Минимальная конфигурация:
 
 ```yaml
 storage:
   dbPath: /usr/local/var/mongodb
-```
-
-Запуск сервера:
-
-```bash
-mongod --config /usr/local/etc/mongod.conf
 ```
 
 # Термины
@@ -1292,6 +1328,26 @@ Write conсern (проблема записи) – описывает урове
 
 - `j` – при `true` требует, чтобы запись была выполнена в журнал на диске (on-disk journal) (наверное, аналог журнала транзакции и *durability*)
 - `wtimeout` – таймаут записи, в случае его превышения операция отваливается с ошибкой
+
+# Резервное копирование
+
+## `mongodump`
+
+Сделать *backup* одной базы данных:
+
+```bash
+mongodump --db <db_name>
+```
+
+
+
+## `mongorestore`
+
+Восстановить базу данных из папки `~/dump/database` и поместить в новую базу `<db_name>`:
+
+```bash
+mongorestore --db <db_name> ~/dump/database
+```
 
 
 

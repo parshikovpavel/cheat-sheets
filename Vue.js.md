@@ -55,19 +55,25 @@ var vm = new Vue({
   vm.<property> = <value>            
   ```
 
-- `methods` – методы, которые будут подмешаны (*mixed*) к *Vue instance*. *Method*'ы доступны через *Vue instance*:
-
-  ```javascript
-  vm.<method>()
-  ```
-
-  Внутри *method*'а' переменная `this` указывает на *Vue instance*. 
-
-  Используются в качестве [*handler*'а *event*'ов](#события)
-  
 - `filters` – [фильтры](#фильтры).
 
 - `components` – регистрация [*local component*'s](#local-регистрация)
+
+## *Method*'ы
+
+- `methods` – методы, которые будут подмешаны (*mixed*) к *Vue instance*. 
+
+*Method*'ы доступны через *Vue instance*:
+
+```javascript
+vm.<method>()
+```
+
+Внутри *method*'а переменная `this` указывает на *Vue instance*. 
+
+Используются в качестве [*handler*'а *event*'ов](#события)
+
+Существует распространенное заблуждение, что *method*'ы «вызываются только один раз» при отрисовке, если использованы в *expression* в *template*. На самом деле это не так. На самом деле при вызове *method*'а из *templat*'а, устанавливается реактивная зависимость на те поля из массива `data` (только `data`????), которые используются по всему стеку (!) вызовов *method*'а. Если эти поля из массива `data` изменяют свое значение, это вызывает re-rendering элемента.
 
 ## Вычисляемые свойства
 
@@ -106,9 +112,35 @@ var vm = new Vue({
 
   
 
- 
+# Ограничения реактивности
 
-  
+Вследствие ограничений JavaScript, есть виды изменений, которые Vue **не может обнаружить**. Однако существуют способы обойти их, чтобы сохранить реактивность.
+
+## Изменения `Object`
+
+Vue не может обнаружить добавление (через `object.property` и `object["property"]`) или удаление *property* (через `delete object.property` и `delete object["property"]`). 
+
+Невозможно никак динамически добавить новое реактивное *property* верхнего уровня в объект `data` (корневое реактивное *property* *Vue instance*'а).
+
+Однако можно добавить или удалить реактивное *property*, которое вложено в *property* из объекта `data`.
+
+Добавление *reactive property*:
+
+```javascript
+this.$set( this.<someObject>, <propertyName/index>, <value> )
+this.$set( this.someObject, 'b', 2 )
+```
+
+Удаление *reactive property*:
+
+```javascript
+this.$delete( this.<someObject>, <propertyName/index> )
+this.$delete( this.someObject, 'b' )
+```
+
+
+
+
 
 На одной странице можно запустить несколько *Vue instance*'ов, которые примонтированы к разным элементам DOM. Это имеет смысл использовать, если *Vue instance* примонтирован к небольшим компонентам – карусель или веб-форма.
 
@@ -345,6 +377,46 @@ Vue.filter( 'my-filter', function (value) { /* return ... */  })
   });
   </script>
   ```
+
+Чтобы передать параметр в *method*, например в цикле, следует подставить этот параметр в момент вызова *method*'а:
+
+```html
+<tag 
+    v-for="item in items" 
+	@click="func(item)"
+></tag>
+<script>
+new Vue({
+  /* ... */
+  methods: {
+    func (item) { 
+        ...
+    }
+  }
+});
+</script>
+```
+
+Если необходимо передать в *method* помимо пользовательского параметра, оригинальное событие `event` ,  то следует передать в *method* специальную переменную `$event`: 
+
+```html
+<tag 
+    v-for="item in items" 
+	@click="func(item, $event)"
+></tag>
+<script>
+new Vue({
+  /* ... */
+  methods: {
+    func (item, event) { 
+        ...
+    }
+  }
+});
+</script>
+```
+
+
 
 # Формы
 

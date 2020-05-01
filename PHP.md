@@ -4897,7 +4897,7 @@ typedef union _zend_value {
 
 ![](https://parshikovpavel.github.io/img/php/zval3.png)
 
-<u>Размещение в памяти</u>
+<ins>Размещение в памяти</ins>
 
 Особенности:
 

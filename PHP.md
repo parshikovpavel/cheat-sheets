@@ -89,49 +89,59 @@ mkdir -p /tmp/pear/cache
 
 Максимальное время в секундах, в течение которого скрипт должен полностью загрузиться. Если этого не происходит, парсер завершает работу скрипта с `Fatal Error`. По умолчанию на загрузку дается 30 секунд. Если PHP запущен из командной строки, это значение по умолчанию равно `0`.
 
-## Ключи в режиме командной строки
+# Ключи в режиме командной строки
 
-**Все параметры** **php**
+- Все параметры PHP
 
-php -h
+  ```bash
+  php -h
+  ```
 
-Запуск встроенного в php веб-сервера
+- Запуск встроенного в php веб-сервера
 
-php -S localhost:8000
+  ```bash
+  php -S localhost:8000
+  ```
 
-Если в конце указать PHP-файл, то он рассматривается как скрипт "маршрутизации". Скрипт выполняется в самом начале после каждого HTTP-запроса. Если этот скрипт возвращает FALSE, то запрашиваемый ресурс возвращается как есть. В противном случае браузеру будет возвращен вывод этого скрипта.
+  Если в конце указать PHP-файл, то он рассматривается как скрипт "маршрутизации". Скрипт выполняется в самом начале после каждого HTTP-запроса. Если этот скрипт возвращает `FALSE`, то запрашиваемый ресурс возвращается как есть. В противном случае браузеру будет возвращен вывод этого скрипта.
 
-Для запуска на 80 порту нужен sudo. По умолчанию текущая папка является корневой для сервера.
+  Для запуска на 80 порту нужен `sudo`. По умолчанию текущая папка является корневой для сервера.
 
-Версия PHP
+- Версия PHP
 
-```bash
-php -v
-```
+- ```bash
+  php -v
+  ```
 
-Вызвать `phpinfo()` и вывести его результат.
+- Вызвать `phpinfo()` и вывести его результат.
 
-```bash
-php -i
-```
+- ```bash
+  php -i
+  ```
 
-Вывод подключенных модулей
+- Вывод подключенных модулей
 
-```bash
-php -m
-```
+- ```bash
+  php -m
+  ```
 
-Вывод всех загруженных конфигурационных файлов
+- Вывод всех загруженных конфигурационных файлов
 
-```bash
-$ php --ini
-Configuration File (php.ini) Path: /usr/local/etc/php/7.4
-Loaded Configuration File:         /usr/local/etc/php/7.4/php.ini
-Scan for additional .ini files in: /usr/local/etc/php/7.4/conf.d
-Additional .ini files parsed:      /usr/local/etc/php/7.4/conf.d/ext-opcache.ini
-```
+- ```bash
+  $ php --ini
+  Configuration File (php.ini) Path: /usr/local/etc/php/7.4
+  Loaded Configuration File:         /usr/local/etc/php/7.4/php.ini
+  Scan for additional .ini files in: /usr/local/etc/php/7.4/conf.d
+  Additional .ini files parsed:      /usr/local/etc/php/7.4/conf.d/ext-opcache.ini
+  ```
 
+- Запустить консольную версию в виде интерактивной консоли, в которую вводишь команды и сразу возвращается результат исполнения:
 
+  ```bash
+  php -a
+  ```
+
+  
 
 ## Синтаксис
 
@@ -3754,8 +3764,8 @@ public void __unset ( string $name )
 
 Есть три взаимоисключающих способа управления сериализацией:
 
-- `__sleep()` и `__wakeup()`
-- `__serialize()` и `__unserialize()`
+- `__sleep()` и `__wakeup()` ([1](#sleep-wakeup))
+- `__serialize()` и `__unserialize()` ([1](#serialize-unserialize))
 - [Интерфейс `Serializable`](#Serializable)
 
 #### `__sleep()` и `__wakeup()`
@@ -3909,11 +3919,7 @@ var_dump($b);   # object(A)#2 (1) {
 
 ### `__clone()`
 
-```php
-__clone ( void ) : void
-```
-
-Вызывается для вновь склонированного объекта, для его дополнительной настройки
+[Клонирование объектов](#клонирование-объектов)
 
 ### `__debugInfo()` 
 
@@ -3947,79 +3953,99 @@ var_dump(new C(42)); # object(C)#1 (1) {
 
 ## Итерирование
 
-При итерации объекта, итерируются все видимые в данном контексте свойства (если снаружи итерирование – публичные, изнутри – приватные и защищенные).
+При итерации объекта, итерируются все видимые в данном контексте свойства (если снаружи итерирование – `public`, изнутри – также `private` и `protected`).
 
-Подробнее про Iterator, Traversable, IteratorAggregate здесь Встроенные интерфейсы.
+Подробнее про [`Iterator`](#Iterator), [`Traversable`](#Traversable), [`IteratorAggregate`](#IteratorAggregate).
 
-В SPL включено несколько встроенных классов итераторов, которые позволяют вам обернуть в объект-итератор некую другую сущность, например массив:
+В SPL включено несколько встроенных классов итераторов, которые позволяют обернуть в объект-итератор некую другую сущность, например `array`:
 
-$iterator = **new** ArrayIterator([1, 2, 3]);
- **foreach** ($iterator **as** $key => $val) {
-     // ... 
- }
+```php
+$iterator = new ArrayIterator([1, 2, 3]);
+foreach ($iterator as $key => $val) {
+    // ... 
+}
+```
 
-123
+Список готовых обёрток-итераторов включает:
 
-Список готовых обёрток-итераторов включает DirectoryIterator (итерирует по списку файлов в заданной директории), RecursiveArrayIterator (рекурсивный обход вложенных массивов), FilterIterator (обход с отбрасыванием нежелательных значений) и другие. Эти обертки реализуют Iterator, а потому могут быть задекорированы внутри IteratorAggregate:
+- `DirectoryIterator` – итерирует по списку файлов в заданной директории
+- `RecursiveArrayIterator` – рекурсивный обход вложенных массивов
+- `FilterIterator` – обход с отбрасыванием нежелательных значений
+- ...
 
-**class** Example **implements** IteratorAggregate
- {
-     **protected** **$****storage** = [];
-     */\* Дополнительная функция для добавления элемента \*/*     **public** **function** set($key, $val)
-     {
-         $this->**storage**[$key] = $val;
-     }
-     */\* Дополнительная функция для получения значения элемента \*/*     **public** **function** get($key)
-     {
-         **return** $this->**storage**[$key];
-     }
-     */\* Функция, требующаяся согласно интерфесу IteratorAggregate* **/*     **public** **function** getIterator(): Traversable
-     {
-         **return** **new** ArrayIterator($this->**storage**);
-     }
- }
+Эти обертки реализуют `Iterator`, а потому могут быть задекорированы внутри `IteratorAggregate`:
 
-В 7.1 появился очередной «псевдотип» «iterable». Диаграмма типов (классов):
+```php
+class Example implements IteratorAggregate
+{
+    protected $storage = [];
+    /* Дополнительная функция для добавления элемента */
+    public function set($key, $val)
+    {
+        $this->storage[$key] = $val;
+    }
+    /* Дополнительная функция для получения значения элемента */
+    public function get($key)
+    {
+        return $this->storage[$key];
+    }
+    /* Функция, требующаяся согласно интерфесу IteratorAggregate */
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator($this->storage);
+    }
+}
+```
 
+Диаграмма классов для `iterable`:
+
+```
 iterable ---> array
+          --> Traversable ---> Iterator
+                           --> IteratorAggregate
+                           --> Generator
+```
 
-​          --> Traversable ---> Iterator
+`object`, допускающие нативную итерацию по своим видимым свойствам в `iterable` не вошли. 
 
-​                           --> IteratorAggregate
+## Ключевое слово `final`
 
-​                           --> Generator
+Ключевое слово `final` можно ставить перед *method*'ом или перед *class*'ом. 
 
-Объекты, допускающие нативную итерацию по своим видимым свойствам («просто object» тип), в тип iterable не вошли. 
+`final` перед *method*'ом означает, что *method* нельзя переопределить в дочерних классах. 
 
-### Ключевое слово final
+```php
+class BaseClass {
+    final public function moreTesting() {}
+}
+```
 
-Ключевое слово final можно ставить перед методом или перед классом. 
+`final` перед *class*'ом означает, что он не может быть унаследован. 
 
-final перед методом означает, что метод нельзя переопределить в дочерних классах. 
+```php
+final class BaseClass { }
+```
 
-**class** BaseClass {
-     **final public function** moreTesting() {}
- }
+## Клонирование объектов
 
-final перед классом означает, что он не может быть унаследован. 
+```php
+__clone ( void ) : void
+```
 
-**final** **class** BaseClass { }
+Вызывается для вновь склонированного объекта, для его дополнительной настройки
 
-### Клонирование объектов
-
- По завершении клонирования, если у класса был определен метод __clone(), то этот метод __clone() вызывается у свежесозданной копии объекта, для возможного изменения всех необходимых свойств.
-
+```php
 class A {}
 
 class B
 {
-    public $object1;
-    public $object2;
+    public $object1;
+    public $object2;
 
-    function __clone()
-    {
-        $this->object1 = clone $this->object1;
-    }
+    function __clone()
+    {
+        $this->object1 = clone $this->object1;
+    }
 }
 
 $obj1 = new B();
@@ -4029,127 +4055,103 @@ $obj1->object2 = new A();
 
 $obj2 = clone $obj1;
 
-/* object2 обоих объектов указывают
-на один экземпляр, а object1 на разные */
+/* object2 обоих объектов указывают на один экземпляр, а object1 на разные */
 var_dump($obj1); # object(B)#1 (2) {
-
-                 #   ["object1"] => object(A)#2 (0)
-
-{}
-
-                 #   ["object2"]=>  object(A)#3 (0) {}
-
-                 # }
+                 #   ["object1"] => object(A)#2 (0) {}
+                 #   ["object2"]=>  object(A)#3 (0) {}
+                 # }
 
 var_dump($obj2); # object(B)#4 (2) {
+                 #   ["object1"] => object(A)#5 (0) {}
+                 #   ["object2"] => object(A)#3 (0) {}
+                 # }
+```
 
-                 #   ["object1"] => object(A)#5 (0)
+## Позднее статическое связывание
 
-{}
+Позднее статическое связывание (*LSB*, *Late Static Binding*) – противоположность «раннему статическому связыванию» (через `self::`).
 
-                 #   ["object2"] => object(A)#3 (0)
+Функция:
 
-{}
+```php
+get_called_class ( void ) : string
+```
 
-                 # }
+возвращает имя класса, полученное с помощью *LSB*, в контексте которого в данный момент работает код.
 
-### Позднее статическое связывание
+Статические ссылки на текущий класс `self::` и `__CLASS__`, вычисляются в том месте, где они были определены.
 
-Строка с именем класса позднего статического связывания возвращается функцией get_called_class() . Статические ссылки на текущий класс self:: и __CLASS__, вычисляются в том месте, где они были определены.
+Можно использовать `static::` и для вызова нестатических методов. Отличие от использование `$this` в том, что ссылка через `$this` на `private` метод приводит к вызову метода в родительском классе, ссылка на приватный метод через `static::` всегда приводит к его вызову в дочернем классе из контекста родительского, и в случае приватного метода выдаст ошибку:
 
-Можно использовать static:: и для вызова нестатических методов. Отличие от использование $this в том, что ссылка через $this на private метод приводит к вызову метода в родительском классе, ссылка на приватный метод через static:: всегда приводит к его вызову в дочернем классе из контекста родительского, и в случае приватного метода выдаст ошибку:
+```php
+class A
+{
+    private function foo() {}
 
-**class** A
- {
-     **private function** foo() {}
+    public function test()
+    {
+        $this->foo();  # Вызов A::foo(), Success
+        static::foo(); # Вызов C::foo(), Fatal error: Uncaught Error: Call to private method C::foo() from context 'A'
+    }
+}
 
-     **public function** test()
-     {
-         $this->foo();  # Вызов A::foo(), Success
-         **static**::foo(); # Вызов C::foo(), Fatal error: Uncaught Error: Call to private method C::foo() from context 'A'
-     }
+class C extends A
+{
+    private function foo() {}
+}
 
- }
+$c = new C();
+$c->test();
+```
 
- **class** C **extends** A
- {
-     **private function** foo() {}
- }
+В статическом контексте вызовы через `parent::` и `self::` перенаправляют в вызываемую функцию информацию вызова и поэтому вызов через `static::` сработает как ожидается на дочернем классе. Вызов с указанием названия родительского класса `A::` такую информацию не перенаправляет:
 
- $c = **new** C();
- $c->test();
+```php
+class A
+{
+    static public function f1()
+    {
+        static::f2();
+    }
 
-В статическом контексте вызовы через parent:: и self:: перенаправляют в вызываемую функцию информацию вызова и поэтому вызов через static:: сработает как ожидается на дочернем классе. Вызов с указанием названия родительского класса A:: такую информацию не перенаправляет:
+    static public function f2()
+    {
+        print "A";
+    }
+}
 
-**class** A
- {
-     **static public function** f1()
-     {
-         **static**::*f2*();
-     }
+class B extends A
+{
+    static public function test()
+    {
+        A::f1();      //print А
+        parent::f1(); //print B
+        self::f1();   //print B
+    }
 
-     **static public function** f2()
-     {
-         **print** **"A"**;
-     }
+    static function f2()
+    {
+        print "B\n";
+    }
+}
+```
 
- }
+## Сериализация
 
- **class** B **extends** A
- {
-     **static public function** test()
-     {
-         A::*f1*();      *//print А*         **parent**::*f1*(); *//print B*         **self**::*f1*();   *//print B*     }
+Функция `serialize()` возвращает строковое представление объекта и сохранит имя класса и все его свойства, однако методы не сохраняются. Для того, чтобы иметь возможность сделать `unserialize()` для объекта нужно, чтобы класс этого объекта был определен заранее. 
 
-     **static function** f2()
-     {
-         **print** **"B****\n****"**;
-     }
-
- }
-
-### Позднее статическое связывание
-
-С версии 5.3 поддерживается «позднее статическое связывание» или LSB (Late Static Binding).в противоположность «раннему статическому связыванию» (через self).
-
-**class** A {
-     **public static** *$var* = **'A'**;
-     **public static function** get() {
-         **return static**::*$var*;
-     }
- }
-
- **class** B **extends** A {
-     **public static** *$var* = **'B'**;
- }
-
- **echo** B::*get*(); *// 'B'*
-
-Существует также специалcьная функция 
-
-**string** *get**_called**_class* ( **void** )
-
-возвращает имя класса, полученное с помощью позднего статического связывания, в контексте которого в данный момент работает ваш код.
-
-### Сериализация
-
-Функция serialize() возвращает строковое представление объекта и сохранит имя класса и все его свойства, однако методы не сохраняются. Для того, чтобы иметь возможность сделать unserialize() для объекта нужно чтобы класс этого объекта был определен заранее. 
-
+```php
 class Name {
-    public $property
-= 1;
+    public $property = 1;
 
-    public function method() {}
+    public function method() {}
 }
 
 $a = new Name;
-var_dump($a);  # object(Name)#1 (1) {
-
-               #    ["property"]=>
-
-               #       int(1)
-
-               # }
+var_dump($a);  # object(Name)#1 (1) {
+               #    ["property"]=>
+               #       int(1)
+               # }
 
 $s = serialize($a);
 
@@ -4157,22 +4159,11 @@ echo $s; # O:4:"Name":1:{s:8:"property";i:1;}
 
 $b = unserialize($s);
 
-var_dump($b); # object(Name)#2 (1)
-{
-
-              #    ["property"]=>
-
-              #       int(1)
-
-              # }
-
-Невыполнение этого требования может привести к тому, что PHP будет использовать для этого объекта класс __PHP_Incomplete_Class_Name, который не имеет методов и сделает объект бесполезным. 
-
-В PHP7 в unserialize добавлен параметр options для фильтрации десериализуемых классов:
-
-*// Преобразование всех объектов в __PHP**_Incomplete**_Class* $data = *unserialize*($foo, [**"****allowed****_****classes****"** => **false**]);
- *// Преобразование всех объектов кроме MyClass* *и MyClass**2 в __PHP**_Incomplete**_Class* $data = *unserialize*($foo, [**"****allowed****_****classes****"** => [**"****MyClass****"**, **"****MyClass****2"**]]);
- *// Поведение по умолчанию принимает все классы (можно просто не задавать второй аргумент)* $data = *unserialize*($foo, [**"****allowed****_****classes****"** => **true**]);
+var_dump($b); # object(Name)#2 (1) {
+              #    ["property"]=>
+              #       int(1)
+              # }
+```
 
 # Namespace
 
@@ -4287,7 +4278,7 @@ namespace {
 }
 ```
 
-### Импортирование и создание *alias*'а
+## Импортирование и создание *alias*'а
 
 Импортирование и создание *alias*'а выполняется с помощью оператора `use`. 
 
@@ -4385,89 +4376,115 @@ use Namespace\{
 
 При использование `use` осуществляется вставка в таблицу импорта классов, `use function` – таблицу импорта функций, `use const` – таблице импорта констант. Эти таблицы импорта различны, т.е. могут быть классы, функции и константы с одинаковым названием.
 
-## Ошибки
+# Ошибки
 
-Если php установлен как модуль apache, то ошибки php попадают также (в не зависимости от настроек php) в лог файл apache, который настраивает в конфиге виртхостов:
+Если PHP установлен как модуль *Apache*, то ошибки PHP попадают также (в не зависимости от настроек PHP) в лог файл Apache, который настраивает в конфиге виртхостов:
 
+```
 ErrorLog  c:/php/home/fishki_files/logs/s_error_log
+```
 
-Выводимые ошибки указываются в параметре error_reporting  в конфигурации php.ini:
+Выводимые ошибки указываются в параметре `error_reporting`  в конфигурации `php.ini`:
 
+```
 error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+```
 
-Также значение директивы error_reporting можно задать во время выполнения с помощью функции  error_reporting().
+Также значение директивы `error_reporting` можно задать во время выполнения с помощью функции  `error_reporting()`.
 
-*// Добавлять сообщения об указанных ошибках* *error**_**reporting*(**E****_****ERROR** | **E****_****WARNING** | **E****_****PARSE** | **E****_****NOTICE**);
+```php
+// Добавлять сообщения об указанных ошибках
+error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
- *// Добавлять сообщения обо всех ошибках, кроме E**_NOTICE* *error**_**reporting*(**E****_****ALL** & ~**E****_****NOTICE**);
+// Добавлять сообщения обо всех ошибках, кроме E_NOTICE
+error_reporting(E_ALL & ~E_NOTICE);
+```
 
- 
+На стадии разработки параметр `error_reporting` ставят в  `E_ALL`.  
 
-На стадии разработки параметр error_reporting ставят в  E_ALL.  
+Параметр `display_errors` определяет, включать ли данные ошибки в вывод скрипта или нет. В режиме отладки должен быть включен. 
 
-Параметр display_errors определяет, включать ли данные ошибки в вывод скрипта или нет. В режиме отладки должен быть включен. 
-
+```
 ; в php.ini
-
 display_errors = On
 
- 
+# в коде
+ini_set ( 'display_errors', true );
+```
 
-\# в коде
+Включить вывод ошибок в лог можно с помощью параметра `log_errors`:
 
-*ini_set* ( 'display_errors', true );
-
-Включить вывод ошибок в лог можно с помощью параметра log_errors:
-
+```ini
 log_errors = On
+```
 
-Файл лога указывается в параметре error_log. 
+Файл лога указывается в параметре `error_log`. 
 
+```ini
 error_log = php_errors.log
+```
 
 Задать пользовательскую функцию, как обработчик ошибок в скрипте:
 
-*/**  \* **@****param*** *callable* *$error**_handler* *Пользовательская функция-обработчик ошибок  \* **@****param*** *int* *$error**_types* *Какие ошибки будут показаны в отчете  \*/* **mixed** *set**_**error**_**handler* ( **callable** $error_handler [, **int** $error_types = **E****_****ALL** | **E****_****STRICT** ] )
+```php
+/**
+ * @param callable $error_handler Пользовательская функция-обработчик ошибок
+ * @param int $error_types Какие ошибки будут показаны в отчете
+ */
+mixed set_error_handler ( callable $error_handler [, int $error_types = E_ALL | E_STRICT ] )
 
- 
 
-В PHP 7 при возникновении фатальных ошибок (E_ERROR) и фатальных ошибок с возможностью обработки (E_RECOVERABLE_ERROR) будет выброшен exception, а не произойдет завершение скрипта. Другие виды ошибок, такие как warning и notice остаются без изменения в php 7. Исключения выброшенные из E_ERROR и E_RECOVERABLE_ERROR не наследуются от Exception., чтобы предотвратить обработку этих ошибок кодом, написанным под PHP5. Они являются экземпляром нового класса: Error. 
+```
 
-   
+При возникновении фатальных ошибок `E_ERROR` и фатальных ошибок с возможностью обработки `E_RECOVERABLE_ERROR` будет выброшено исключение, а не произойдет завершение скрипта. Другие виды ошибок, такие как `Warning` и `Notice` исключение не выбрасывают. Исключения выброшенные при ошибках `E_ERROR` и `E_RECOVERABLE_ERROR` не наследуются от `Exception`, чтобы предотвратить обработку этих ошибок кодом, написанным под PHP5. Они являются экземпляром нового класса `Error`. 
 
-Экземпляр TypeError выбрасывается, когда аргументы метода или возвращаемое значение не совпадает с объявленным типом.
+![Throwable](https://parshikovpavel.github.io/img/php/Throwable.png)
 
-**function** add(int $left, int $right) {}
+Подклассы `Error`:
 
- **try** {
-     $value = add(**'left'**, **'right'**);
- }
- **catch**(TypeError $e)
- {
-     **echo** **'Parsing error!'**;
- }
+- `TypeError` – выбрасывается, когда аргументы метода или возвращаемое значение не совпадает с объявленным типом.
 
-ParseError выбрасывается, когда подключаемый (путем include/require) файл или код в eval содержит ошибки синтаксиса. 
+  ```php
+  function add(int $left, int $right) {}
+  
+  try {
+      $value = add('left', 'right');
+  }
+  catch(TypeError $e)
+  {
+      echo 'Parsing error!';
+  }
+  ```
 
-Когда условие, заданное методом assert() не выполняется, выбрасывается *AssertionError*:
+- `ParseError` – выбрасывается, когда подключаемый (путем `include`/`require`) файл или код в `eval` содержит ошибки синтаксиса. 
 
-## Исключения
+- `AssertionError` – выбрасывается когда условие, заданное методом `assert()` не выполняется
 
-Исключение можно "выбросить" при помощи throw, и можно  "поймать" оператором catch. Каждый блок try должен иметь как минимум один соответствующий ему блок catch или finally.
+# Исключения
 
-Генерируемый объект должен принадлежать классу Exception или наследоваться от Exception. Попытка сгенерировать исключение другого класса приведет к фатальной ошибке PHP.
+Исключение можно "выбросить" при помощи `throw`, и можно  "поймать" оператором `catch`. Каждый блок `try` должен иметь как минимум один соответствующий ему блок `catch` или `finally`.
 
-**try** {
-     **throw new** Exception(**'Some Exception'**);
- } **catch** (Exception $e) {
-     **echo** **'****Выброшено** **исключение****: '**,  $e->getMessage(), **"****\n****"**;
- } **finally** {
-     **echo** **"****Блок** **finally.****\n****"**;
- }
+Генерируемый объект должен наследоваться от `Throwable`. 
 
-Если исключение не будет перехвачено, PHP выдаст сообщение об ошибке, если не был определен обработчик ошибок при помощи функции set_exception_handler(). После вызова exception_handlerвыполнение будет остановлено.
+```php
+try {
+    throw new Exception('Some Exception');
+} catch (Exception $e) {
+    echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
+} finally {
+    echo "Блок finally.\n";
+}
+```
 
-*/**  \* **@****param*** *callable* *$exception**_handler* *Функция, которая будет вызываться каждый раз, когда выбрасывается неперехватываемое исключение.  \* **@****return*** *callable* *Предыдущий заданный обработчик или NULL* *в случае ошибки.  \*/* **callable** *set**_**exception**_**handler* ( **callable** $exception_handler )
+Если исключение не будет перехвачено, PHP выдаст сообщение об ошибке, если не был определен обработчик ошибок при помощи функции `set_exception_handler()`. После вызова `$exception_handler` выполнение будет остановлено.
+
+```php
+/**
+ * @param callable $exception_handler Функция, которая будет вызываться каждый раз, когда выбрасывается неперехватываемое исключение.
+ * @return callable Предыдущий заданный обработчик или NULL в случае ошибки.
+ */
+callable set_exception_handler ( callable $exception_handler )
+```
 
 Блок `catch` может принимать несколько типов исключений, эти типы разделяются символом `|`. 
 
@@ -4479,89 +4496,117 @@ try {
 }
 ```
 
-Блоки try можно вкладывать друг в друга. Для того чтобы обработку исключения передать из вложенного блока на уровень выше, исключение нужно выбросить повторно:
+Блоки `try` можно вкладывать друг в друга. Для того чтобы обработку исключения передать из вложенного блока на уровень выше, исключение нужно выбросить повторно:
 
-**try** {
-     **try** {
-         **throw new** Exception(**'foo!'**);
-     } **catch** (Exception $e) {
-         *// повторный выброс исключения*         **throw** $e;
-     }
- } **catch** (Exception $e) {
-     *var_dump*($e->getMessage()); *# string(4) "foo!"* }
+```php
+try {
+    try {
+        throw new Exception('foo!');
+    } catch (Exception $e) {
+        // повторный выброс исключения
+        throw $e;
+    }
+} catch (Exception $e) {
+    var_dump($e->getMessage()); # string(4) "foo!"
+}
+```
 
-### Наследование исключений
+## Наследование исключений
 
-Определенный пользователем класс исключения должен быть определен, как класс расширяющий (наследующий) встроенный класс Exception.  При наследовании исключений в переопределяемом конструкторе, необходимо вызвать конструктор parent::__construct(). Метод __toString() может быть переопределен, что бы обеспечить нужный вывод, когда объект преобразуется в строку.
+Определенный пользователем класс исключения должен быть определен, как класс расширяющий (наследующий) встроенный класс Exception.  При наследовании исключений в переопределяемом конструкторе, необходимо вызвать конструктор `parent::__construct()`. Метод `__toString()` может быть переопределен, что бы обеспечить нужный вывод, когда объект преобразуется в строку.
 
+```php
 /** Cвой класс исключения */
- **class** MyException **extends** Exception
- {
-     /* Переопределение конструктора, возможно с другими параметрами, т.к. конструктор это позволяет */
-     **public** **function** __construct($message = **null**, $code = 0, Exception $previous = **null**)
-     {
-         // некоторый код
-         **echo** **"****MyException****::****construct****\****n****"**;
-         **parent**::__construct($message, $code, $previous);
-     }
+class MyException extends Exception
+{
+    /* Переопределение конструктора, возможно с другими параметрами, т.к. конструктор это позволяет */
+    public function __construct($message = null, $code = 0, Exception $previous = null)
+    {
+        // некоторый код
+        echo "MyException::construct\n";
+        parent::__construct($message, $code, $previous);
+    }
 
-     // Переопределим строковое представление объекта.
-     **public function** __toString() {
-         **return** **__CLASS__** . **": [**{$this->**code**}**]:** {$this->**message**}**\n****"**;
-     }
-     
-     **public function** customFunction() {
-         **echo** **"MyException::customFunction****\n****"**;
-     }
+    // Переопределим строковое представление объекта.
+    public function __toString() {
+        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+    }
 
- }
+    public function customFunction() {
+        echo "MyException::customFunction\n";
+    }
+}
 
- **try** {
-     **throw new** MyException(**'Message exception'**, 1);
- }
- **catch**(MyException $e) {
-     **echo** $e;
-     $e->customFunction();
- }
+try {
+    throw new MyException('Message exception', 1);
+}
+catch(MyException $e) {
+    echo $e;
+    $e->customFunction();
+}
+```
 
-Последний параметр конструктора предназначен для указания ссылки на предыдущее исключение и используется при создания цепочки исключений. При обработке исключения, используя метод Exception::getPrevious(), можно пройтись по всей цепочке исключений.
+Последний параметр конструктора предназначен для указания ссылки на предыдущее исключение и используется при создания цепочки исключений. При обработке исключения, используя метод `Exception::getPrevious()`, можно пройтись по всей цепочке исключений.
 
-**try** {
-     **try** {
-         *# Вложенное исключение*         **throw** **new** InvalidArgumentException(**"****Exception****1"**, 1);
-     } **catch**(Exception $e) {
-         *# Повторное выбрасывание с указанием $**previous*          **throw** **new** BadMethodCallException(**"****Exception****2"**, 2, $e);
-     }
- } **catch**(Exception $e) {
-     *# Проход по цепочке исключений*     **do** {
-         *printf*(**"%****s****:%****d** **%****s** **(%****d****) [%****s****]****\****n****"**, $e->getFile(), $e->getLine(), $e->getMessage(), $e->getCode(), *get**_class*($e));
-     } **while**($e = $e->getPrevious());
- }
+```php
+try {
+    try {
+        # Вложенное исключение
+        throw new InvalidArgumentException("Exception1", 1);
+    } catch(Exception $e) {
+        # Повторное выбрасывание с указанием $previous 
+        throw new BadMethodCallException("Exception2", 2, $e);
+    }
+} catch(Exception $e) {
+    # Проход по цепочке исключений
+    do {
+        printf("%s:%d %s (%d) [%s]\n", $e->getFile(), $e->getLine(), $e->getMessage(), $e->getCode(), get_class($e));
+    } while($e = $e->getPrevious());
+}
+```
 
-##  `Generator`
+#  `Generator`
 
 *Generator* (генератор, сопрограмма, «корутина», *coroutine*) — подпрограмма, которая дополнительно поддерживает множество входных точек (а не одну, как обычная подпрограмма), остановку и продолжение выполнения с сохранением определённого положения.
 
-Генераторы предоставляют лёгкий способ реализации простых итераторов без использования дополнительных ресурсов или сложностей, связанных с реализацией класса, реализующего интерфейс Iterator. Пишется функция-генератор, которая вместо возвращения единственного значения может yield столько раз, сколько необходимо для генерации значений, позволяющих перебрать исходный набор данных. 
+Генераторы предоставляют лёгкий способ реализации простых итераторов без сложностей, связанных с реализацией интерфейса `Iterator`. Пишется функция-генератор, которая вместо возвращения единственного значения может делать `yield` столько раз, сколько необходимо сгенерировать значений. 
 
-Пример: реализация в виде генератора функции range(), которая генеририрует массив значений из диапазона. Использование генератора позволяет не создавать огромных массивов, занимая память, а только хранить текущее состояние генератора при переборе:
+<ins>Пример</ins>: реализация в виде генератора функции `range()`, которая генеририрует массив значений из диапазона. Использование генератора позволяет не создавать огромных массивов, занимая память, а только хранить текущее состояние генератора при переборе:
 
-**function** mrange($start,$end) 
- {
-    **for**($i = $start;$i<$end; $i++) {
-       **yield** $i;
-    }
- }
+```php
+function mrange($start,$end) 
+{
+   for($i = $start; $i<$end; $i++) {
+      yield $i;
+   }
+}
 
- $generator = mrange(10,20);
+$generator = mrange(10,20);
 
- *var_dump*($generator); *# object(Generator)#1 (0) {}*  **foreach**($generator **as** $number) {
-    **echo** $number.**"****\n****"**;
- }
+var_dump($generator);          # object(Generator)#1 (0) {}
 
- 
+foreach($generator as $number) {
+   echo $number."\n";
+}
+```
 
-Когда функция генератор будет вызвана первый раз, она вернет объект встроенного класса `Generator`, который реализует интерфейс `Iterator`. Когда все значения в генераторе закончились, функция просто завершит работу ничего не вернув. После этого основной код продолжит работу, аналогично как, например, когда в массиве закончились элементы для перебора. 
+Когда функция генератор будет вызвана первый раз, она вернет объект встроенного класса `Generator`, который реализует интерфейс `Iterator`. 
+
+```php
+Generator implements Iterator {
+public current ( void ) : mixed
+public getReturn ( void ) : mixed # Получить значение, возвращаемое генератором
+public key ( void ) : mixed
+public next ( void ) : void
+public rewind ( void ) : void
+public send ( mixed $value ) : mixed # Передать значение в генератор
+public throw ( Throwable $exception ) : mixed # Бросить исключение в генератор
+public valid ( void ) : bool
+public __wakeup ( void ) : void
+}
+```
+
+Когда все значения в генераторе закончились, функция просто завершит работу ничего не вернув. После этого основной код продолжит работу, аналогично как, например, когда в массиве закончились элементы для перебора. 
 
 Начиная с PHP 7, используя `Generator::getReturn()` можно получить значение, возвращаемое генератором через `return` после завершения генератора.  
 
@@ -4585,71 +4630,86 @@ echo "Count arguments: {$generator->getReturn()}";
 
 ```
 
-
-
 Из генератора можно не только получать, но и отправлять в него значения с помощью Generator::send(). 
 
-*/**  \* **@****param*** *mixed* *$value* *Что отправляется в генератор, будет возвращаемым значением yield* *в генераторе.  \* **@****return*** *mixed* *что было сгенерировано в генераторе через yield*  **/* **public** **mixed** Generator::*send* ( **mixed** $value )
+```php
+/**
+ * @param mixed $value Что отправляется в генератор, будет возвращаемым значением yield в генераторе.
+ * @return mixed что было сгенерировано в генераторе через yield
+ */
+public Generator::send ( mixed $value ) : mixed
 
-Эта функция передает значение в генератор как результат вызова yield  в генераторе и возобновляет работу генератора.
+```
 
-*/\* Через send() в генератор передается строка для печати \*/* **function** printer() {
-     **while** (**true**) {
-         $string = **yield**;
-         **echo** $string.**PHP_EOL**;
-     }
- }
+Эта функция передает значение в генератор как результат вызова `yield`  в генераторе и возобновляет работу генератора.
 
- $printer = printer();
- $printer->send(**'Hello world!'**);
- $printer->send(**'Bye world!'**);
+```php
+/* Через send() в генератор передается строка для печати */
+function printer() {
+    while (true) {
+        $string = yield;
+        echo $string . PHP_EOL;
+    }
+}
 
-Функция Generator::send() возвращает сгенерированное через yield значение.
+$printer = printer();
+$printer->send('Hello world!');
+$printer->send('Bye world!');
+```
 
-\# Отправка значения в генератор через параметр send()
- \# и получение результата через возвращаемое значение send()
- **function** square()
- {
-     $number = **yield**; # Здесь получается значение первый раз
-     **while**(1) {
-         \# Здесь значение отправляется, а потом получается новое
-         $number = (**yield** $number*$number);
-     }
- }
+Функция `Generator::send()` возвращает сгенерированное через `yield` значение.
 
- var_dump(square()->send(5));   # int(25)
- var_dump(square()->send(10));  # int(100)
+```php
+# Отправка значения в генератор через параметр send()
+# и получение результата через возвращаемое значение send()
+function square()
+{
+    $number = yield; # Здесь получается значение первый раз
+    while(1) {
+        # Здесь значение отправляется, а потом получается новое
+        $number = (yield $number*$number);
+    }
+}
 
-yield может также генерировать значения с ключами:
+var_dump(square()->send(5));   # int(25)
+var_dump(square()->send(10));  # int(100)
+```
 
-**function** gen()
- {
-     **for**($i=1;;$i++)
-         **yield** **"Line**$i**"** => $i;
- }
+`yield` может также генерировать значения с ключами:
 
- $gen = gen();
- **echo** **"**{$gen->key()} **=>** {$gen->current()}**"**; *# Line1 => 1* $gen->next();
- **echo** **"**{$gen->key()} **=>** {$gen->current()}**"**; *# Line2 => 1*
+```php
+function gen()
+{
+    for($i=1;;$i++)
+        yield "Line$i" => $i;
+}
 
-Генераторы могут отдавать значения по ссылке. Как и при возврате ссылки из функции необходимо добавить амперсанд (&) перед именем функции.
+$gen = gen();
+echo "{$gen->key()} => {$gen->current()}"; # Line1 => 1
+$gen->next();
+echo "{$gen->key()} => {$gen->current()}"; # Line2 => 1
+```
 
-**function** &gen_reference() {
-     $value = 3;
-     **while** ($value>0) {
-         **yield** $value;
-         **echo** $value; # 2... 1... 0... 
-     }
- }
+Генераторы могут отдавать значения по ссылке. Как и при возврате ссылки из функции необходимо добавить амперсанд `&` перед именем функции.
 
- \# Так как генератор возвращает ссылку
- \# при изменении $number в цикле
- \# $value в gen_reference() также меняется
- **foreach** (gen_reference() **as** &$number) {
-     $number--.**'...** **'**;
- }
+```php
+function &gen_reference() {
+    $value = 3;
+    while ($value>0) {
+        yield $value;
+        echo $value; # 2... 1... 0... 
+    }
+}
 
-В PHP 7, делегирование *generator*'а позволяет получать значения из другого `Generator`, объекта `Traversable` или `array`, используя `yield from`. 
+# Так как генератор возвращает ссылку
+# при изменении $number в цикле
+# $value в gen_reference() также меняется
+foreach (gen_reference() as &$number) {
+    $number--.'... ';
+}
+```
+
+Делегирование *generator*'а позволяет получать значения из другого `Generator`, объекта `Traversable` или `array`, используя `yield from`. 
 
 `yield from` не сбрасывает ключи – ключи, возвращенные из объекта `Traversable` или `array`, сохранятся. В итоге ключи для каждого из генераторов (внутреннего и внешнего) считаются отдельно, поэтому могут совпадать, как в примере:
 
@@ -4687,64 +4747,70 @@ array iterator_to_array ( Traversable $iterator [, bool $use_keys = true ] ): ar
 
 При возврате значений с одинаковыми ключами из внешнего `yield` и внутреннего `yield from`, они перезапишут друг друга. Нужно отключить использование ключей, установив `$use_keys = false`. 
 
-Можно в качестве значения return генератора указать yield from, тогда результатом внешнего генератор будет результат внутреннего генератора:
+Можно в качестве значения `return` генератора указать `yield from`, тогда результатом внешнего генератор будет результат внутреннего генератора:
 
-**<?php** //Возврат значения из функции-генератора через yield from
- **function** outer_generator()
- {
-     **yield** from [1]; # iterable-массив
-     **yield** from **new** ArrayIterator([2]); # iterable объект класса Traversable
-     **return yield** from inner_generator(); # возврат значения внутреннего генератора
- }
+```php
+//Возврат значения из функции-генератора через yield from
+function outer_generator()
+{
+    yield from [1]; # iterable-массив
+    yield from new ArrayIterator([2]); # iterable объект класса Traversable
+    return yield from inner_generator(); # возврат значения внутреннего генератора
+}
 
- **function** inner_generator()
- {
-     **yield** 3;
-     **return** 4;
- }
+function inner_generator()
+{
+    yield 3;
+    return 4;
+}
 
- $gen = outer_generator();
- **foreach**($gen **as** $num)
- {
-     **echo** **"**$num**... "**; # 1... 2... 3...
- }
- **echo** $gen->getReturn(); # 4
+$gen = outer_generator();
+foreach($gen as $num)
+{
+    echo "$num... "; # 1... 2... 3...
+}
+echo $gen->getReturn(); # 4
 
-Т.к. генератор реализует интерфейс Traversable, он может использоваться внутри интерфейса IteratorAggregate. Это поволяет сделать custom итерируемый класс со своими функциями, например, custom итератор с массивом внутри:
+```
 
-*//Использование генератора совместно с IteratorAggregate* **class** myArrayObject **implements** IteratorAggregate
- {
-    **private** **$data** = [];
-    
+Т.к. генератор реализует интерфейс `Traversable`, он может использоваться внутри интерфейса `IteratorAggregate`. Это поволяет сделать *custom*'ный итерируемый класс со своими функциями, например, *custom*'ный итератор с массивом внутри:
 
-    **public function** __construct($data) 
-    {
-       $this->**data** = $data;
-    }
-    
-    **public function** getIterator() {
-       **foreach**($this->**data** **as** $key => $value) {
-          **yield** $key => $value;
-       }
-    }
+```php
+//Использование генератора совместно с IteratorAggregate
+class myArrayObject implements IteratorAggregate
+{
+   private $data = [];
+   
+   public function __construct($data) 
+   {
+      $this->data = $data;
+   }
+   
+   public function getIterator() {
+      foreach($this->data as $key => $value) {
+         yield $key => $value;
+      }
+   }
+}
 
- }
 
- **foreach**(**new** myArrayObject([1,2,3]) **as** $key => $value) {
-    **echo** **"**$key**=>**$value**\n****"**;
- }
+foreach(new myArrayObject([1,2,3]) as $key => $value) {
+   echo "$key=>$value\n";
+}
+```
 
 `Generator` (как и любой `iterable`) можно использовать при вызове функции вместе с многоточием `...`, чтобы распаковать в список аргументов ([1](#список-аргументов-переменной-длины))
 
-Недостатки генераторов по сравнению с другими итераторами:
+Недостатки *generator*'ов по сравнению с другими *iterator*'ов:
 
-·      генераторы могут быть только однонаправленными итераторами. Их нельзя перемотать назад после старта итерации. 
+- *generator*'ы могут быть только однонаправленными итераторами. Их нельзя перемотать назад после старта итерации. 
 
-·      один и тот же генератор нельзя использовать несколько раз: генератор необходимо пересоздавать каждый раз, снова вызвав функцию генератора.
+- один и тот же *generator* нельзя использовать несколько раз: *generator* необходимо пересоздавать каждый раз, снова вызвав функцию *generator*'а.
 
- 
 
-## zval
+
+
+# zval
 
 ### Структура zval
 
@@ -5675,330 +5741,316 @@ foo(5); *// Константа, а не переменная*
 
 ## Сборка мусора
 
-Как только "refcount" станет равным нулю, контейнер уничтожается. "refcount" уменьшается на единицу при уходе переменной из области видимости (например, в конце функции) или при удалении этой переменной (например при вызове unset()).
+Как только `refcount` станет равным нулю, контейнер уничтожается. `refcount` уменьшается на единицу при уходе переменной из области видимости (например, в конце функции) или при удалении этой переменной (например при вызове `unset()`).
 
-$a = **"new string"**;
- $c = $b = $a;
- xdebug_debug_zval( **'a'** ); *//a: (refcount=3, is_ref=0)='new string'* $b = 42;
- xdebug_debug_zval( **'a'** );*// a: (refcount=2, is_ref=0)='new string'* **unset**( $c );
- xdebug_debug_zval( **'a'** );*// a: (refcount=1, is_ref=0)='new string'*
+```php
+$a = "new string";
+$c = $b = $a;
+xdebug_debug_zval( 'a' ); //a: (refcount=3, is_ref=0)='new string'
+$b = 42;
+xdebug_debug_zval( 'a' );// a: (refcount=2, is_ref=0)='new string'
+unset( $c );
+xdebug_debug_zval( 'a' );// a: (refcount=1, is_ref=0)='new string'
+```
 
-Все усложняется с составными типами данных, такими как массивы (array) и объекты (object). В отличии от скалярных (scalar) значений, массивы и объекты хранят свои свойства в собственных таблицах имен. Это значит, что следующий пример создаст сразу три zval контейнера:
+Все усложняется с составными типами данных, такими как `array` и `object`. В отличии от *scalar*'ных значений, `array` и `object` хранят свои свойства в собственных таблицах имен. Это значит, что следующий пример создаст сразу три `zval` контейнера:
 
-$a = [**'meaning'** => **'life'**, **'number'** => 42 ];
- xdebug_debug_zval( **'a'** );  # a: (refcount=1, is_ref=0)=array [
-                            \#     'meaning' => (refcount=1, is_ref=0)='life',
-                            \#     'number' => (refcount=1, is_ref=0)=42
-                            \# ]
+```php
+$a = ['meaning' => 'life', 'number' => 42 ];
+xdebug_debug_zval( 'a' );  # a: (refcount=1, is_ref=0)=array [
+                           #     'meaning' => (refcount=1, is_ref=0)='life',
+                           #     'number' => (refcount=1, is_ref=0)=42
+                           # ]
+```
 
-   
+![garbage](https://parshikovpavel.github.io/img/php/garbage1.png)
 
-Элементы массива работают как отдельные переменные. Т.е. при присвоении по значению одного элемента другому используется техника copy-on-write. 
+Элементы `array` работают как отдельные переменные. Т.е. при присвоении по значению одного элемента другому используется техника *copy-on-write*. 
 
-$a = array( 'meaning'
-=> 'life', 'number' => 42
-);
+```php
+$a = array( 'meaning' => 'life', 'number' => 42 );
 $a['life'] = $a['meaning'];
-xdebug_debug_zval( 'a' );  # a: (refcount=1, is_ref=0)=array (
+xdebug_debug_zval( 'a' );  # a: (refcount=1, is_ref=0)=array (
+                           #     'meaning' => (refcount=2, is_ref=0)='life',
+                           #     'number' => (refcount=1, is_ref=0)=42,
+                           #     'life' => (refcount=2, is_ref=0)='life'
+                           # ]
+```
 
-                           #    
-
-'meaning' => (refcount=2, is_ref=0)='life',
-
-                           #     'number' => (refcount=1, is_ref=0)=42,
-
-                           #     'life' => (refcount=2, is_ref=0)='life'
-
-                           # ]
-
-   
+![garbage](https://parshikovpavel.github.io/img/php/garbage2.png)
 
 Интересное начинается, если добавить ссылку на массив в этот же массив:
 
-$a = **array**( **'one'** );
- $a[] =& $a;
- xdebug_debug_zval( **'a'** );
+```php
+$a = array( 'one' );
+$a[] =& $a;
+xdebug_debug_zval( 'a' );
+```
+
+![garbage](https://parshikovpavel.github.io/img/php/garbage3.png)
+
+при удалении массива `$a` происходит утечка памяти:
+
+![garbage](https://parshikovpavel.github.io/img/php/garbage4.png)
 
    
 
-при удалении массива $a происходит утечка памяти
+PHP удалит эти данные при завершении запроса, но до этого момента данные будут занимать место в памяти. Такая ситуация часто случается с объектами, потому что они всегда неявно используются *by reference*. Проблема часто возникает в долгоработающих скриптах, таких как демоны, где запрос не заканчивается никогда, или в больших наборах модульных тестов.
 
-   
-
-PHP удалит эти данные при завершении запроса, но до этого момента данные будут занимать ценное место в памяти. Такая ситуация случается с объектами, потому что они всегда неявно используются по ссылке. Проблема часто возникает в долгоработающих скриптах, таких как демоны, где запрос не заканчивается никогда, или в больших наборах модульных тестов.
-
-С версии 5.3.0 реализован механизм поиска циклических ссылок. Утечки памяти с циклическими ссылками могут получиться только при уменьшении счетчика ссылок до ненулевого значения. Затем, в выделенных контейнерах можно найти мусор проверив возможность уменьшения всех счетчиков ссылок на единицу и определив те контейнеры, у которых счетчик станет равным нулю. 
+В PHP реализован механизм поиска циклических ссылок. Утечки памяти с циклическими ссылками могут получиться только при уменьшении счетчика ссылок до ненулевого значения. Затем, в выделенных контейнерах можно найти мусор проверив возможность уменьшения всех счетчиков ссылок на единицу и определив те контейнеры, у которых счетчик станет равным нулю. 
 
 Допустим, были произведены следующие действия:
 
-$array[] = [**'one'**];
- $a =& $array[0];
- $array[] =& $array;
- **unset**($array);
+```php
+$array[] = ['one'];
+$a =& $array[0];
+$array[] =& $array;
+unset($array);
+```
 
 Результат таких операций показан на шаге **A**.
 
-   
+![garbage](https://parshikovpavel.github.io/img/php/garbage5.png)
 
-При каждом уменьшении счетчика ссылок, алгоритм добавляет все возможные корни (zval контейнеры) в "корневой буфер" (root). Когда в «корневой буфер» (root) попало определенное количество ссылок, в которых уменьшился счетчик, стартует алгоритм (также старт можно сделать функцией gc_collect_cycles()). На шаге **B** производится уменьшение счетчиков ссылок на 1 у всех дочерних элементов. На шаге **C** помечаются те zval, у которых счетчик стал 0 и возвращаетcя назад значение счетчика у остальных. На шаге **D** удаляются помеченные контейнеры.
+При каждом уменьшении счетчика ссылок, алгоритм добавляет все возможные корни (`zval` контейнеры) в "корневой буфер" (`root`). Когда в «корневой буфер» (`root`) попало определенное количество ссылок, в которых уменьшился счетчик, стартует алгоритм (также старт можно сделать функцией `gc_collect_cycles()`). На шаге **B** производится уменьшение счетчиков ссылок на `1` у всех дочерних элементов. На шаге **C** помечаются те `zval`, у которых счетчик стал 0 и возвращаетcя назад значение счетчика у остальных. На шаге **D** удаляются помеченные контейнеры.
 
-Сборку мусора можно включить и выключить в настройках. Применение сборщика мусора позволяет уменьшить использование памяти за счет удаления циклических ссылок, при этом замедление работы по тестам около 7%. Оценить используемую память можно функциями memory_get_usage и memory_get_peak_usage.
+Сборку мусора можно включить и выключить в настройках. Применение сборщика мусора позволяет уменьшить использование памяти за счет удаления циклических ссылок, при этом замедление работы по тестам около 7%. Оценить используемую память можно функциями `memory_get_usage()` и `memory_get_peak_usage()`.
 
+# Суперглобальные переменные
 
+Доступны в любом месте скрипта –  для доступа к ним в *local scope* нет необходимости использовать синтаксис:
 
+```php
+global $variable;
+```
 
+В `php.ini` параметр:
 
-
-
-## Суперглобальные переменные
-
-Доступны в любом месте скрипта. Нет необходимости использовать синтаксис 
-
-​    **global** $variable;
-
-для доступа к ним в функциях и методах. 
-
-В php.ini параметр 
-
+```php
 variables_order = "GPCS"
+```
 
 отвечает за то, какие суперглобальные переменные доступны.
 
-·      **$GLOBALS** — ссылки на все переменные глобальной области видимости;
+Полный список:
 
-array(7) {
-    ["_GET"] => []
-    ["_POST"] => []
-    ["_COOKIE"] => []
-    ["_FILES"] => []
-    ["_SESSION"] => []
-    ["variable"] =>
-int(1)
-    ["GLOBALS"] => {*RECURSION*}
-}
+- `$GLOBALS` — ссылки на все переменные глобальной области видимости:
 
-·      **$_SERVER** – заголовки, пути и местоположения скриптов;
+  ```php
+  array(7) {
+      ["_GET"] => []
+      ["_POST"] => []
+      ["_COOKIE"] => []
+      ["_FILES"] => []
+      ["_SESSION"] => []
+      ["variable"] => int(1)
+      ["GLOBALS"] => {*RECURSION*}
+  }
+  ```
 
-o  **'PHP_SELF'** – имя файла скрипта /foo/bar.php
+- `$_SERVER` – заголовки, пути и местоположения скриптов;
+  - `PHP_SELF` – имя файла скрипта `/foo/bar.php`
 
-o  **'argv'** – массив агрументов, переданных скрипту
+  - `argv` – массив аргументов, переданных скрипту
 
-o  **'argc'** – количество параметров
+  - `argc` – количество аргументов, переданных скрипту
 
-o  **SERVER_NAME** – имя хоста, на котором выполняется текущий скрипт (например, localhost)
+  - `SERVER_NAME` – имя хоста, на котором выполняется текущий скрипт (например, `localhost`)
 
-o  **REQUEST_****METHOD** – метод запроса (например, 'GET', 'HEAD', 'POST', 'PUT')
+  - `REQUEST_METHOD` – метод запроса (например, `GET`, `POST`)
 
-o  **REQUEST_TIME** – временная метка начала запроса (например, int(1504188059)
+  - `REQUEST_TIME` – временная метка начала запроса (например, `int(1504188059)`)
 
-o  **QUERY_STRING** – строка запросов после ? (например, param=123)
+  - `QUERY_STRING` – строка запроса после `?` (например, `param=123`)
 
-o  **DOCUMENT_ROOT** – директория корня документов (например, C:/php/home/localhost/www)
+  - `DOCUMENT_ROOT` – директория корня документов (например, `/www/site`)
 
-o  **HTTP_HOST** – содержимое заголовка Host запроса (например, localhost)
+  - `HTTP_HOST` – содержимое заголовка `Host` запроса (например, `localhost`)
 
-o  **HTTP_USER_AGENT** – обозначение браузера
+  - `HTTP_USER_AGENT` – содержимое заголовка `User-agent`
 
-o  **REMOTE_ADDR** – IP-адрес, с которого пользователь просматривает текущую страницу.
+  - `HTTP_<HEADER_NAME>` –  содержимое заголовка `Header-name` запроса
 
-o  **REQUEST_****URI** –  URI из заголовка запроса (например, /news/first.php?param=123)
+  - `REMOTE_ADDR` – IP-адрес, с которого пользователь просматривает текущую страницу.
 
-o  **PHP_AUTH_DIGEST** – заголовок 'Authorization' при выполнении HTTP Digest аутентификации (его необходимо потом использовать для соответствующей валидации).
+  - `REQUEST_URI` –  URI из заголовка запроса (например, `/news/first.php?param=123`)
 
-o  **PHP_AUTH_USER** – имя пользователя при HTTP-аутентификация
+  - `PHP_AUTH_DIGEST` – заголовок `Authorization` при выполнении *HTTP Digest* аутентификации (его необходимо потом использовать для соответствующей валидации).
 
-o  **PHP_AUTH_PW** – пароль пользователя
+  - `PHP_AUTH_USER` – имя пользователя при HTTP-аутентификация
 
-o  **SCRIPT_FILENAME** – путь к скрипту (например, «C:/php/home/localhost/www/news/first.php»)
+  - `PHP_AUTH_PW` – пароль пользователя
 
-o  **SCRIPT_NAME** –  путь к скрипту относительно корня (например, «/news/first.php»)
+  - `SCRIPT_FILENAME` – путь к скрипту (например, `/www/news/first.php`)
 
-o  **CONTENT_****TYPE** – заголовок «Content-Type», по умолчанию для POST *application/**x-**www-**form-**urlencoded*, для отправки файлов *multipart/form-data*
+  - `SCRIPT_NAME` –  путь к скрипту относительно корня (например, `/news/first.php`)
 
-·      **$_GET** – ассоциативный массив параметров, переданных скрипту через URL
+  - `CONTENT_TYPE` – заголовок `Content-Type` ([1](#content-type))
 
-·      **$_POST** ассоциативный массив данных, переданных скрипту через HTTP метод POST, при этом Content-Type – *application/x-www-form-urlencoded* или *multipart/form-data* .
+- `$_GET` – ассоциативный массив параметров, переданных скрипту через URL
 
-·      **$_FILES** – массив описания файлов, загруженных через метод POST.
+- `$_POST` – ассоциативный массив данных, переданных скрипту через метод `POST`
+- `$_FILES` – массив описания файлов, загруженных через метод `POST`.
 
-·      **$_REQUEST** – данные переменных $_GET, $_POST и $_COOKIE.
+- `$_REQUEST` – данные переменных `$_GET`, `$_POST` и `$_COOKIE`.
 
-·      **$_SESSION** – переменные сессии, которые доступны для текущего скрипта.
+- `$_SESSION` – переменные сессии, которые доступны для текущего скрипта.
 
-·      **$_ENV** – значения из переменных окружения системы.
+- `$_ENV` – значения из переменных окружения системы.
 
-·      **$_COOKIE** – значения заголовка Cookie в виде массива.
+- `$_COOKIE` – значения заголовка *Cookie* в виде массива.
 
-Если в php.ini установлена  **register_argc_argv** глобально доступны $argc и $argv
+# Встроенные интерфейсы
 
-## Встроенные интерфейсы
+## `Traversable` 
 
-### Traversable 
+Интерфейс, делает класс обходимым (*traversable*) с использованием `foreach`. Абстрактный базовый интерфейс, который не может быть реализован сам по себе. Вместо этого должен реализовываться `IteratorAggregate` или `Iterator`. Этот интерфейс не имеет методов, его единственная цель - быть базовым интерфейсом для всех обходимых классов.
 
-Интерфейс, делает класс обходимым (traversable) с использованием foreach. Абстрактный базовый интерфейс, который не может быть реализован сам по себе. Вместо этого должен реализовываться [IteratorAggregate](http://php.net/manual/ru/class.iteratoraggregate.php) или Iterator. Этот интерфейс не имеет методов, его единственная цель - быть базовым интерфейсом для всех обходимых классов.
-
-**interface** Traversable 
-
+```php
+interface Traversable 
 {
-
 }
+```
 
-### Iterator
+## `Iterator`
 
-Для реализации собственных алгоритмов итерации PHP (а точнее SPL) предоставляет специальный интерфейс Iterator, состоящий из пяти методов: 
+Используется для реализации собственных алгоритмов итерации: 
 
-**Iterator** **extends** **Traversable** {
-     // Метод должен вернуть значение текущего элемента
-     **abstract** **public** **mixed** current ( **void** );
+```php
+Iterator extends Traversable {
+    // Метод должен вернуть значение текущего элемента
+    abstract public mixed current ( void );
 
-     // Метод должен вернуть ключ текущего элемента
-     **abstract** **public** **scalar** key ( **void** );
-     
-     // Метод должен сдвинуть "указатель" на следующий элемент
-     **abstract** **public** **void** next ( **void** );
-     
-     // Метод должен поставить "указатель" на первый элемент
-     **abstract** **public** **void** rewind ( **void** );
-     
-     // Метод должен проверять - не вышел ли указатель за границы?
-     **abstract** **public** **bool** valid ( **void** );
+    // Метод должен вернуть ключ текущего элемента
+    abstract public scalar key ( void );
 
- }
+    // Метод должен сдвинуть "указатель" на следующий элемент
+    abstract public void next ( void );
 
-Метод key может возвращать данные любого типа (а не только строки и числа). Итерироваться с помощью foreach нам позволяет интерфейс Traversable, а Iterator является его наследником. 
+    // Метод должен поставить "указатель" на первый элемент
+    abstract public void rewind ( void );
 
-### IteratorAggregate
+    // Метод должен проверять - не вышел ли указатель за границы?
+    abstract public bool valid ( void );
+}
+```
 
-Интерфейс IteratorAggregate[ ](http://php.net/manual/ru/class.iteratoraggregate.php#class.iteratoraggregate) – интерфейс для создания внешнего итератора, что-то вроде декоратора над другим итератором:
+Метод `key` может возвращать данные любого типа (а не только строки и числа). Итерироваться с помощью `foreach` нам позволяет интерфейс `Traversable`, а `Iterator` является его наследником. 
 
-**IteratorAggregate** **extends** **Traversable** {
-     /* Получить итератор для перебора */
-     **abstract public** **Traversable** getIterator ( **void** )
- }
+## `IteratorAggregate`
 
- 
+Интерфейс `IteratorAggregate`[ ](http://php.net/manual/ru/class.iteratoraggregate.php#class.iteratoraggregate) – интерфейс для создания внешнего итератора, что-то вроде декоратора над другим итератором:
 
-**class** Example **implements** IteratorAggregate {
-     **public** **$data** = [1,2,3];
+```php
+IteratorAggregate extends Traversable {
+    /* Получить итератор для перебора */
+    abstract public Traversable getIterator ( void )
+}
+```
 
-     **public function** getIterator() {
-         **return new** ArrayIterator($this->**data**);
-     }
+```php
+class Example implements IteratorAggregate {
+    public $data = [1,2,3];
 
- }
+    public function getIterator() {
+        return new ArrayIterator($this->data);
+    }
+}
+```
 
-### Throwable
+## `Throwable`
 
-Родительский интерфейс для всех объектов, выбрасывающихся с помощью выражения throw в PHP 7, включая классы Error и Exception, классы PHP не могут напрямую реализовать интерфейс Throwable.
+Родительский интерфейс для всех объектов, выбрасывающихся с помощью выражения `throw`, включая классы `Error` и `Exception`. Классы исключений не могут напрямую реализовать интерфейс `Throwable`.
 
+```php
+interface Throwable {
+    abstract public string getMessage ( void )       # Получает сообщение ошибки
+    abstract public int getCode ( void )             # Возвращает код исключения
+    abstract public string getFile ( void )          # Возвращает файл, в котором произошло исключение
+    abstract public int getLine ( void )             # Получает строку скрипта, в которой данный объект был выброш
+    abstract public array getTrace ( void )          # Возвращает трассировку стека
+    abstract public string getTraceAsString ( void ) # Получает результаты трассировки стека в виде строки
+    abstract public Throwable getPrevious ( void )   # Возвращает предыдущий Throwable
+    abstract public string __toString ( void )       # Получает строковое представление
+}
+```
 
- **interface** Throwable {
-     **abstract** **public** string getMessage ( void )       # Получает сообщение ошибки
-     **abstract** **public** int getCode ( void )             # Возвращает код исключения
-     **abstract** **public** string getFile ( void )          # Возвращает файл, в котором произошло исключение
-     **abstract** **public** int getLine ( void )             # Получает строку скрипта, в которой данный объект был выброш
-     **abstract** **public** **array** getTrace ( void )          # Возвращает трассировку стека
-     **abstract** **public** string getTraceAsString ( void ) # Получает результаты трассировки стека в виде строки
-     **abstract** **public** Throwable getPrevious ( void )   # Возвращает предыдущий Throwable
-     **abstract** **public** string __toString ( void )       # Получает строковое представление
- }
+## `ArrayAccess`
 
-### ArrayAccess
+```php
+interface ArrayAccess {
+    abstract public bool offsetExists ( mixed $offset ) # Существует ли заданное смещение (ключ)
+    abstract public mixed offsetGet ( mixed $offset )   # Возвращает заданное смещение (ключ)
+    abstract public void offsetSet ( mixed $offset , mixed $value ) # Присваивает значение заданному смещению
+    abstract public void offsetUnset ( mixed $offset )    # Удаляет по смещению
+}
+```
 
-Обеспечивает доступ к объектам как к массиву.
+## `Serializable`
 
-**interface** ArrayAccess {
-     **abstract** **public** bool offsetExists ( mixed $offset ) # Существует ли заданное смещение (ключ)
-     **abstract** **public** mixed offsetGet ( mixed $offset )   # Возвращает заданное смещение (ключ)
-     **abstract** **public** void offsetSet ( mixed $offset , mixed $value ) # Присваивает значение заданному смещению
-     **abstract** **public** void offsetUnset ( mixed $offset )    # Удаляет по смещению
- }
+Есть три взаимоисключающих способа управления сериализацией:
 
-### Serializable
+- `__sleep()` и `__wakeup()` ([1](#sleep-wakeup))
+- `__serialize()` и `__unserialize()` ([1](#serialize-unserialize))
+- Интерфейс `Serializable`
 
-Классы, реализующие этот интерфейс, больше не поддерживают __sleep() и __wakeup(). Метод serialize вызывается всякий раз, когда необходима сериализация экземпляру класса. Когда данные десериализуются, класс известен и соответствующий метод unserialize() вызывается как конструктор вместо вызова __construct(). Если вам необходимо вызвать стандартный конструктор, вы можете это сделать в этом методе.
+```php
+interface Serializable {
+    abstract public string serialize ( void ) # Представляет объект в виде строки
+    abstract public void unserialize ( string $serialized ) # Создает объект по строке (замещает конструктор)
+}
+```
 
-**interface** Serializable {
-     **abstract** **public** string serialize ( void ) # Представляет объект в виде строки
-     **abstract** **public** void unserialize ( string $serialized ) # Создает объект по строке (замещает конструктор)
- }
+- `serialize()` – вызывается при сериализации. 
+- `unserialize()` – вызывается при десериализации, выступает как конструктор вместо вызова `__construct()`. Если необходимо вызвать стандартный конструктор, то нужно это сделать в этом методе.
 
- 
+```php
+class ValueSerializable implements Serializable
+{
+    private $value;
 
-**class** ValueSerializable **implements** Serializable
- {
-     **private** **$value**;
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
 
-     **public function** __construct($value)
-     {
-         $this->**value** = $value;
-     }
-     
-     **public function** serialize()
-     {
-         **return** *json_encode*([**"value"** => $this->**value**]);
-     }
-     
-     **public function** unserialize($serialized)
-     {
-         $data = *json_decode*($serialized, **true**);
-         $this->__construct($data[**'value'**]);
-     }
+    public function serialize()
+    {
+        return json_encode(["value" => $this->value]);
+    }
 
- }
+    public function unserialize($serialized)
+    {
+        $data = json_decode($serialized, true);
+        $this->__construct($data['value']);
+    }
+}
+```
 
- 
-
-### Closure
+## `Closure`
 
 Класс, экземплярами которого являются анонимные функции.
 
+```php
 class Closure {
-
-    # Конструктор, запрещающий создание экземпляра
-
-    private __construct ( void
-)
-
-    # Статический метод, дублирует и возвращает замыкание на основе указанного
-
-замыкания, связанного объекта и области видимости класса
-    public static Closure bind ( Closure $closure , object $newthis [, mixed $newscope = "static" ] )
-
-    # Нестатический метод, дублирует и возвращает замыкание на основе
-
-связанного объекта и области видимости класса
-    public Closure bindTo ( object $newthis [,
-mixed $newscope = "static" ] )
-
-    # Связывает и запускает замыкание
-
-    public mixed call
-( object $newthis [, mixed $... ] )
-    #
-Конвертирует callable в замыкание
-    public static Closure
-fromCallable ( callable $callable )
+    # Конструктор, запрещающий создание экземпляра
+    private __construct ( void )
+    # Статический метод, дублирует и возвращает замыкание на основе указанного замыкания, связанного объекта и области видимости класса
+    public static Closure bind ( Closure $closure , object $newthis [, mixed $newscope = "static" ] )
+    # Нестатический метод, дублирует и возвращает замыкание на основе связанного объекта и области видимости класса
+    public Closure bindTo ( object $newthis [, mixed $newscope = "static" ] )
+    # Связывает и запускает замыкание
+    public mixed call ( object $newthis [, mixed $... ] )
+    # Конвертирует callable в замыкание
+    public static Closure fromCallable ( callable $callable )
 }
+```
 
-### Generator
+## `Generator`
 
-Когда функция генератор будет вызвана первый раз, она вернет объект встроенного класса Generator.
+[1](#generator)
 
-**class** Generator **implements** Iterator {
-     **public** mixed current ( void )
-     **public** mixed getReturn ( void ) # Получить значение, возвращаемое генератором
-     **public** mixed key ( void )
-     **public** void next ( void )
-     **public** void rewind ( void )
-     **public** mixed send ( mixed $value ) # Передать значение в генератор
-     **public** mixed **throw** ( Throwable $exception ) # Бросить исключение в генератор
-     **public** bool valid ( void )
- }
-
- 
-
-### Countable
+## `Countable`
 
 Классы, реализующие интерфейс `Countable`, могут быть использованы с функцией `count()`.
 
@@ -6024,9 +6076,11 @@ var_dump(count(new A())); # int(123)
 
 Функция `is_countable()` проверяет возможность использования аргумента  с функцией `count()`. Возвращает `true`, если аргумент является `array` или `object`, реализующий `Countable` интерфейс. 
 
-### `WeakReference`
+## `WeakReference`
 
-`WeakReference` (слабая ссылка) позволяет программисту получить такую ссылку на объект `$object`  , которая допускает его уничтожение сборщиком мусора. Аналог распределенных систем кеширования типа `memcached` с вытеснением из кеша. Могут использоваться для реализации кеша в рамках *request*'а.
+`WeфakReference` (слабая ссылка) позволяет программисту получить такую ссылку на объект `$object`, которая не влияет на количество ссылок на него, поэтому сборщик мусора сможет освободить этот объект. Аналог распределенных систем кеширования типа `memcached` с вытеснением из кеша. Могут использоваться для реализации кеша в рамках *request*'а.
+
+Структура класса:
 
 ```php
 final class WeakReference {
@@ -6039,576 +6093,555 @@ final class WeakReference {
 }
 ```
 
-## Поддерживаемые протоколы и встроенные обработчики
+Пример использования:
 
-Прелназначены для использования с функциями файловой системы, такими как fopen(), copy(), file_exists() и filesize(). Можно создать свой обработчик через stream_wrapper_register().
+```php
+$obj = new stdClass;
+$weakref = WeakReference::create($obj);
+var_dump($weakref->get()); # object(stdClass)#1 (0) {}
+unset($obj);
+var_dump($weakref->get()); # NULL
+```
 
-### file://
+# Поддерживаемые протоколы и встроенные обработчики
 
-Доступ к локальной файловой системе (по умолчанию)
+Предназначены для использования с функциями файловой системы, такими как `fopen()`, `copy()`, `file_exists()` и `filesize()`. Можно создать свой обработчик через `stream_wrapper_register()`.
 
-### http:// -- https:// 
+- `file://`
 
-Доступ к URL-адресам по протоколу HTTP(s)
+  Доступ к локальной файловой системе (по умолчанию)
 
-### ftp:// -- ftps://
+- `http://`, `https://` 
 
-Доступ к URL-адресам по протоколу FTP(s)
+  Доступ к URL-адресам по протоколу HTTP(s)
 
-### php://
+- `ftp://`, `ftps://`
 
-Доступ к потокам ввода-вывода
+  Доступ к URL-адресам по протоколу FTP(s)
 
-#### php://stdin
+- `php://`
 
-Чтение из стандартного потока ввода (из консоли через командную строку):  Поток только для чтения.
+  Доступ к потокам ввода-вывода
+  - `php://stdin`
 
-$input = fopen(**"php://stdin"**, **"r"**);
- $line = fgets($input);
- fclose($input);
- var_dump($line);
+    Чтение из стандартного потока ввода (из консоли через командную строку).  Поток только для чтения.
 
-либо короче:
+    ```php
+    $input = fopen("php://stdin", "r");
+    $line = fgets($input);
+    fclose($input);
+    var_dump($line);
+    ```
 
-$line = fgets(**STDIN**);
+    либо короче:
+
+    ```php
+    $line = fgets(STDIN);
+    var_dump($line);
+    ```
+
+  - `php://stdout`
 
-var_dump($line);
+    Вывод в стандартный поток (в консоль и срабатывает вывод в браузер). Поток только для записи.
 
-#### php://stdout
-
-Вывод в стандартный поток (в консоль и срабывает вывод в браузер). Поток только для записи.
-
-$output = fopen(**"****php****://****stdout****"**, **"****w****"**);
-
- fputs($output, **"****Hello** **world****!"**);
- fclose($output);
-
-или короче
-
-fputs(**STDOUT**, **"Hello world!"**);
-
-#### php://input
-
-Поток только для чтения. Позволяет читать необработанные данные из тела запроса. Рекомендуется использовать этот поток для получения необработанных данных POST вместо удаленной в PHP7 предопределенной переменной $HTTP_RAW_POST_DATA. php://input недоступен с типом содержимого enctype="multipart/form-data".
-
-​    $input = *fopen*(**"php://input"**, **"r"**);
-​     $line = *fgets*($input);
-​     *fclose*($input);
-
-или короче
-
-​    $input = *file_get_contents*(**"php://input"**);
-
-Пример вывода для POST запроса:
-
-param1=value1&param2=value2&param3=value3
-
-#### php://output
-
-Поток только для записи. Позволяет вам записать данные в выходной буфер аналогично как это делают функции print и echo.
-
-​    $output = *fopen*(**"php://output"**, **"w"**);
-
-​     *fputs*($output, **"Hello world!"**);
-​     *fclose*($output);
-
-#### php://memory и php://temp 
-
-Являются потоками для чтения/записи и позволяют сохранять временные данные в файлоподобной обертке. php://memory будет всегда хранить данные в оперативной памяти, тогда как php://temp будет использовать временный файл в том случае, когда объем хранимой информации достигнет заданного лимита (по умолчанию 2 Мб). 
-
-​    $fp = *fopen*(**'php://memory'**, **"rw+"**);
-​     *fputs*($fp, **"hello,"**);
-​     *fputs*($fp, **" world."**);
-​     *rewind*($fp);
-​     **echo** *fgets*($fp);
-​     **echo** *fgets*($fp);
-​     *fclose*($fp);
-
-#### php://filter
-
-Применяет фильтры к потоку во время открытия. Может применяться совместно с файловыми функциями такими, как [readfile()](http://php.net/manual/ru/function.readfile.php), [file()](http://php.net/manual/ru/function.file.php), и [file_get_contents()](http://php.net/manual/ru/function.file-get-contents.php) там, где иначе не было возможности применить фильтр к потоку до того, как содержимое будет прочитано.
-
-Поток php://filter принимает следующие параметры как часть своего пути. В одном пути можно указать несколько цепочек фильтров. 
-
-| **Название**                                                 | **Описание**                                                 |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| resource*=<поток для фильтрации>*                            | Этот параметр является необходимым. Он указывает   потоку, что его необходимо отфильтровать. |
-| read*=<список фильтров для применения к цепочке чтения>*     | Этот параметр является необязательным. Одно или   более имен фильтров может быть указано здесь, разделенные вертикальной чертой   (*\|*). |
-| write*=<список фильтров для применения к цепочке записи>*    | Этот параметр является необязательным. Одно или   более имен фильтров может быть указано здесь, разделенные вертикальной чертой   (*\|*). |
-| *<список фильтров для применения к обеим цепочкам   чтения и записи>* | Любой список фильтров, которые используются без   префиксов *read=* или *write=*, будет применен к   обоим потокам на чтение и на запись при необходимости. |
-
-Параметр resource должен быть расположен в конце вашей спецификации php://filter и должен указывать на поток, который вы хотите фильтровать.
-
-\# readfile - направление содержимого потока в поток вывода. Эквивалентно
- \# readfile("http://www.example.com");
- \# так как на самом деле фильтры не указаны
- readfile(**"****php****://****filter****/****resource****=****http****://****www****.****example****.****com****"**);
-
- 
-
-*# Вывод содержимого www**.example**.com*  *# в верхнем регистре и кодирование алгоритмом ROT**13*  readfile(**"****php****://****filter****/****read****=****string****.****toupper****|****string****.****rot****13/****resource****=****http****://****www****.****example****.****com****"**);
-
- 
-
-\# Фильтровать строку "Hello World" через фильтр rot13,
- \# затем записывать результат в файл example.txt в текущей директории
- file_put_contents(**"****php****://****filter****/****write****=****string****.****rot****13/****resource****=****example****.****txt****"**,**"****Hello** **World****"**);
-
-## Отправка файла
-
-Форма
-
-<!-- Тип кодирования данных, enctype, ДОЛЖЕН БЫТЬ указан ИМЕННО так -->
-
-<form enctype="multipart/form-data" action="__URL__" method="POST">
-
-
-​    <!-- Поле MAX_FILE_SIZE должно быть указано до поля загрузки файла -->
-
-​    <input type="hidden" name="MAX_FILE_SIZE" value="30000" />
-
-​    <!-- Название элемента input определяет имя в массиве $_FILES -->
-
-​    Отправить этот файл: <input name="userfile" type="file" />
-
-​    <input type="submit" value="Send File" />
-
-</form>
-
-если задано поле MAX_FILE_SIZE, то его размер проверяется php на стороне сервера и в случае превышения пишет ошибку в $_FILES.
-
-Пример структуры $_FILES, здесь userfile – название поля в форме
-
-*$_FILES['userfile']['name']* Оригинальное имя файла на компьютере клиента.
-
-*$_FILES['userfile']['type']* Mime-тип файла: *"image/gif"*. 
-
-*$_FILES['userfile']['size']*Размер в байтах принятого файла.
-
-*$_FILES['userfile']['tmp_name']* Временное имя, с которым принятый файл был сохранен на сервере.
-
-*$_FILES['userfile']['error']* [Код ошибки](http://php.net/manual/ru/features.file-upload.errors.php), которая может возникнуть при загрузке файла.
-
-В случае невыбора файла , size=0, name=’’
-
-При указании массива файлов в name=”userfile[]”, каждый из элементов массива $_FILES будет массивом из двух элементов, напр [$_FILES['userfile'\]['name']](http://php.net/manual/ru/reserved.variables.files.php)[0] и [1]
-
-## Тонкости
-
-Скрипт завершает работу при отключении клиента (можно изменить в конфиге)., можно также установить обработчик на завершение скрипта register_shutdown_function, где сделать проверку отсоединился или нет.
-
-Есть возможность создавать постоянные соединения с сервером БД (например через  PDO::ATTR_PERSISTENT => true). Суть идеи постоянного соединения у PHP - постоянно запущенный процесс PHP просто хранит в общей памяти информацию об установленном соединении (проверяет пользователя, пароль). При запросе коннекта отдаёт вместо создания нового - существующий.
-
-Можно запустить консольную версию в виде интерактивной консоли, в которую вводишь команды и сразу возвращается результат исполнения.: php –a
-
-Параметры [функций работы с массивами](http://php.net/manual/ru/book.array.php) упорядочены в виде "*иголка (needle), сено (haystack)*", тогда как порядок в [строковых функциях](http://php.net/manual/ru/book.strings.php) обратный, то есть аналогичен "*сено, иголка*".
-
-При передаче методом POST параметров точки и пробелы в имени заменяются подчеркиваниями. form.x и form x = $_POST[form_x]
+    ```php
+    $output = fopen("php://stdout", "w");
+    
+    fputs($output, "Hello world!");
+    fclose($output);
+    ```
+
+    или короче:
+
+    ```php
+    fputs(STDOUT, "Hello world!");
+    ```
+
+  - `php://input`
+
+    Поток только для чтения. Позволяет читать необработанные данные из тела запроса. Рекомендуется использовать этот поток для получения необработанных данных POST вместо удаленной в PHP7 предопределенной переменной `$HTTP_RAW_POST_DATA`. `php://input` недоступен с типом содержимого `enctype="multipart/form-data".`
+
+    ```php
+    $input = fopen("php://input", "r");
+    $line = fgets($input);
+    fclose($input);
+    ```
+
+    или короче:
+
+    ```php
+    $input = file_get_contents("php://input");
+    ```
+
+    Пример вывода для POST запроса:
+
+    ```php
+    param1=value1&param2=value2&param3=value3
+    ```
+
+  - `php://output`
+
+    Поток только для записи. Позволяет записать данные в выходной буфер, аналогично `print` и `echo`.
+
+    ```php
+    $output = fopen("php://output", "w");
+    
+    fputs($output, "Hello world!");
+    fclose($output);
+    ```
+
+  - `php://memory` и `php://temp` 
+
+    Являются потоками для чтения/записи и позволяют сохранять временные данные в файлоподобной обертке. `php://memory` будет всегда хранить данные в оперативной памяти, тогда как `php://temp` будет использовать временный файл в том случае, когда объем хранимой информации достигнет заданного лимита (по умолчанию 2 Мб). 
+
+    ```php
+    $fp = fopen('php://memory', "rw+");
+    fputs($fp, "hello,");
+    fputs($fp, " world.");
+    rewind($fp);
+    echo fgets($fp);
+    echo fgets($fp);
+    fclose($fp);
+    ```
+
+  - `php://filter`
+
+    Применяет фильтры к потоку во время открытия. Позволяет применить фильтр к потоку до того, как содержимое будет прочитано.
+    
+    Поток `php://filter` принимает следующие параметры как часть своего пути. В одном пути можно указать несколько цепочек фильтров. 
+    
+    | **Название**                                                 | **Описание**                                                 |
+    | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | `resource=<поток для фильтрации>`                            | Этот параметр является необходимым. Он указывает   потоку, что его необходимо отфильтровать. |
+    | `read=<список фильтров для применения к цепочке чтения>`     | Этот параметр является необязательным. Одно или более имен фильтров может быть указано здесь, разделенные вертикальной чертой   `|`. |
+    | `write=<список фильтров для применения к цепочке записи>`    | Этот параметр является необязательным. Одно или более имен фильтров может быть указано здесь, разделенные вертикальной чертой  `|`. |
+    | `<список фильтров для применения к обеим цепочкам чтения и записи>` | Любой список фильтров, которые используются без   префиксов `read=` или `write=`, будет применен к обоим потокам на чтение и на запись при необходимости. |
+    
+    Параметр `resource` должен быть расположен в конце вашей спецификации `php://filter` и должен указывать на поток, который вы хотите фильтровать.
+    
+    ```php
+    # readfile - направление содержимого потока в поток вывода. Эквивалентно
+    # readfile("http://www.example.com");
+    # так как на самом деле фильтры не указаны
+    readfile("php://filter/resource=http://www.example.com");
+    ```
+    
+    ```php
+    # Вывод содержимого www.example.com 
+    # в верхнем регистре и кодирование алгоритмом ROT13 
+    readfile("php://filter/read=string.toupper|string.rot13/resource=http://www.example.com");
+    ```
+    
+    ```php
+    # Фильтровать строку "Hello World" через фильтр rot13,
+    # затем записывать результат в файл example.txt в текущей директории
+    file_put_contents("php://filter/write=string.rot13/resource=example.txt","Hello World");
+    ```
+
+# Формы
+
+При передаче методом POST параметров точки и пробелы в имени заменяются подчеркиваниями. 
+
+```
+form.x → $_POST[form_x]
+form x → $_POST[form_x]
+```
 
 Создание поля с числовым ключом в POST
 
-<input name="AnotherArray[]" />
+`<input name="param[]" />`
 
 Создание поля с строковым ключом в POST
 
-<input name="AnotherArray[email]" />
+`<input name="param[email]" />`
 
+## Отправка файлов
 
+Форма:
 
-## Сессии
+```html
+<form enctype="multipart/form-data" action="<url>" method="POST">
+    <!-- Поле MAX_FILE_SIZE должно быть указано до поля загрузки файла -->
+    <input type="hidden" name="MAX_FILE_SIZE" value="30000" />
+    <!-- Название элемента input определяет имя в массиве $_FILES -->
+    Отправить этот файл: <input name="<name>" type="file" />
+    <input type="submit" value="Send File" />
+</form>
+
+```
+
+Если задано поле `MAX_FILE_SIZE`, то его размер проверяется PHP на стороне сервера и в случае превышения пишет ошибку в `$_FILES`.
+
+Структура `$_FILES`:
+
+```php
+$_FILES = [
+	<name> => [
+        'name' =>  # оригинальное имя файла на компьютере клиента
+        'type' => # mime-тип файла: "image/gif"
+        'size' => # размер в байтах принятого файла
+        'tmp_name' => # временное имя, с которым принятый файл был сохранен на сервере
+        'error' => # Код ошибки, которая может возникнуть при загрузке файла
+    ]    
+];
+```
+
+В случае невыбора файла, `size=0` и `name=''`
+
+При указании массива файлов в `name="userfile[]"`, каждый из элементов массива `$_FILES` будет массивом из двух элементов, например:
+
+```php
+$_FILES = [
+	<name> => [
+        'name' => [
+            0 => <file1_name>
+            1 => <file2_name>
+        ],
+        ...
+    ]    
+];
+```
+
+# Сессии
 
 Сессии – способ сохранения некоторых данных между несколькими последовательными доступами. 
 
-Принцип работы
+## Принцип работы
 
-Каждому посетителю сайта присваивается уникальный идентификатор, называемый идентификатором сессии (session id). Он хранится либо в cookie на стороне пользователя, либо передается через URL. 
+Каждому посетителю сайта присваивается уникальный идентификатор, называемый идентификатором сессии `session_id`. Он хранится либо в *cookie* на стороне пользователя, либо передается через URL. 
 
-Поддержка сессий позволяет сохранять данные между запросами в суперглобальном массиве $_SESSION. В тот момент, когда посетитель получает доступ к сайту, PHP проверяет (автоматически, если session.auto_start установлено в 1, или по запросу явным образом через вызов session_start()) наличие идентификатора сессии в заголовках запроса. Если это так, восстанавливается сохраненное ранее окружение.
+Поддержка сессий позволяет сохранять данные между запросами в суперглобальном массиве `$_SESSION`. В тот момент, когда посетитель получает доступ к сайту, PHP проверяет (автоматически, если `session.auto_start=1`, или по запросу явным образом через вызов `session_start()`) наличие идентификатора сессии в заголовках запроса. Если это так, восстанавливается сохраненное ранее окружение.
 
-$_SESSION сериализуются внутри PHP после выполнения запроса, используя обработчик сериализации, указанный в INI-опции session.serialize_handler. По умолчанию, все данные, связанные с конкретной сессией будут храниться в файле в директории, указанной в опции session.save_path файла конфигурации. Файл создается для каждой сессии (независимо от наличия ассоциированных с ней данных).
+`$_SESSION` сериализуются внутри PHP после выполнения запроса, используя обработчик сериализации, указанный в INI-опции `session.serialize_handler`. 
 
-Отсутствие идентификатора сессии или сессионного cookie сообщает PHP о том, что необходимо создать новую сессию и сгенерировать новый идентификатор сессии. PHP заполнит суперглобальную переменную $_SESSION сессионной информацией после того, как будет запущена сессия. Когда PHP завершает работу, он автоматически сериализует содержимое суперглобальной переменной $_SESSION и отправит для сохранения, используя сессионный обработчик для записи сессии.
+Отсутствие идентификатора сессии или сессионного *cookie* сообщает PHP о том, что необходимо создать новую сессию и сгенерировать новый `session_id`. 
 
-Нельзя использовать ссылки в сессионных переменных, так как не существует реального способа восстановления ссылки к другой переменной.
+PHP заполнит суперглобальную переменную `$_SESSION` сессионной информацией после того, как будет запущена сессия. 
 
-Сессии могут запускаться вручную с помощью функции session_start(). Если директива session.auto_start установлена в 1, сессия автоматически запустится, в начале запроса. Функция session_start() по умолчанию выставляет следующие заголовки
+Когда PHP завершает работу, он автоматически сериализует содержимое суперглобальной переменной `$_SESSION` и отправит для сохранения, используя сессионный обработчик для записи сессии.
 
-**Cache-Control**: no-store, no-cache, must-revalidate
+Нельзя использовать ссылки в `$_SESSION`, так как не существует  способа восстановления ссылки к другой переменной.
 
-**Pragma**: no-cache
+Сессии могут запускаться:
 
-Управление выдаваемыми заголовками возможно через ini-опцию session.cache_limiter (варианты public, private, nocache, либо отключить вообще заголовки передав пустую строку '').
+- вручную, с помощью функции `session_start()`. 
+- автоматически в начале запроса, если директива `session.auto_start=1`. 
 
-Сессия обычно завершает свою работу, когда PHP заканчивает исполнять скрипт, но может быть завершена и вручную с помощью функции session_write_close().
+Функция `session_start()` по умолчанию выставляет следующие заголовки:
 
-Пример использования сессий: 
+```http
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+```
+
+Управление выдаваемыми заголовками возможно через ini-опцию `session.cache_limiter` (варианты `public`, `private`, `nocache`, либо отключить вообще заголовки передав пустую строку `''`).
+
+Сессия обычно завершает свою работу, когда PHP заканчивает исполнять скрипт, но может быть завершена и вручную с помощью функции `session_write_close()`.
+
+<ins>Пример</ins>
 
 Требуется реализовать счетчик просмотров внутри сессии:
 
-*session_start*();
- **if** (!**isset**($_SESSION[**'count'**])) {
-     $_SESSION[**'count'**] = 0;
- } **else** {
-     $_SESSION[**'count'**]++;
- }
+```php
+session_start();
+if (!isset($_SESSION['count'])) {
+    $_SESSION['count'] = 0;
+} else {
+    $_SESSION['count']++;
+}
+```
 
 Удаление счетчика из сессии:
 
-*session_start*();
- **unset**($_SESSION[**'count'**]);
+```php
+session_start();
+unset($_SESSION['count']);
+```
 
-### Места хранения сессий
+## Места хранения сессий
 
-По умолчанию в PHP сессии хранятся в файлах. Однако в боевом режиме это приводит к множеству проблем:
+Опция `session.save_handler` определяет имя обработчика, который используется для хранения и извлечения данных, связанных с сессией. По умолчанию имеет значение `files`. Все данные, связанные с конкретной сессией будут храниться в файле в директории, указанной в опции `session.save_path` файла конфигурации. Файл создается для каждой сессии (независимо от наличия ассоциированных с ней данных).
 
-·      Сессии, использующие файлы, блокируют файл сессии сразу при открытии сессии. После блокировки, ни один другой скрипт не может получить доступ к этому же файлу сессии, пока он не будет закрыт. Эта проблема чаще всего проявляется с сайтами, которые делают параллельно множество запросов через AJAX. 
+Некоторые расширения могут зарегистрировать собственные обработчики (*save_handler*), которые затем можно использовать с опцией `session.save_handler`. Так, например, доступен обработчик *redis*.
 
-·      доступ к диску очень медленный
+Хранение сессий в файлах имеет ряд проблем: 
 
-·      работа с сессиями нагружает I/O
+- Сессии, использующие файлы, блокируют файл сессии сразу при открытии сессии. После блокировки, ни один другой скрипт не может получить доступ к этому же файлу сессии, пока он не будет закрыт. Эта проблема чаще всего проявляется с сайтами, которые делают параллельно множество запросов через AJAX. 
 
-·      могут кончиться inode 
 
-Если надежность хранения сессий не требуется, то чаще всего сессии размещают в распределенных кеширующих системах: redis или memcached.
+- доступ к диску очень медленный
 
-Для реализации хранилища данных (или любого иного хранилища) следует использовать session_set_save_handler(), чтобы создать набор пользовательских функций хранилища. Также можно создать обработчики сессий, используя класс SessionHandlerInterface, или расширить внутренние обработчики PHP, унаследовав класс SessionHandler.
 
-Функции обратного вызова в session_set_save_handler():
+- работа с сессиями нагружает I/O
 
-·      Когда стартует сессия – обработчик open с последующим вызовом обработчика read, который должен вернуть закодированную строку - в точности такую, какая передавалась для сохранения. После возвращения обработчиком read закодированной строки, PHP декодирует ее и заполнит получившимся массивом суперглобальный массив $_SESSION.
 
-·      Когда PHP завершает исполнение скрипта, PHP закодирует суперглобальный массив $_SESSION, и передаст эти данные с идентификатором сессии функции обратного вызова write. После того, как отработает функция обратного вызова write, PHP внутренне вызовет обработчик функции обратного вызова close. 
+- могут кончиться *inode* 
 
-·      Когда сессия специально уничтожена, PHP вызовет обработчик destroy с идентификатором сессии. PHP будет вызывать обработчик функции обратного вызова gc время от времени, чтобы пометить сессии как истекшие в соответствии с временем жизни сессий.
 
-Также можно управлять местом хранения сессий на уровне конфигов PHP. Для этого есть настройка в php.ini:
+Если надежность хранения сессий не требуется, то чаще всего сессии размещают в распределенных кеширующих системах: *redis* или *memcached*.
 
-session.save_handler –определяет имя обработчика, который используется для хранения и извлечения данных, связанных с сессией. По умолчанию – files. Расширения PHP могут зарегистрировать собственные обработчики, так, например, доступен обработчик redis.
+Для *custom*'ной реализации хранения сессий можно использовать:
 
- 
+- функцию `session_set_save_handler()`. Порядок вызова *callback*'ов:
+  - когда стартует сессия, вызывается обработчик `open` с последующим вызовом обработчика `read`, который должен вернуть закодированную строку – в точности такую, какая передавалась для сохранения. После возвращения обработчиком `read` закодированной строки, PHP декодирует ее и заполнит получившимся массивом суперглобальный массив `$_SESSION`.
+  - Когда PHP завершает исполнение скрипта, PHP закодирует суперглобальный массив `$_SESSION`, и передаст эти данные с `session_id` *callback*'у `write`. После того, как отработает *callback* `write`, PHP вызовет *callback* `close`. 
+  - Когда сессия будет уничтожена, PHP вызовет обработчик `destroy` с `session_id`. 
+  - PHP будет вызывать *callback* `gc` время от времени, чтобы пометить сессии как истекшие в соответствии с временем жизни сессий.
+- интерфейс `SessionHandlerInterface`
+- расширить внутренние обработчики PHP, унаследовав класс `SessionHandler`.
 
- 
+PHP может отслеживать прогресс загрузки отдельных файлов при включенной опции `session.upload_progress.enabled`. Во время загрузки приложение может посылать POST-запросы на отдельную страницу (например, с помощью XHR) для проверки статуса.
 
-PHP может отслеживать прогресс загрузки отдельных файлов при включенной опции session.upload_progress.enabled. В течение данной загрузки приложение может посылать POST-запросы на отдельную страницу (например, с помощью XHR) для проверки статуса.
+## Защита сессий
 
-### Защита сессий
+Основная проблема при защите сессий – утечка существующего идентификатора сессии третьим лицам. 
 
-Основная проблема при **защите сессий**: утечка существующего идентификатора сессии третьим лицам. 
+Основные способы защиты:
 
-Рекомендуемые опции:
+- защита от XSS и кражи *cookie*
+- `session.use_strict_mode = 1` – запрещается получение от клиента неинициализированного `session_id`. Это не позволяет злоумышленнику рассылать ссылки, с известным ему заранее `session_id`. 
+- Пересоздание идентификаторов сессий сильно уменьшает риск кражи сессии, соответственно надо на переодической основе запускать `session_regenerate_id()`.
 
-session.use_strict_mode = 1 –запрещается получение от клиента неинициализированного сессионного ID. Не позволяет злоумышленнику рассылать ссылки, с известным ему заранее session_id. 
+- Разработчики должны следить за активными сессиями каждого пользователя и оповещать его, сколько есть активных сессий, с каких IP (и где географически), как долго они активны и т.д. Если обнаружена попытка доступа к устаревшей сессии, необходимо сбросить флаги авторизации для всех активных сессий пользователя.
 
-Пересоздание идентификаторов сессий сильно уменьшает риск кражи сессии, соответственно надо на переодической основе запускать session_regenerate_id().
 
-Разработчики должны следить за активными сессиями каждого пользователя и оповещать его, сколько есть активных сессий, с каких IP (и где географически), как долго они активны и т.д. Если обнаружена попытка доступа к устаревшей сессии, необходимо сбросить флаги авторизации для всех активных сессий пользователя.
+# Регулярные выражения
 
-## Регулярные выражения
+## Функции для работы
 
-### Функции для работы
+### `preg_match`
 
-#### preg_match
+Ищет в заданном тексте `$subject` совпадения с шаблоном `$pattern`.
 
-Ищет в заданном тексте subject совпадения с шаблоном pattern.
+```php
+preg_match ( string $pattern , string $subject [, array &$matches [, int $flags = 0 [, int $offset = 0 ]]] ) : int
+```
 
-**int** *preg_match* ( **string** $pattern , **string** $subject [, **array** &$matches [, **int** $flags = 0 [, **int** $offset = 0 ]]] )
+<ins>Параметры</ins>
 
-##### `Параметры`
+- `$pattern` – регулярное выражение
 
-$pattern – регулярное выражение
+- `$subject` – сопоставляемая строка
 
-subject – сопоставляемая строка
+- `$matches`  – результаты сопоставления. Причем:
+  - ` $matches[0]` – содержит часть строки, соответствующую вхождению всего шаблона
+  -  `$matches[1]` – часть строки, соответствующую первой подмаске 
+  - и так далее.
 
-matches 
+- `$flags`
 
-Результаты сопоставления. Причем $matches[0] – содержит часть строки, соответствующую вхождению всего шаблона, $matches[1] - часть строки, соответствующую первой подмаске и так далее.
+  Возможен флаг:
 
-flags
+  - `PREG_OFFSET_CAPTURE`
 
-Возможен флаг:
+    Для каждой найденной подстроки будет указана ее позиция в исходной строке. Т.е. флаг меняет формат `$matches`, так что каждый элемент будет содержать массив, где:
 
-`PREG_OFFSET_CAPTURE`
+    - индекс `[0]` – найденная подстрока, 
+    - индекс `[1]` – смещение этой подстроки в `$subject`.
 
-Для каждой найденной подстроки будет указана ее позиция в исходной строке. Т.е. флаг меняет формат matches, так что каждый элемент будет содержать массив, где под индексом [0] – найденная подстрока, а [1] – смещение этой подстроки в subject.
+    ```php
+    preg_match('/foo(bar)baz/', 'foobarbaz', $matches, PREG_OFFSET_CAPTURE);
+    print_r($matches);
+    ```
 
-*preg_match*('/foo(bar)baz/', 'foobarbaz', $matches, *PREG_OFFSET_CAPTURE*);
- *print_r*($matches);
+    Вывод:
 
-Вывод:
+    ```php
+    Array
+    (
+        [0] => Array
+            (
+                [0] => foobarbaz
+                [1] => 0
+            )
+        [1] => Array
+            (
+                [0] => bar
+                [1] => 3
+            )
+    )
+    ```
 
-Array
+  - `offset` – Начальная позиция для поиска (в байтах).
 
-(
+    Использование параметра `$offset` не эквивалентно замене сопоставляемой строки выражением `substr($subject, $offset)` при вызове функции `preg_match()`, поскольку шаблон `$pattern` может содержать такие условия как `^`, `$` или `(?<=x)`. 
 
-​    [0] => Array
+    В примере строка не соответствует паттерну:
 
-​        (
+    ```php
+    $subject = "abcdef";
+    $pattern = '/^def/';
+    preg_match($pattern, $subject, $matches, PREG_OFFSET_CAPTURE, 3);
+    print_r($matches); # Array ()
+    ```
 
-​            [0] => foobarbaz
+<ins>Возвращаемые значения</ins>
 
-​            [1] => 0
-
-​        )
-
-​    [1] => Array
-
-​        (
-
-​            [0] => bar
-
-​            [1] => 3
-
-​        )
-
-)
-
-offset
-
-Начальная позиция для поиска (в байтах).
-
-Использование параметра offset не эквивалентно замене сопоставляемой строки выражением substr($subject, $offset) при вызове функции preg_match(), поскольку шаблон pattern может содержать такие условия как ^, $ или (?<=x). 
-
-В примере строка не соответствует паттерну:
-
-$subject = **"abcdef"**;
- $pattern = **'/^def/'**;
- *preg_match*($pattern, $subject, $matches, **PREG_OFFSET_CAPTURE**, 3);
- *print_r*($matches); *# Array ()*
-
- 
-
-##### Возвращаемые значения
-
-- `1`, если `pattern` соответствует `subject`, 
+- `1`, если `$pattern` соответствует `$subject`, 
 
 - `0`, если нет
 
 - `false` в случае ошибки.
 
-#### preg_match_all
+### `preg_match_all`
 
-Ищет в строке $subject все совпадения с шаблоном $pattern и помещает результат в массив $matches в порядке, определяемом комбинацией флагов $flags.
+Ищет в строке `$subject` все совпадения с шаблоном `$pattern` и помещает результат в массив `$matches` в порядке, определяемом комбинацией флагов `$flags`.
 
 После нахождения первого соответствия последующие поиски будут осуществляться с позиции последнего найденного вхождения.
 
-**int** *preg_match_all* ( **string** $pattern , **string** $subject [, **array** &$matches [, **int** $flags = **PREG_PATTERN_ORDER** [, **int** $offset = 0 ]]] )
-
-##### Параметры
-
-$pattern, $subject, $matches, $offset 
-
-имеют тот же смысл, что и в функции preg_match(). Параметр $matches будет содержать многомерный массив.
-
-$flags
-
-Может быть указан, как один из двух флагов:
-
-`·       ``PREG_PATTERN_ORDER`
-
-Возвращает в $matches массив с элементами– подмассивами, соответствующими номеру открывающей скобки. Т.е. в общем виде обращение к конкретному совпадению имеет вид: $matches[B][N], где B— порядковый номер открывающей скобки в шаблоне, a N— номер совпадения, если было несколько совпадений. Например, в $matches[0] будет содержаться список подстрок, ПОЛНОСТЬЮ совпавших c шаблоном $pattern. В $matches[1] — список совпадений, которым соответствует первая открывающая скобка и т. д. Данный режим подразумевается по умолчанию.
-
-*preg_match_all*(**'/(.)(.)/'**,**'abcd'**, $matches, **PREG_PATTERN_ORDER**);
- *var_dump*($matches);
-
-array(3) {
-
-  [0]=>
-
-  array(2) {
-
-​    [0]=>
-
-​    string(2) "ab"
-
-​    [1]=>
-
-​    string(2) "cd"
-
-  }
-
-  [1]=>
-
-  array(2) {
-
-​    [0]=>
-
-​    string(1) "a"
-
-​    [1]=>
-
-​    string(1) "c"
-
-  }
-
-  [2]=>
-
-  array(2) {
-
-​    [0]=>
-
-​    string(1) "b"
-
-​    [1]=>
-
-​    string(1) "d"
-
-  }
-
-}
-
-`·       ``PREG_SET_ORDER`
-
-Наиболее интуитивный режим поиска. Возвращает в $matches массив с элементами– подмассивами, соответствующими номеру совпадения.  Т.е. сколько раз шаблон $pattern совпал, столько элементов и окажется в $matches, При этом каждый элемент будет иметь точно такую же структуру, как и при вызове обычной функции preg match(), а именно, это список совпавших скобочных выражений (нулевой элемент— все выражение, первый — первая скобка и т. д.). Обращение к массиву организуется так: $matches[N][B], где N— порядковый номер совпадения, а B— номер скобки.
-
-*preg_match_all*(**'/(.)(.)/'**,**'abcd'**, $matches, **PREG_SET_ORDER**);
- *var_dump*($matches);
-
-array(2) {
-
-  [0]=>
-
-  array(3) {
-
-​    [0]=>
-
-​    string(2) "ab"
-
-​    [1]=>
-
-​    string(1) "a"
-
-​    [2]=>
-
-​    string(1) "b"
-
-  }
-
-  [1]=>
-
-  array(3) {
-
-​    [0]=>
-
-​    string(2) "cd"
-
-​    [1]=>
-
-​    string(1) "c"
-
-​    [2]=>
-
-​    string(1) "d"
-
-  }
-
-}
-
-К двум, указанным выше флагам может быть добавлен флаг **PREG_OFFSET_CAPTURE**. для каждой найденной подстроки будет указана ее позиция в исходной строке. Он меняет формат каждого совпадения в массиве $matches так что в индексе с номером 0 содержится найденная подстрока, а в индекса 1 – смещение этой подстроки (т.е. аналогично preg_match()).
-
-preg_match_all(**'/(.)(.)/'**,**'abcd'**, $matches, **PREG_SET_ORDER** | **PREG_OFFSET_CAPTURE**);
- var_dump($matches);
-
-array(2) {
-
-  [0]=> array(3) {
-
-​    [0]=> 
-
-​    array(2) {
-
-​      [0]=> string(2) "ab"
-
-​      [1]=>
-
-​      int(0)
-
-​    }
-
-​    [1]=>
-
-​    array(2) {
-
-​      [0]=>
-
-​      string(1) "a"
-
-​      [1]=>
-
-​      int(0)
-
-​    }
-
-​    [2]=>
-
-​    array(2) {
-
-​      [0]=>
-
-​      string(1) "b"
-
-​      [1]=>
-
-​      int(1)
-
-​    }
-
-  }
-
-  [1]=>
-
-  array(3) {
-
-​    [0]=>
-
-​    array(2) {
-
-​      [0]=>
-
-​      string(2) "cd"
-
-​      [1]=>
-
-​      int(2)
-
-​    }
-
-​    [1]=>
-
-​    array(2) {
-
-​      [0]=>
-
-​      string(1) "c"
-
-​      [1]=>
-
-​      int(2)
-
-​    }
-
-​    [2]=>
-
-​    array(2) {
-
-​      [0]=>
-
-​      string(1) "d"
-
-​      [1]=>
-
-​      int(3)
-
-​    }
-
-  }
-
-}
-
-##### Возвращаемое значение
-
-Возвращает количество найденных вхождений шаблона (которое может быть и нулем) либо FALSE, если во время выполнения возникли какие-либо ошибки.
-
-#### preg_replace
+```php
+int preg_match_all ( string $pattern , string $subject [, array &$matches [, int $flags = PREG_PATTERN_ORDER [, int $offset = 0 ]]] )
+```
+
+<ins>Параметры</ins>
+
+- `$pattern`, `$subject`, `$matches`, `$offset` – имеют тот же смысл, что и в функции `preg_match()`. Параметр `$matches` будет содержать многомерный массив.
+
+- `$flags`
+
+  Может быть указан, как один из двух флагов:
+
+  - `PREG_PATTERN_ORDER`
+
+    Возвращает в `$matches` массив с элементами–подмассивами, соответствующими номеру открывающей скобки `(`. Т.е. в общем виде обращение к конкретному совпадению имеет вид: `$matches[B][N]`, где `B` — порядковый номер открывающей скобки `(` в шаблоне, a N — номер совпадения, если было несколько совпадений. 
+
+    Например:
+
+    - в `$matches[0]` будет содержаться список подстрок, ПОЛНОСТЬЮ совпавших c шаблоном `$pattern`
+    - в `$matches[1]` — список совпадений, которым соответствует первая открывающая скобка
+    - и т. д. 
+
+    Данный режим подразумевается по умолчанию.
+
+    ```php
+    preg_match_all('/(.)(.)/','abcd', $matches, PREG_PATTERN_ORDER);
+    var_dump($matches);
+    array(3) {
+      [0]=>
+      array(2) {
+        [0]=>
+        string(2) "ab"
+        [1]=>
+        string(2) "cd"
+      }
+      [1]=>
+      array(2) {
+        [0]=>
+        string(1) "a"
+        [1]=>
+        string(1) "c"
+      }
+      [2]=>
+      array(2) {
+        [0]=>
+        string(1) "b"
+        [1]=>
+        string(1) "d"
+      }
+    }
+    ```
+
+  - `PREG_SET_ORDER`
+
+    Наиболее интуитивный режим поиска. Возвращает в `$matches` массив с элементами– подмассивами, соответствующими номеру совпадения.  Т.е. сколько раз шаблон `$pattern` совпал, столько элементов и окажется в `$matches`. При этом каждый элемент будет иметь точно такую же структуру, как и при вызове обычной функции `preg_match()`, а именно, это список совпавших скобочных выражений:
+
+    - нулевой элемент `0` — все выражение
+    - первый `1` — первая скобка
+    -  и т. д. 
+
+    Обращение к массиву организуется так: `$matches[N][B]`, где `N` — порядковый номер совпадения, а `B` — номер скобки.
+
+    ```php
+    preg_match_all('/(.)(.)/','abcd', $matches, PREG_SET_ORDER);
+    var_dump($matches);
+    array(2) {
+      [0]=>
+      array(3) {
+        [0]=>
+        string(2) "ab"
+        [1]=>
+        string(1) "a"
+        [2]=>
+        string(1) "b"
+      }
+      [1]=>
+      array(3) {
+        [0]=>
+        string(2) "cd"
+        [1]=>
+        string(1) "c"
+        [2]=>
+        string(1) "d"
+      }
+    }
+    ```
+
+  - `PREG_OFFSET_CAPTURE`
+
+    К двум, указанным выше флагам может быть добавлен флаг `PREG_OFFSET_CAPTURE`. Для каждой найденной подстроки будет указана ее позиция в исходной строке. Он меняет формат каждого совпадения в массиве `$matches` так (аналогично `preg_match()`):
+
+    - в индексе `0` содержится найденная подстрока
+    - в индекса `1` – смещение этой подстроки.
+
+    ```php
+    preg_match_all('/(.)(.)/','abcd', $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+    var_dump($matches);
+    array(2) {
+      [0]=> array(3) {
+        [0]=> 
+        array(2) {
+          [0]=> string(2) "ab"
+          [1]=>
+          int(0)
+        }
+        [1]=>
+        array(2) {
+          [0]=>
+          string(1) "a"
+          [1]=>
+          int(0)
+        }
+        [2]=>
+        array(2) {
+          [0]=>
+          string(1) "b"
+          [1]=>
+          int(1)
+        }
+      }
+      [1]=>
+      array(3) {
+        [0]=>
+        array(2) {
+          [0]=>
+          string(2) "cd"
+          [1]=>
+          int(2)
+        }
+        [1]=>
+        array(2) {
+          [0]=>
+          string(1) "c"
+          [1]=>
+          int(2)
+        }
+        [2]=>
+        array(2) {
+          [0]=>
+          string(1) "d"
+          [1]=>
+          int(3)
+        }
+      }
+    }
+    ```
+
+<ins>Возвращаемое значение</ins>
+
+- Возвращает количество найденных вхождений шаблона (которое может быть и нулем) либо `false`, если во время выполнения возникли какие-либо ошибки.
+
+
+### `preg_replace`
 
 Поиск в строке `$subject` всех подстрок, совпадающих с выражением `$pattern`, и замена их на `$replacement`.
 
@@ -6616,7 +6649,7 @@ array(2) {
 mixed preg_replace ( mixed $pattern , mixed $replacement , mixed $subject [, int $limit = -1 [, int &$count ]] ) : mixed
 ```
 
-##### Параметры
+<ins>Параметры</ins>
 
 - `$pattern`
 
@@ -6628,35 +6661,38 @@ mixed preg_replace ( mixed $pattern , mixed $replacement , mixed $subject [, int
 
   `$replacement` может содержать ссылки вида `\\\\n`, либо `$n`, причем последний вариант предпочтительней. Каждая такая ссылка будет заменена на подстроку, соответствующую `n`-ой подмаске. `n` может принимать значения от `0` до `99`, причем `$0` соответствует вхождению всего шаблона. 
 
-**subject**
+- `$subject`
 
-Строка или массив строк для поиска и замены. 
+  Строка или массив строк для поиска и замены. 
 
-Если subject является массивом, то поиск с заменой осуществляется для каждого элемента массива subject, а возвращаемое значение также будет являться массивом.
+  Если `$subject` является массивом, то поиск с заменой осуществляется для каждого элемента массива `$subject`, а возвращаемое значение также будет являться массивом.
 
-**limit**
+- `$limit`
 
-Максимально возможное количество замен каждого шаблона для каждой строки subject. По умолчанию равно -1 (без ограничений).
+  Максимально возможное количество замен каждого шаблона для каждой строки `$subject`. По умолчанию равно -1 (без ограничений).
 
-**count**
+- `$count`
 
-Если указана, то эта переменная будет заполнена количеством произведенных замен.
+  Если указана, то эта переменная будет заполнена количеством произведенных замен.
 
-##### Возвращаемые значения
+<ins>Возвращаемые значения</ins>
 
-Если параметр subject является массивом – возвращает массив, иначе возвращается строка.
+- Если параметр `$subject` является массивом – возвращает массив, иначе возвращается строка.
 
-#### preg_replace_callback
 
-Работает аналогично preg_replace(), только вместо замены строкой $replacement запускает функцию $саllback и передает ей содержимое карманов при очередном совпадении. Результат, возвращенный функцией, используется для подстановки.
+### `preg_replace_callback`
 
-**mixed** *preg_replace_callback* ( **mixed** $pattern , **callable** $callback , **mixed** $subject [, **int** $limit = -1 [, **int** &$count ]] )
+Работает аналогично `preg_replace()`, только вместо замены строкой `$replacement` запускает функцию `$саllback` и передает ей содержимое карманов при очередном совпадении. Результат, возвращенный функцией, используется для подстановки.
 
-##### Параметры
+```php
+mixed preg_replace_callback ( mixed $pattern , callable $callback , mixed $subject [, int $limit = -1 [, int &$count ]] )
+```
 
-$pattern, $subject, $limit, $count 
+<ins>Параметры</ins>
 
-имеют тот же смысл, что и в функции preg_replace(). 
+- `$pattern`, `$subject`, `$limit`, `$count` 
+
+  имеют тот же смысл, что и в функции `preg_replace()` 
 
 $callback
 
@@ -7327,6 +7363,11 @@ var_dump(preg_replace(**'/(?<!\d)\d/'**, **'z'** ,**'12a34'**));
  
 
 ## Библиотеки функций
+
+Порядок параметров функций:
+
+- функции для работы с массивами – `function(needle, haystack, ...)`
+- строковые функции – `function(haystack, needle, ...)`
 
 ### Для работы с массивами
 

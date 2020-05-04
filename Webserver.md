@@ -10,16 +10,44 @@
 - Конфигурация виртуального хоста (`/usr/local/etc/httpd/extra/httpd-vhosts.conf`).
 
 
-- Конфигурация уровня директории (.htaccess).
-
+- Конфигурация уровня директории (`.htaccess`).
 
 Конфигурационные файлы состоят из блоков директив. 
 
+#### Конфигурация сервера
+
 Директивы:
 
-| MaxClients | Максимальное  количество воркеров |
-| ---------- | --------------------------------- |
-|            |                                   |
+| Директива                                       | Описание                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `MaxClients`                                    | Максимальное  количество воркеров                            |
+| `ErrorLog "/usr/local/var/log/httpd/error.log"` | Error log. Используется для тех *vhost*'ов, для которых не указана своя директива `ErrorLog` |
+
+#### Виртуальные хосты
+
+```apache
+<VirtualHost 127.0.0.1:81>
+	DocumentRoot   "/Users/pavelparshikov/repos/fishki/htdocs"
+	AccessFileName .htaccess_fishki
+	ServerName fishki.pp
+	ServerAlias m.fishki.pp erofishki.pp old.fishki.pp www.fishki.pp pwa.fishki.pp erofishki.pp
+	<Directory "/Users/pavelparshikov/repos/fishki/htdocs">
+		Allow from all
+		Options -Indexes
+		Options +FollowSymLinks
+		AllowOverride All
+	</Directory>
+</VirtualHost>
+
+```
+
+| Директива | Описание |
+| --------- | -------- |
+|           |          |
+|           |          |
+|           |          |
+
+
 
 ### Командная строка
 

@@ -577,7 +577,7 @@ v-for="(<value>, <key>) in <object>"
 
 - через объект, объявленный в `v-bind:class` атрибуте.
 
-- ```html
+  ```html
   <tag [class="..."] v-bind:class="{'<class1>': <bool_expr>, <class2>: <bool_expr>, ... }"/>
   
   <div v-bind:class="{ a: isA, b: isB }"></div>   
@@ -586,7 +586,7 @@ v-for="(<value>, <key>) in <object>"
         isA: true,
         isB: false
       }
-  </script>    
+  </script>  
   ```
 
 - через указания имени объекта, объявленного вне `v-bind:class` атрибута:

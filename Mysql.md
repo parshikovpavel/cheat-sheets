@@ -2116,7 +2116,9 @@ mysql> SHOW STATUS LIKE 'last_query_cost';
 
 - Перечисленные в списке `IN()` значения сортируются, выполняется быстрый двоичный поиск. Вычислительная сложность при этом составляет `O(log n)`, тогда как сложность эквивалентной последовательности условий `OR` равна `O(n)`.
 
-## `JOIN`'ы
+## `JOIN`
+
+### Виды
 
 - `JOIN`, `CROSS JOIN` и `INNER JOIN` полностью эквивалентны.
 
@@ -2138,7 +2140,9 @@ mysql> SHOW STATUS LIKE 'last_query_cost';
 
 - `NATURAL JOIN` эквивалентен `INNER JOIN` или `LEFT JOIN` с предложением `USING`, перечисляющем названия всех столбцов, которые существуют в обеих таблицах (даже если это первичный ключ `id`).
 
-### *Nested loop*
+### Алгоритмы
+
+#### *Nested loop*
 
 Соединения в MySQL реализуются только алгоритмом *nested loop* (вложенные циклы): 
 
@@ -2197,7 +2201,7 @@ MySQL оптимизирует порядок соединения таблиц 
 
 - Без использования индексов сложность `O(N⋅M)`.
 
-### Hash Join
+#### Hash Join
 
 В MySQL нативно не реализован, можно реализовать вручную ([1](#упрощение-запросов)) . Если размер одной из таблиц позволяет засунуть ее целиком в память, значит, на ее основе можно сделать *Hash table* и искать в ней нужные ключи.
 
@@ -2210,7 +2214,7 @@ MySQL оптимизирует порядок соединения таблиц 
 
 Временная сложность `O(N+M)`, но требуется дополнительная память.
 
-### Merge Join
+#### Merge Join
 
 В MySQL не реализован. Данные в обоих списках должны быть отсортированы, например, по возрастанию. Иногда это условие уже выполнено, если присутствуют индексы по обоим таблицам, или же если мы отсортировали данные на предыдущих стадиях запроса. 
 
@@ -2225,6 +2229,13 @@ MySQL оптимизирует порядок соединения таблиц 
 
 - если списки предварительно отсортированы, `O(M+N)` и не требуется никакой дополнительной памяти. 
 - если данные не отсортированы, то нужно сначала их отсортировать. Из-за этого временная сложность возрастает до `O(M log M + N log N)` плюс появляются дополнительные требования к памяти.
+
+### Ускорение
+
+Основные способы ускорения:
+
+- Вторая и последующие таблицы в порядке соединения `JOIN` должны иметь индексы по столбцам из `ON` или `USING`. 
+- Желательно, чтобы в выражениях `GROUP BY` и `ORDER BY` встречались столбцы только из одной таблицы, тогда у MySQL появится возможность воспользоваться для этой операции индексом.
 
 ## Сортировка
 
@@ -2321,15 +2332,57 @@ MySQL может выполнять `JOIN` с сортировкой тремя 
 - Иначе, записать результат соединения `JOIN` во временную таблицу и затем выполнить *filesort* всего результата целиком. В `EXPLAIN` выводится `Using temporary; Using filesort`.
 
 
-## `IN`, `EXISTS`, `JOIN` (коррелированные подзапросы)
+## Коррелированный подзапрос
+
+Коррелированный запрос – вложенный запрос, который использует значения из внешнего запроса. Оценивается отдельно для каждой строки-результата внешнего запроса, поэтому часто неэффективен.
 
 Для корректированных подзапросов в `EXPLAIN` выводится тип `DEPENDENT SUBQUERY`.
+
+### `SELECT`
+
+Коррелированный запрос может встречаться в:
+
+- блок `WHERE`
+
+  Найти всех сотрудников, чья зарплата выше среднего для их отдела.
+
+  ```mysql
+  SELECT employee_number, name 
+  FROM employees AS emp 
+  WHERE salary > ( SELECT AVG(salary) FROM employees WHERE department = emp.department);
+  ```
+
+- блок `SELECT`
+
+  Вывести сотрудников и среднюю зарплату по отделу каждого сотрудника. 
+
+  ```mysql
+  SELECT employee_number, name, 
+  (SELECT AVG(salary) FROM employees WHERE department = emp.department) AS department_average 
+  FROM employees AS emp;
+  ```
+
+Такие коррелированные подзапросы неэффективны и их стоит избегать.
+
+Эффект коррелированных подзапросов в некоторых случаях может быть получен с использованием объединений. Такие запросы не коррелируют с внешним запросом и поэтому выполняется только один раз, независимо от количества сотрудников. 
+
+```mysql
+SELECT employees.employee_number, employees.name 
+FROM employees INNER JOIN 
+	(SELECT department, AVG(salary) AS department_average 
+	FROM employees 
+	GROUP BY department) AS temp 
+ON employees.department = temp.department 
+WHERE employees.salary > temp.department_average;
+```
+
+Если внутренний запрос используется в нескольких запросах, внутренний запрос может быть сохранен как *view*, а затем `JOIN`'иться как обычная таблица.
 
 ### `IN`, `EXISTS`, `INNER JOIN`
 
 Стоит избегать подзапросов в операторе `IN()` во фразе `WHERE`. 
 
-Пример найти все фильмы, в которых играл актер `actor id=1`.
+Пример найти все фильмы, в которых играл актер `actor_id=1`.
 
 ```mysql
 SELECT • FROM film
@@ -2422,167 +2475,175 @@ WHERE film_id IN (
 
   В книге этот вариант быстрее. Очевидно из-за примененной оптимизации (алгоритма раннего завершения) и отсутствия необходимости создавать временную таблицу с последующим выбором по `DISTINCT`.
 
-### Ограничения UNION
+## `UNION`
 
-MySQL не может «опустить» условия с внешнего уровня UNION на внутренний, где их можно было бы использовать с целью ограничения результата или создания возможностей для дополнительных оптимизаций. Например при объединении две очень большие таблицы и ограничиваете результат первыми 20 строками, MySQL сначала запишет обе таблицы во временную, а затем выберет всего 20 строк. Этого можно избежать, включив ограничение LIMIT 20 в каждую часть UNION.
+MySQL не может «опустить» условия с внешнего уровня `UNION` на внутренний, для оптимизации выборок в *subquery*'s. 
 
-explain (select id from fishki_pg_data limit 10)
+Например, объединяются две очень большие таблицы и результат объединения ограничивается первыми 10 строками. MySQL сначала запишет обе таблицы во временную таблицу, а затем выберет всего 10 строк. Этого можно избежать, включив ограничение `LIMIT 10` в каждую часть `UNION`.
 
-union 
-
-(select id from fishki_category limit 10)
-
+```mysql
+select id from table1 limit 10
+UNION
+select id from table2 limit 10
 order by id
-
 limit 10;
+```
 
-### Оптимизация слияния индексов
+## Слияние индексов
 
-При выполнении запроса можно использовать два индекса: они просматриваются одновременно, после чего результаты сливаются. Существует три варианта этого алгоритма: объединение для условий c OR, пересечение для условий c AND и объединение пересечений для случая, когда встречаются как OR, так и AND.
+В некоторых случаях возможно использовать одновременно два индекса – они просматриваются одновременно, после чего результаты выборки сливаются.
 
-mysql> EXPLAIN SELECT film_id, actor_id FROM sakila.film_actor 
- -> WHERE actor_id = 1 OR film_id = 1\G
+Случаи применения:
 
+- объединение для условий c `OR`
+- пересечение для условий c `AND`
+- комбинация объединений и пересечений, когда встречаются `OR` и `AND`.
+
+```mysql
+mysql> EXPLAIN SELECT film_id, actor_id FROM film_actor 
+               WHERE actor_id = 1 OR film_id = 1\G
 Extra: Using union(PRIMARY,idx_fk_film_id); Using where
+```
 
-MySQL умеет применять эту технику к сложным фразам WHERE, поэтому для некоторых запросов в столбце Extra можно встретить вложенные операции. В результате параллельных просмотров может возвращаться много строк, подлежащих слиянию, что повлияет на одновременно выполняющиеся запросы. При этом запуск изолированно запроса не покажет влияния и большого размера выделенной памяти. Это свидетельствует о необходимо тестировать на реальной системе. 
+В случае комбинации объединений и пересечений, в `Extra` можно встретить вложенные операции. 
 
-**MySQL не умеет распараллеливать выполнение одного запроса на нескольких ЦП**. Эту возможность предлагают многие СУБД, но только не MySQL.
+## Непоследовательный просмотр индекса
 
-### Непоследовательный просмотр индекса
+MySQL не умеет выполнять непоследовательный просмотр индекса (*loose index scan*), то есть просмотр несмежных диапазонов индекса. При просмотре индекса всегда необходимо задавать начальную и конечную точку. Если бы такое было возможно, то это позволило бы оптимизировать случаи, когда используется не левый префикс ключа:
 
-MySQL не умеет выполнять непоследовательный просмотр индекса (loose index scan), то есть просмотр несмежных диапазонов индекса. При просмотре индекса всегда необходимо задавать начальную и конечную точку. Если бы такое было возможно, то это позволило бы оптимизировать случаи, когда используется не левый префикс ключа:
+```mysql
+CREATE TABLE ... (
+	INDEX ... (a,b)
+);
+```
 
-INDEX(a,b)
-
+```mysql
+SELECT ...
 WHERE b BETWEEN 2 AND 3;
+```
 
-  
+![looseIndexScan](https://parshikovpavel.github.io/img/mysql/looseIndexScan.png?3)
 
-Непоследовательный просмотр индекса возможен в некоторых ситуациях, например для отыскания минимального и максимального значений в запросе с группировкой:
+Непоследовательный просмотр индекса возможен в некоторых ситуациях:
 
-INDEX (post_id, gallery_id)
+- для отыскания минимального и максимального значений в запросе с группировкой:
 
-explain SELECT post_id, max(gallery_id) FROM fishki_pg_data group by post_id;
+  ```mysql
+  CREATE TABLE ... (
+  	INDEX ... (post_id, gallery_id)
+  );
+  ```
 
-Extra: Using index for group-by
+  ```mysql
+  mysql> explain SELECT post_id, max(gallery_id) FROM fishki_pg_data group by post_id;
+  Extra: Using index for group-by
+  ```
 
-Наличие слов «Using index for group-by» свидетельствует о непоследовательном просмотре индекса. 
+  Наличие слов `Using index for group-by` свидетельствует о непоследовательном просмотре индекса. 
 
-Для непоследовательного просмотра индекса можно также применять обходное решение с указанием список констант для столбца, указанного первым в ключе индекса.
+<u>Ручная реализация непоследовательного просмотра индекса</u>
 
-### Функции MIN() и MAX()
+Для непоследовательного просмотра индекса можно также применять обходное решение с указанием список констант для столбца, указанного первым в ключе индекса:
 
-Запросы, которые выбирают min или max значение из проиндексированного поля и имеют условие по неиндексированному полю можно оптимизировать так. Вместо:
+```mysql
+SELECT ...
+WHERE a IN (1,2,3,4,...)
+	b BETWEEN 2 AND 3;
+```
 
-mysql> SELECT MIN(actor_id) FROM sakila.actor WHERE first_name = ‘PENELOPE’; 
- что приводит к полному просмотру таблицы можно написать:
+## `MIN()` и `MAX()`
 
-mysql> SELECT actor_id FROM sakila.actor USE INDEX(PRIMARY) 
- -> WHERE first_name = ‘PENELOPE’ LIMIT 1;
+Пусть надо выбрать `MIN(`) или `MAX()` значение из проиндексированного поля с условием по неиндексированному полю. 
 
-что прекратит поиск после нахождения первой подходящей строки.
+Такой запрос приводит к *fullscan*:
 
-### SELECT и UPDATE одной таблицы
+```mysql
+SELECT MIN(actor_id) FROM sakila.actor WHERE first_name = 'PENELOPE';
+```
 
-MySQL не позволяет производить SELECT из таблицы одновременно с UPDATE.
+Можно указать явный просмотр в порядке `PRIMARY` индекса c `LIMIT 1`. Будет использован алгоритм раннего завершения, поиск прекратится после нахождения первой подходящей строки.
 
-mysql> UPDATE tbl AS outer_tbl 
- -> SET cnt = ( 
- -> SELECT count(*) FROM tbl AS inner_tbl 
- -> WHERE inner_tbl.type = outer_tbl.type ); 
- ERROR 1093 (HY000): You can’t specify target table 
- ‘outer_tbl’ for update in FROM clause
+```mysql
+SELECT actor_id FROM sakila.actor USE INDEX(PRIMARY) 
+WHERE first_name = 'PENELOPE' LIMIT 1;
+```
 
-Можно через производную таблицу, так как MySQL материализует ее в виде временной таблицы.
+## `GROUP BY` и `DISTINCT`
 
-mysql> UPDATE tbl INNER JOIN
+MySQL использует одинаковый алгоритм для `GROUP BY` и `DISTINCT`. 
 
--> (SELECT type, count(*) AS cnt 
- -> FROM tbl 
- -> GROUP BY type 
- -> ) AS der USING(type) 
- -> SET tbl.cnt = der.cnt;
+### По индексу
 
-### Коррелированный подзапрос
+Лучше всего иметь выполнять `GROUP BY` по индексированному полю. 
 
-Вложенный запрос , который использует значения из внешнего запроса. Оценивается отдельно для каждой строки, обработанной внешним запросом, поэтому неэффективен.
+Иногда запрос можно преобразовать так, чтобы преобразовать его в `GROUP BY` по индексированному полю. 
 
-Найти всех сотрудников, чья зарплата выше среднего для их отдела.
+Пример:
 
-SELECT employee_number, name 
+```mysql
+SELECT actor.first_name, actor.last_name, COUNT(*) 
+FROM sakila.film_actor 
+INNER JOIN sakila.actor USING(actor_id) 
+GROUP BY actor.first_name, actor.last_name;
+```
 
-FROM employees AS emp 
+Способы улучшения:
 
-WHERE salary > ( SELECT AVG(salary) FROM employees WHERE department = emp.department);
+- Способ 1
 
-Корреляционные подзапросы могут появляться в другом месте, кроме предложения WHERE; например, в предложении SELECT для печати списка сотрудников и средней зарплаты для отдела каждого сотрудника. 
+  ```mysql
+  SELECT actor.first_name, actor.last_name, COUNT(*) 
+  FROM sakila.film_actor 
+  INNER JOIN sakila.actor USING(actor_id) 
+  GROUP BY film_actor.actor_id;
+  ```
 
-SELECT employee_number, name, 
+  В режиме `SQL_MODE = ONLY_FULL_GROUP_BY` такой запрос выдаст ошибки. 
 
-(SELECT AVG(salary) FROM employees WHERE department = emp.department) AS department_average 
+- Можно добавить `MIN()` или `MAX()`:
 
-FROM employees AS emp;
+  ```mysql
+  SELECT MIN(actor.first_name), MIN(actor.last_name), COUNT(*) 
+  FROM sakila.film_actor 
+  INNER JOIN sakila.actor USING(actor_id) 
+  GROUP BY film_actor.actor_id;
+  ```
 
-Эффект коррелированных подзапросов в некоторых случаях может быть получен с использованием объединений. Такие запросы не коррелируют с внешним запросом и поэтому - выполняется только один раз, независимо от количества сотрудников. 
+- Можно использовать подзапрос. Однако это может работать медленно, т.к. заполняется временная таблица и временная таблица не имеет индексов.
 
-SELECT employees.employee_number, [employees.name](https://vk.com/away.php?to=http%3A%2F%2Femployees.name&cc_key=) 
+  ```mysql
+  SELECT actor.first_name, actor.last_name, c.cnt 
+  FROM sakila.actor 
+  INNER JOIN ( 
+  	SELECT actor_id, COUNT(*) AS cnt 
+  	FROM sakila.film_actor 
+  	GROUP BY actor_id 
+  ) AS c USING(actor_id);
+  ```
 
-FROM employees INNER JOIN 
+### Без индекса
 
-  (SELECT department, AVG(salary) AS department_average 
+Если подходящего индекса не существует, то выбирается один из двух алгоритмов: 
 
-  FROM employees 
+- если результирующий набор невелик, то он помещается в проиндексированную временную таблицу, и в итоге он сразу получается отсортированным для группировки. Можно использовать подсказку оптимизатору `SQL_SMALL_RESULT`.
+-  если результирующий набор велик, то используется временная таблица на диске с последующей сортировкой. Можно использовать подскоку оптимизатору `SQL_BIG_RESULT`.
 
-  GROUP BY department) AS temp 
+### Общее
 
-ON employees.department = temp.department 
+MySQL автоматически упорядочивает результат запроса с группировкой по столбцам, перечисленным во фразе `GROUP BY`, если фраза `ORDER BY` явно не указана. Если порядок не имеет значения, то можно подавить файловую сортировку (*filesort*), включив фразу `ORDER BY NULL`:
 
-WHERE employees.salary > temp.department_average;
+```mysql
+SELECT ...
+GROUP BY ...
+ORDER BY NULL
+```
 
-Если внутренний запрос используется в нескольких запросах, внутренний запрос может быть сохранен как представление, а затем joinиться как обычная таблица.
+При группировке можно поместить сразу после `GROUP BY DESC` или `ASC`.
 
-Самая важная рекомендация, которую можно дать – стараться по возможности использовать вместо них соединение.
-
-### Оптимизация запросов с JOIN
-
-Стройте индексы по столбцам, используемым во фразах ON или USING. При добавлении индексов учитывайте порядок соединения – следует индексировать только вторую таблицу в порядке соединения,
-
-Старайтесь, чтобы в выражениях GROUP BY и ORDER BY встречались столбцы только из одной таблицы, тогда у MySQL появится возможность воспользоваться для этой операции индексом.
-
-### Оптимизация GROUP BY и DISTINCT
-
-MySQL зачастую внутренне переключается между ними на стадии оптимизации. Если подходящего индекса не существует, то возможно две стратегии: воспользоваться временной таблицей или прибегнуть к файловой сортировке. Чтобы заставить оптимизатор выбрать нужный вам метод, включите в запрос подсказки SQL_BIG_RESULT или SQL_SMALL_RESULT.
-
-Если нужна группировка по значению столбца, который извлекается при соединении из справочной таб лицы, то обычно более продуктивно группировать по идентификатору из этой таблицы, а не по его значению. Вместо
-
-mysql> SELECT actor.first_name, actor.last_name, COUNT(*) 
- -> FROM sakila.film_actor 
- -> INNER JOIN sakila.actor USING(actor_id) 
- -> GROUP BY actor.first_name, actor.last_name;
-
-сделать так
-
-mysql> SELECT actor.first_name, actor.last_name, COUNT(*) 
- -> FROM sakila.film_actor 
- -> INNER JOIN sakila.actor USING(actor_id) 
- -> GROUP BY film_actor.actor_id;
-
-Авторы не рекомендуют использовать такие хаки и желательно  ставить SQL_MODE в режим ONLY_FULL_GROUP_BY, чтобы сервер выдавал сообщение об ошибке, а не разрешал писать плохие запросы. Чтобы обойти эту сложность, можно воспользоваться функциями MIN() или MAX(). 
-
-Возможно сделать также через подзапрос
-
-mysql> SELECT actor.first_name, actor.last_name, c.cnt 
- -> FROM sakila.actor 
- -> INNER JOIN ( 
- -> SELECT actor_id, COUNT(*) AS cnt 
- -> FROM sakila.film_actor 
- -> GROUP BY actor_id 
- -> ) AS c USING(actor_id) ;
-
-Однако стоимость создания и заполнения временной таблицы может быть слишком высока по сравнению с мелким отступлением от принципов реляционной теории. Также временная таблица, создаваемая в процессе выполнения подзапроса, не имеет индексов.
-
-MySQL автоматически упорядочивает результат запроса с группировкой по столбцам, перечисленным во фразе GROUP BY, если фраза ORDER BY явно не указана. Если порядок не имеет значения, то можно подавить файловую сортировку (filesort) включив фразу ORDER BY NULL. При группировке можно поместить сразу после GROUP BY DESC или ASC.
+```mysql
+SELECT ...
+GROUP BY ... DESC
+```
 
 ### GROUP BY WITH ROLLUP
 
@@ -5355,32 +5416,61 @@ assignment_list:
 
 Возможно две формы синтаксиса:
 
-- одно-табличный синтаксис:
+- однотабличный синтаксис
+- многотабличный синтаксис
 
-  ```mysql
-  UPDATE [LOW_PRIORITY] [IGNORE] table_reference
-      SET assignment_list
-      [WHERE where_condition]
-      [ORDER BY ...]
-      [LIMIT row_count]
-  
-  value:
-      {expr | DEFAULT}
-  
-  assignment:
-      col_name = value
-  
-  assignment_list:
-      assignment [, assignment] ...
-  ```
+#### Однотабличный синтаксис
 
-- много-табличный синтаксис:
+```mysql
+UPDATE [LOW_PRIORITY] [IGNORE] table_reference
+    SET assignment_list
+    [WHERE where_condition]
+    [ORDER BY ...]
+    [LIMIT row_count]
 
-  ```mysql
-  UPDATE [LOW_PRIORITY] [IGNORE] table_references
-      SET assignment_list
-      [WHERE where_condition]
-  ```
+value:
+    {expr | DEFAULT}
+
+assignment:
+    col_name = value
+
+assignment_list:
+    assignment [, assignment] ...
+```
+
+#### Многотабличный синтаксис:
+
+```mysql
+UPDATE [LOW_PRIORITY] [IGNORE] table_references
+    SET assignment_list
+    [WHERE where_condition]
+```
+
+MySQL не позволяет в `UPDATE` использовать коррелированный подзапрос `SELECT`  к той же самой таблице.
+
+```mysql
+mysql> UPDATE tbl AS outer_tbl 
+	   SET cnt = ( 
+			SELECT count(*) FROM tbl AS inner_tbl 
+			WHERE inner_tbl.type = outer_tbl.type 
+       ); 
+ERROR 1093 (HY000): You can’t specify target table 
+‘outer_tbl’ for update in FROM clause
+
+```
+
+Необходимо использовать многотабличный синтаксис с `INNER JOIN`. Второй раз таблица должна использоваться как производная, тогда MySQL материализует ее в виде временной таблицы.
+
+```mysql
+UPDATE tbl INNER JOIN
+	(SELECT type, count(*) AS cnt 
+	 FROM tbl 
+	 GROUP BY type 
+	) AS derived USING(type) 
+SET tbl.cnt = derived.cnt;
+```
+
+#### Общее
 
 `value: DEFAULT` – использование значения по умолчанию для данного столбца. 
 
@@ -5392,7 +5482,7 @@ UPDATE t1 SET col1 = col1 + 1, col2 = col1;
 
 `col2=col1+1`, т.е. второе присваивание использует уже новое (обновленное) `col1` значение. Это поведение отличается от стандарта SQL.
 
-Операторы
+
 
 ### Functions and operators
 

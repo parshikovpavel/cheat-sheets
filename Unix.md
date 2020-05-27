@@ -356,15 +356,17 @@ dpkg --list
 
 #### `ls`
 
-**-****l** Вывод информации из inode (куда ведет ссылка, какие права доступа, кто владелец)
+`ls -l` Вывод информации из inode (куда ведет ссылка, какие права доступа, кто владелец):
 
-[pparshikov@cup ~]$ ls -l /etc/sphinx/sphinx.conf
+```bash
+$ ls -l /sphinx.conf
+lrwxrwxrwx 1 root root 52 Nov  7 16:57 /sphinx.conf -> /www/sphinx_123.conf
 
-lrwxrwxrwx 1 root root 52 Nov 7 16:57 /etc/sphinx/sphinx.conf -> /www/fishki6.cup.ondu.ru/misc/sphinx_fishki_cup.conf
+```
 
-**-****a** показать скрытые файлы
+`ls -a` показать скрытые файлы
 
-**-****I** номер inode
+`ls -I` номер *inode*
 
 #### **mkdir**
 
@@ -1197,9 +1199,6 @@ nc localhost 80
 <u>Многоядерный процессор</u>
 
 Для многоядерной системы с количеством ядер `N`  все числа необходимо доносить на `N`. Т.е. для четырехмерной системы 100% загрузка при `Load average = 4.00`. Т.е. необходимо, чтобы `Load average < N`. 
-
-<u>Важно!!!</u>
-На linux в LA учитываются не только ждущие выполнения процессы, но и 
 
 ## `htop`
 

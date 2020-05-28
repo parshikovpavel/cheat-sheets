@@ -439,6 +439,11 @@ brew install yarn
 yarn install
 ```
 
+# Import
 
-
+```javascript
+import 'imgAreaSelect'
+import 'imgAreaSelect/imgAreaSelect.css' # CSS!!!
+import { NodeSelection } from 'prosemirror-state'
+```
 

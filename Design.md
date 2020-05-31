@@ -90,17 +90,17 @@ class A
  {
    **public function** f() {}
  }
- 
+
  */** Делегирующий класс \*/
 \* **class** B
  {
    **private** **$a**;
- 
+
    **public function** __construct(A $a)
    {
      $this->**a** = $a;
    }
- 
+
    **public function** f()
    {
      **return** $this->**a**->f();
@@ -139,27 +139,27 @@ function cost () (
 \* **abstract class** Lesson {
    **private $duration**;
    **private $costStrategy**;
- 
+
    **function** _construct (int $duration, CostStrategy $strategy)
    {
      $this->**duration** = $duration;
      $this->**costStrategy** = $strategy;
    }
- 
+
    **function** cost()
    {
      **return** $this->**costStrategy**->cost($this);
    }
- 
+
    **function** getDuration () 
 
   {
      **return** $this->**duration**;
    }
- 
+
    **abstract function** charge();
  }
- 
+
  */** Класс Лекция \*/
 \* **class** Lecture **extends** Lesson
  {
@@ -168,7 +168,7 @@ function cost () (
      **echo "Lecturing before the flow of students\n"**;
    }
  }
- 
+
  */** Класс Семинар \*/
 \* **class** Seminar **extends** Lesson {
    **function** charge()
@@ -176,13 +176,13 @@ function cost () (
      **echo "Verification of laboratory works\n"**;
    }
  }
- 
+
  */** Класс Стратегия Расчет стоимости \*/
 \* **abstract class** CostStrategy
  {
    **abstract function** cost(Lesson $lesson);
  }
- 
+
  */** Класс Повременная стоимость \*/
 \* **class** TimedCostStrategy **extends** CostStrategy 
  {
@@ -191,7 +191,7 @@ function cost () (
      **return** ($lesson->getDuration() * 5 );  
    }
  }
- 
+
  */** Класс Фиксированная стоимость \*/
 \* **class** FixedCostStrategy **extends** CostStrategy
  {
@@ -213,7 +213,7 @@ function cost () (
 **class** A
  {
    **private** **$b**;
- 
+
    **public function** __construct(B $b)
    {
      $this->**b** = $b;
@@ -231,7 +231,7 @@ function cost () (
 **class** A
  {
    **private** **$b**;
- 
+
    **public function** __construct()
    {
      $this->**b** = **new** B();
@@ -265,7 +265,7 @@ function cost () (
 В PHP реализован через трейт:
 
 **trait** SayWorld {
-   
+
  **class** MyHelloWorld {
    **use** SayWorld;
 
@@ -274,13 +274,13 @@ function cost () (
 **abstract class** Base {
    /** Массив поведений */
    **private $behaviors** = [];
- 
+
    /** Аттач поведения */
    **public function** attachBehavior(Behavior $behavior)
    {
      $this->**behaviors**[] = $behavior;
    }
- 
+
    **public function** __call($name, $params)
    {
      **foreach** ($this->**behaviors as** $behavior) {
@@ -515,13 +515,13 @@ http://blog.byndyu.ru
      $post = $this->selectPost();
      **return** $this->format($post);
    }
- 
+
    *# Выбрать пост из базы данных
 \*   **public** **function** selectPost()
    {
      **return** DB::*select*(**'****SELECT** **....'**);
    }
- 
+
    *# Отформатировать вывод для* *HTML**
 \*   **public** **function** format($post)
    {
@@ -544,27 +544,27 @@ http://blog.byndyu.ru
  {
    **private** **$db**;
    **private** **$fomatter**;
- 
+
    **public function** __construct(Db $db, Formatter $formatter)
    {
      $this->**db** = $db;
      $this->**fomatter** = $formatter;
    }
- 
+
    **public function** getPost()
    {
      $post = $this->**db**->selectPost();
      **return** $this->**formatter**->format($post);
    }
  }
- 
- 
+
+
  *# Ответственность класса - База данных
 \* **interface** Db 
  {
    **public function** selectPost();
  }
- 
+
  **class** DbMysql **implements** Db
  {
    **public function** selectPost()
@@ -572,13 +572,13 @@ http://blog.byndyu.ru
      **return** DB::*select*(**'SELECT ....'**);
    }
  }
- 
+
  *# Ответственность класса - Форматирование вывода
 \* **interface** Formatter
  {
    **public function** format($post);
  }
- 
+
  **class** FormatterHtml **implements** Formatter
  {
    **public function** format($post)
@@ -927,7 +927,7 @@ https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D1%82%D0%B5%D1%80%D1%84%D0%B5%D0%B9%D
 
 class User {
    private $userData;
- 
+
    public function __construct()
    {
      $this->userData = (new Repository)->getUserData();
@@ -938,7 +938,7 @@ class User {
 
 class User {
    private $userData;
- 
+
    public function __construct(IRepository $repository)
    {
      $this->userData = $repository->getUserData();
@@ -949,7 +949,7 @@ class User {
 
 class User {
    private $userData;
- 
+
    public function __construct(UserData $userData)
    {
      $this->userData = $userData;
@@ -1034,17 +1034,17 @@ class A
  {
    **public function** f() {}
  }
- 
+
  */** Делегирующий класс \*/
 \* **class** B
  {
    **private** **$a**;
- 
+
    **public function** __construct(A $a)
    {
      $this->**a** = $a;
    }
- 
+
    **public function** f()
    {
      **return** $this->**a**->f();
@@ -1083,27 +1083,27 @@ function cost () (
 \* **abstract class** Lesson {
    **private $duration**;
    **private $costStrategy**;
- 
+
    **function** _construct (int $duration, CostStrategy $strategy)
    {
      $this->**duration** = $duration;
      $this->**costStrategy** = $strategy;
    }
- 
+
    **function** cost()
    {
      **return** $this->**costStrategy**->cost($this);
    }
- 
+
    **function** getDuration () 
 
   {
      **return** $this->**duration**;
    }
- 
+
    **abstract function** charge();
  }
- 
+
  */** Класс Лекция \*/
 \* **class** Lecture **extends** Lesson
  {
@@ -1112,7 +1112,7 @@ function cost () (
      **echo "Lecturing before the flow of students\n"**;
    }
  }
- 
+
  */** Класс Семинар \*/
 \* **class** Seminar **extends** Lesson {
    **function** charge()
@@ -1120,13 +1120,13 @@ function cost () (
      **echo "Verification of laboratory works\n"**;
    }
  }
- 
+
  */** Класс Стратегия Расчет стоимости \*/
 \* **abstract class** CostStrategy
  {
    **abstract function** cost(Lesson $lesson);
  }
- 
+
  */** Класс Повременная стоимость \*/
 \* **class** TimedCostStrategy **extends** CostStrategy 
  {
@@ -1135,7 +1135,7 @@ function cost () (
      **return** ($lesson->getDuration() * 5 );  
    }
  }
- 
+
  */** Класс Фиксированная стоимость \*/
 \* **class** FixedCostStrategy **extends** CostStrategy
  {
@@ -1157,7 +1157,7 @@ function cost () (
 **class** A
  {
    **private** **$b**;
- 
+
    **public function** __construct(B $b)
    {
      $this->**b** = $b;
@@ -1175,7 +1175,7 @@ function cost () (
 **class** A
  {
    **private** **$b**;
- 
+
    **public function** __construct()
    {
      $this->**b** = **new** B();
@@ -1209,7 +1209,7 @@ function cost () (
 В PHP реализован через трейт:
 
 **trait** SayWorld {
-   
+
  **class** MyHelloWorld {
    **use** SayWorld;
 
@@ -1218,13 +1218,13 @@ function cost () (
 **abstract class** Base {
    /** Массив поведений */
    **private $behaviors** = [];
- 
+
    /** Аттач поведения */
    **public function** attachBehavior(Behavior $behavior)
    {
      $this->**behaviors**[] = $behavior;
    }
- 
+
    **public function** __call($name, $params)
    {
      **foreach** ($this->**behaviors as** $behavior) {
@@ -1415,7 +1415,7 @@ interface ResponseFormat
 public class Client 
  {
    private $service;
- 
+
    public function __construct()
    {
      $service = new ConcreteService();
@@ -1428,7 +1428,7 @@ public class Client
 
 **class** Client {
    **private** **$service**;
- 
+
    **public function** __construct(**array** $config)
    { 
      *# тип конкретного сервиса передается через строку в конфиге
@@ -1436,7 +1436,7 @@ public class Client
      $this->**service** = **new** $serviceClass;
    }
  }
- 
+
  *# клиент используется в качестве сервиса Mock-объект
 \* $client = **new** Client([
      **'serviceClass'** => ServiceMock::***class\***,
@@ -1465,7 +1465,7 @@ public class Client
 ·  Практически невозможно в исходном классе подменить конкретный сервис mock-объектом. Только через хаки вроде Reflection API.
 
 ·  Приемлемый вариант – унаследовать от Client и переопределить его конструктор на инстанцирование *MockService*. Возможно, если область видимости поля *$**service* *protected* или *public.*
- 
+
  
 
 ##### Внедрение зависимости (Dependency injection, DI)
@@ -1506,7 +1506,7 @@ interface Service
  {
    public function use();
  }
- 
+
  class ConcreteService implements Service
  {
    public function use() {}
@@ -1530,7 +1530,7 @@ Constructor injection устанавливает *обязательные* за
 
 **class** Client {
    **private $service**;
- 
+
    **public function** __construct(Service $service)
    {
      $this->**service** = $service;
@@ -1541,7 +1541,7 @@ Constructor injection устанавливает *обязательные* за
 
 **class** Client {
    **private** **$service**;
- 
+
    **public function** __construct(Service $service = **null**)
    {
      $this->**service** = $service ?? **new** DefaultService();
@@ -1555,13 +1555,13 @@ Constructor injection устанавливает *обязательные* за
 */**
  \* Пример внедрения зависимости через конструктор без интерфейса, напрямую
  \*/
- 
+
 \* **class** DbConfig {
    **private $host**;
    **private $port**;
    **private $username**;
    **private $password**;
- 
+
    **public function** __construct(string $host, string $username, string $password, string $dbname)
    {
      $this->**host** = $host;
@@ -1569,43 +1569,43 @@ Constructor injection устанавливает *обязательные* за
      $this->**password** = $password;
      $this->**dbname** = $dbname;
    }
- 
+
    **public function** getHost()
    {
      **return** $this->**host**;
    }
- 
+
    **public function** getDbname()
    {
      **return** $this->**dbname**;
    }
- 
+
    **public function** getUsername()
    {
      **return** $this->**username**;
    }
- 
+
    **public function** getPassword()
    {
      **return** $this->**password**;
    }
  }
- 
+
  */**
  \* Класс соединение с базой данных
  \*/
 \* **class** DbConnection{
    **private $dbConfig**;
- 
+
    **public function** __construct(DbConfig $dbConfig)
    {
      $this->**dbConfig** = $dbConfig;
    }
- 
+
    **public function** connect()
    {
      $mysqli = **new** mysqli($this->**dbConfig**->getHost(), $this->**dbConfig**->getUsername(), $this->**dbConfig**->getPassword(), $this->**dbConfig**->getDbname());
- 
+
      **return** $mysqli;
    }
  }
@@ -1624,7 +1624,7 @@ Client предоставляет setter для инджекции.
 
 **class** Client {
    **private $service**;
- 
+
    **public function** setService(Service $service)
    {
      $this->**service** = $service;
@@ -1635,13 +1635,13 @@ Client предоставляет setter для инджекции.
 
 **class** Client {
    **private** **$service**;
- 
+
    **public function** setService(Service $service)
    {
      **static** $changed = **false**;
      **if**($changed)
        **throw new** Exception();
- 
+
      $this->**service** = $service;
      $changed = **true**;
    }
@@ -1654,13 +1654,13 @@ Client предоставляет setter для инджекции.
 **class** Client
  {
    **public** **$service**;
- 
+
    **public function** __construct()
    {
      $this->**service** = **new** ConcreteService1;
    }
  }
- 
+
  $client = **new** Client;
  $client->**service** = **new** ConcreteService2;
 
@@ -1669,18 +1669,18 @@ Client предоставляет setter для инджекции.
 **class** ServiceA
  {
    **private** **$serviceB**;
- 
+
    **public function** __construct(ServiceB $serviceB)
    {
      $this->**serviceB** = $serviceB;
    }
  }
- 
+
  **class** ServiceB
  {
    **public** **$serviceA**;
  }
- 
+
  $serviceB = **new** ServiceB;
  $serviceA = **new** ServiceA($serviceB);
  $serviceB->**serviceA** = $serviceA;
@@ -1734,19 +1734,19 @@ Client предоставляет setter для инджекции.
  **class** ArrayClass **implements** IteratorAggregate
  {
    **protected** **$array** = [3,2,1];
- 
+
    **public function** getIterator(): Traversable
    {
      **return new** ArrayIterator($this->**array**);
    }
- 
+
    **public function** sort(SortStrategy $sortStrategy) : **self
 **   {
      *usort*($this->**array**, [$sortStrategy, **'compare'**]);
      **return** $this;
    }
  }
- 
+
  *var_dump*(*iterator_to_array*((**new** ArrayClass())->sort(**new** SimpleSortStrategy())));
  *# array(3) {
  \#  [0] => int(1)
@@ -1764,9 +1764,9 @@ Client предоставляет setter для инджекции.
      *var_dump*($context);
    }
  }
- 
+
  **class** Context {}
- 
+
  (**new** Client)->method(**new** Context);
 
 Также паттерны Command, State используют дополнительный внешний контекст для выполнения операции.
@@ -1777,22 +1777,22 @@ Client предоставляет setter для инджекции.
 
 */\* Сервис (service**) \*/
 \* **interface** Service { }
- 
+
  */\* Интерфейс для ввода зависимости \*/
 \* **interface** ServiceSetter {
    **public** **function** setService(Service $service);
  }
- 
+
  */\* Клиент (client**) \*/
 \* **class** Client **implements** ServiceSetter {
    **private** **$service**;
- 
+
    **public** **function** setService(Service $service)
    {
      $this->**service** = $service;
    }
  }
- 
+
  *//регистрируется конкретный сервис
 \* $container->set(Service::***class\***, ConcreteService::***class\***);
  *// потом регистрируется класс-инджектор, который контейнер вызовет для внедрения зависимости и передаст его методу inject* *ссылку на клиента
@@ -1952,7 +1952,7 @@ Simple Factory
  {
    */\* Сервис-синглтон \*/
 \*   **private** **$service**;
- 
+
    **public function** getService()
    {
      **if**(**null** === $this->**service**)
@@ -1960,11 +1960,11 @@ Simple Factory
      **return** $this->**service**;
    }
  }
- 
+
  **class** Client
  {
    **private** **$simpleFactory**;
- 
+
    **public function** __construct(SimpleFactory $simpleFactory)
    {
      $this->**simpleFactory** = $simpleFactory;
@@ -1982,19 +1982,19 @@ Simple Factory с созданием абстракций
  {
    function connect(string $dsn);
  }
- 
+
  */** ConcreteProduct1 \*/
 \* class MysqlDb implements Db
  {
    function connect(string $dsn) {}
  }
- 
+
  */** ConcreteProduct2 \*/
 \* class PostgresDb implements Db
  {
    function connect(string $dsn) {}
  }
- 
+
  */** SimpleFactory \*/
 \* class DbFactory
  {
@@ -2043,7 +2043,7 @@ DI в конструктор класса Factory Method
  {
    **public function** factoryMethod(DomainObject $domainObject);
  }
- 
+
  **class** ConcreteClientFactory **implements** ClientFactory
  {
    **private** **$service**;
@@ -2096,7 +2096,7 @@ DI в конструктор класса Factory Method
 Более простые варианты (1 и 2) без инстанцирования называют паттерном Registry. Также Registry может быть реализован через ArrayObject.
 
 $registry = **new** ArrayObject();
- 
+
  $registry[**'service'**] = **new** Service();
 
  
@@ -2110,12 +2110,12 @@ $registry = **new** ArrayObject();
 **class** ServiceLocator
  {
    **private static** *$service*;
- 
+
    **public static function** getService($service)
    {
      **return self**::*$service*;
    }
- 
+
    **public static function** setService($service)
    {
      **self**::*$service* = $service;
@@ -2127,12 +2127,12 @@ $registry = **new** ArrayObject();
 class ServiceLocator
  {
    private static *$services* = [];
- 
+
    public static function get($id)
    {
      return self::*$services*[$id];
    }
- 
+
    public static function set($id, $service)
    {
      self::*$services*[$id] = $service;
@@ -2150,19 +2150,19 @@ class ServiceLocator
    **final private function** __construct() {} *// Защищаем от создания через new Singleton
 \*   **final private function** __clone()  {} *// Защищаем от создания через клонирование
 \*   **final private function** __wakeup()  {} *// Защищаем от создания через unserialize
- 
+
 \*   **public static function** getInstance() : ServiceLocator {
      **if** ( **empty**(**static**::*$_instance*) ) {
        **static**::*$_instance* = **new static**();
      }
      **return static**::*$_instance*;
    }
- 
+
    **public function** getService() : Service
    {
      **return** $this->**_service**;
    }
- 
+
    **public function** setService(Service $service)
    {
      $this->**_service** = $service;
@@ -2173,23 +2173,23 @@ class ServiceLocator
 
 **class** ServiceLocator {
    **private static** *$_instance*;
- 
+
    **private** **$_instances**;
- 
+
    **final private function** __construct() {} *// Защищаем от создания через new Singleton
- 
+
 \*   **public static function** getInstance() : ServiceLocator {
      **if** ( **empty**(**static**::*$_instance*) ) {
        **static**::*$_instance* = **new static**();
      }
      **return static**::*$_instance*;
    }
- 
+
    **public function** get($id) : object
    {
      **return** $this->**_instances**[$id] ?? **null**;
    }
- 
+
    **public function** set(string $id, object $instance)
    {
      $this->**_instances**[$id] = $instance;
@@ -2211,12 +2211,12 @@ class ServiceLocator
 
 **class** ServiceLocator {
    **private** **$_callables**;
- 
+
    **public function** get($id) : object
    {
      **return isset**($this->**_callables**[$id]) ? *call_user_func*($this->**_callables**[$id]) : **null**;
    }
- 
+
    **public function** set(string $id, **callable** $callable)
    {
      $this->**_callables**[$id] = $callable;
@@ -2229,12 +2229,12 @@ class ServiceLocator
  {
    **private** **$serviceLocator**;
    **private** **$service**;
- 
+
    **public function** __construct(ServiceLocator $serviceLocator)
    {
      $this->**serviceLocator** = $serviceLocator;
    }
- 
+
  *
 \*   **public function do**()
    {
@@ -2246,7 +2246,7 @@ class ServiceLocator
 
 $sl = **new** ServiceLocator();
  $sl->set(**'service'**, **function**(){**return new** ConcreteService();});
- 
+
  **new** Client($sl);
 
 Однако и третий вариант плох, т.к. контракт (предусловия, предусловия) класса неясный, ведь неизвестно какие из сервисов локатора используются. Чтобы понять требования клиента придется проанализировать исходный код этого класса, что может быть непросто или невозможно.
@@ -2258,7 +2258,7 @@ $sl = **new** ServiceLocator();
 **class** Client
  {
    **private** **$service**;
- 
+
    **public function** __construct(ServiceLocator $serviceLocator)
    {
      $this->**service** = $serviceLocator->get(**'service'**);
@@ -2291,8 +2291,8 @@ $sl = **new** ServiceLocator();
  {
    **public function** getService() : Service;  
  }
- 
- 
+
+
  **class** ServiceLocator **implements** ServiceInterface {
    ...
    **public function** getService() : Service
@@ -2406,7 +2406,7 @@ $sl = **new** ServiceLocator();
 **class** LazyService **implements** Service
  {
    **private** **$service**;
- 
+
    **public function** __construct(Service $service)
    {
      $this->**service** = $service;
@@ -2426,13 +2426,13 @@ $sl = **new** ServiceLocator();
  {
    **public function** getInstance() : Service;
  }
- 
+
  **class** ServiceLocator
  {
    **private** **$factories** = [];
- 
+
    **public function** setFactory(string $id, ServiceFactory $factory) {}
- 
+
    **public function** getFactory(string $id) : ServiceFactory {}
  }
 
@@ -2516,7 +2516,7 @@ https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
  {
    */\* Сервис-синглтон \*/
 \*   **private** **$service**;
- 
+
    **public function** getService()
    {
      **if**(**null** === $this->**service**)
@@ -2524,11 +2524,11 @@ https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
      **return** $this->**service**;
    }
  }
- 
+
  **class** Client
  {
    **private** **$simpleFactory**;
- 
+
    **public function** __construct(SimpleFactory $simpleFactory)
    {
      $this->**simpleFactory** = $simpleFactory;
@@ -2568,7 +2568,7 @@ Simple Factory
 ·    **Когда использовать?**
 
 ·    
- 
+
  
 
 ·    Этот шаблон полезен для каких-то общих обработок в классе, но требуемые подклассы динамически определяются в ходе выполнения (runtime). То есть когда клиент не знает, какой именно подкласс может ему понадобиться.
@@ -2631,11 +2631,11 @@ Simple Factory
 конкретный реализатор. чтобы его поддержать.   
 
   
- 
+
  
 
 **Что нам даёт такая реализация?**
- 
+
  
 
 \1.  Нам предоставляется гибкость в создании объектов-репозиториев — инстанцируемый класс может быть заменён на любой, который мы сами пожелаем. Например, MySQLOrderRepository для DBOrderRepositoryfactory может быть заменён на OracleOrderRepository. И это будет сделано в одном месте
@@ -2645,9 +2645,9 @@ Simple Factory
 \3.  Также имеется возможность добавить для выполнения какой-либо код при создании-объектов. Код будет добавлен только в 1 месте
 
 
- 
+
  **Какие проблемы данная реализация не решает?**
- 
+
  
 
 \1.  Код перестал зависеть от низкоуровневых модулей, но тем не менее зависит от класса-фабрики, что всё равно несколько затрудняет тестирование
@@ -2712,7 +2712,7 @@ public function __construct($size, $cheese = true, $pepperoni = true, $tomato = 
 **Когда использовать?**
 
 
- 
+
  
 
 Когда у объекта может быть несколько свойств и когда нужно избежать Telescoping constructor. Ключевое отличие от шаблона «Простая фабрика»: он используется в одноэтапном создании, а «Строитель» — в многоэтапном.
@@ -2748,7 +2748,7 @@ public function __construct($size, $cheese = true, $pepperoni = true, $tomato = 
 **Когда использовать?**
 
 
- 
+
  
 
 Когда необходимый объект аналогичен уже существующему или когда создание с нуля дороже клонирования.
@@ -2827,7 +2827,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
    \* **@****return** string
    */
   **abstract** **protected** **function** getString() : string;
-  
+
   /**
    \* **@****return** string
    */
@@ -2835,35 +2835,35 @@ Singleton-ы, но в заданном заранее N-ном количест�
     **return** $this->getString();
   }
  }
- 
+
  /**
  \* Leaf, Класс операнда-значения, не включающего выражения
  */
  **class** Operand **extends** Component
  {
   **private** **$****value**;
-  
+
   **public** **function** __construct($value)
   {
     $this->**value** = $value;
   }
-  
+
   **protected** **function** getString() : string
   {
     **return** (string)$this->**value**;
   }
  }
- 
+
  /**
  \* Composite, Абстрактный класс оператора
  */
  **abstract** **class** Operator **extends** Component
  {
   **protected** **$****components**;
-  
+
   **abstract** **protected** **function** getOperator() : string;
  }
- 
+
  /**
  \* Composite, Абстрактный класс унарного оператора
  */
@@ -2873,13 +2873,13 @@ Singleton-ы, но в заданном заранее N-ном количест�
   {
     $this->**components** = $component;
   }
-  
+
   **protected** **function** getString() : string
   {
     **return** **'('**.$this->getOperator().**"** $this->**components****)"**;
   }
  }
- 
+
  /**
  \* Composite, Абстрактный класс бинарного оператора
  */
@@ -2889,13 +2889,13 @@ Singleton-ы, но в заданном заранее N-ном количест�
   {
     $this->**components** = [$component1, $component2];
   }
-  
+
   **protected function** getString() : string
   {
     **return** **"(**{$this->**components**[0]} **"**.$this->getOperator().**"** {$this->**components**[1]}**)"**;
   }
  }
- 
+
  /**
  \* Конкретные классы Composite c операторами
  */
@@ -2906,7 +2906,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     **return** **'AND'**;
   }
  }
- 
+
  **class** OrOperator **extends** BinaryOperator
  {
   **protected function** getOperator() : string
@@ -2914,7 +2914,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     **return** **'OR'**;
   }
  }
- 
+
  **class** NotOperator **extends** UnaryOperator
  {
   **protected function** getOperator() : string
@@ -2934,7 +2934,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     $expr = **new** AndOperator(**new** Operand(**'x'**),**new** Operand(**'y'**));
     $this->assertEquals(**'(x AND y)'**, (string)$expr);
   }
-  
+
   **public function** test2() 
   {
     $expr = **new** OrOperator(**new** AndOperator(**new** Operand(**'x'**),**new** Operand(**'y'**)), **new** NotOperator(**new** Operand(**'z'**)));
@@ -3020,38 +3020,38 @@ Singleton-ы, но в заданном заранее N-ном количест�
    */
   **abstract public function** process() : **array**;
  }
- 
+
  /**
  \* ConcreteComponent, Конкретный класс извлечения массива из строки в формате JSON
  */
- 
+
  **class** JsonArray **extends** ArrayProcessing
  {
   **private** **$string**;
-  
+
   **public function** __construct(string $string)
   {
     $this->**string** = $string;
   }
-  
+
   **public function** process() : **array
 **  {
     **return** json_decode($this->**string**, **true**);
   }
  }
- 
+
  /**
  \* ConcreteComponent, Конкретный класс для передачи объекта с целью его преобразования в массив
  */
  **class** ObjectArray **extends** ArrayProcessing
  {
   **private** **$object**;
-  
+
   **public function** __construct($object)
   {
     $this->**object** = $object;
   }
-  
+
   **public function** process() : **array
 **  {
     **return** (array)$this->**object**;
@@ -3063,7 +3063,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
  **abstract class** ArrayDecorator **extends** ArrayProcessing
  {
   **protected** **$arrayProcessing**;
-  
+
   **public function** __construct(ArrayProcessing $arrayProcessing)
   {
     $this->**arrayProcessing** = $arrayProcessing;
@@ -3091,7 +3091,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     **return** array_reverse($this->**arrayProcessing**->process());
   }
  }
- 
+
  /**
  \* ConcreteDecorator, фидьтрующий все элементы, приводимые к FALSE
  */
@@ -3112,7 +3112,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     $array = (**new** ReverseDecorator(**new** SortDecorator(**new** JsonArray(**'[2,3,1]'**))))->process();
     $this->assertEquals([3,2,1], $array);
   }
-  
+
   **public function** test2() 
   {
     $object = **new** stdClass();
@@ -3155,23 +3155,23 @@ Singleton-ы, но в заданном заранее N-ном количест�
 \* **abstract class** DecoratorProductModel **implements** ProductModel
  {
    **protected** **$productModel**;
- 
+
    **public function** __construct(ProductModel $productModel)
    {
      $this->**productModel** = $productModel;
    }
  }
- 
+
  */\*
  \* Интерфейс для классов, кеширующих данные
  \*/
 \* **interface** Cache
  {
    **public function** set(string $key, **array** $data);
- 
+
    **public function** get(string $key) : ?**array**;
  }
- 
+
  */\*
  \* ConcreteDecorator, Декоратор для добавления функционала кеширования
  \*/
@@ -3179,24 +3179,24 @@ Singleton-ы, но в заданном заранее N-ном количест�
  {
    **private const** ***key\*** = **'topSellers'**;
    **private** **$cache**;
- 
+
    **public function** __construct(ProductModel $productModel, Cache $cache)
    {
      **parent**::*__construct*($productModel);
      $this->**cache** = $cache;
    }
- 
+
    **public function** selectTopSellers() : **array
 **   {
      **if**(**null** === ($data = $this->**cache**->get(**self**::***key\***))) {
        $data = $this->**productModel**->selectTopSellers();
        $this->**cache**->set(**self**::***key\***, $data);
      }
- 
+
      **return** $data;
    }
  }
- 
+
  */\*
  \* Интерфейс для классов, логирующих строки
  \*/
@@ -3205,21 +3205,21 @@ Singleton-ы, но в заданном заранее N-ном количест�
    *# Логгирование строки
 \*   **public function** log(string $str);
  }
- 
- 
+
+
  */\*
  \* ConcreteDecorator, Декоратор для добавления функционала логирования времени начала и окончания выполнения запроса
  \*/
 \* **class** LoggerProductModel **extends** DecoratorProductModel
  {
    **private** **$logger**;
- 
+
    **public function** __construct(ProductModel $productModel, Logger $logger)
    {
      **parent**::*__construct*($productModel);
      $this->**logger** = $logger;
    }
- 
+
    **public function** selectTopSellers() : **array
 **   {
      $this->**logger**->log(**'Begin: '**.*time*());
@@ -3259,7 +3259,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     **return** *preg_replace*(**'|((?: ){2,})|'**,**' '**,$string);
   }
  }
- 
+
  */**
  \* Класс базы данных для получения описания
  \*/
@@ -3270,7 +3270,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     
   }
  }
- 
+
  */**
  \* Helper с функцией заворачивания текста в 
  \*/
@@ -3281,7 +3281,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     **return** **"**$text**"**;
   }
  }
- 
+
  */**
  \* Фасад с методом textareaDescription - инкапсулирует получение строки из базы, удаление пробелом и обертку в тег
  \*/
@@ -3290,14 +3290,14 @@ Singleton-ы, но в заданном заранее N-ном количест�
   **private** **$database**;
   **private** **$stringHelper**;
   **private** **$htmlHelper**;
-  
+
   **public function** __construct(Database $database, StringHelper $stringHelper, HtmlHelper $htmlHelper)
   {
     $this->**database** = $database;
     $this->**stringHelper** = $stringHelper;
     $this->**htmlHelper** = $htmlHelper;
   }
-  
+
   **public function** textareaDescription($id = **null**)
   {
     $description = $this->**database**->getDescription($id);
@@ -3324,7 +3324,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     
     $this->assertEquals(**'This description is extracted from the database and used for the test'**, $facade->textareaDescription());
   }
-  
+
   **public function** testDescription1() 
   {
     $map = [
@@ -3343,7 +3343,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
     
     $this->assertEquals(**' This description '**, $facade->textareaDescription(10));
   }
-  
+
   **public function** testDescription2() 
   {
     $callback = **function**($id) {
@@ -3355,16 +3355,17 @@ Singleton-ы, но в заданном заранее N-ном количест�
     $database->expects($this->once())
        ->method(**'getDescription'**)
        ->will($this->returnCallback($callback));
-    
-    
-    $stringHelper = **new** StringHelper();
-    $htmlHelper = **new** HtmlHelper();
-    
+
+
+​    
+​    $stringHelper = **new** StringHelper();
+​    $htmlHelper = **new** HtmlHelper();
+​    
     $facade = **new** Facade($database, $stringHelper, $htmlHelper);
     
     $this->assertEquals(**'This description No. 10'**, $facade->textareaDescription(10));
   }
-  
+
  }
 
  
@@ -3397,7 +3398,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
   **public function** getFriendFromApi($id) : string
   {
   }
-  
+
   **public function** getMessageFromApi($id) : string
   {
   }
@@ -3410,7 +3411,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
   **public function** getFriends() : **array
 **  {
   }
-  
+
   **public function** getMessages() : **array
 **  {
   }
@@ -3423,47 +3424,47 @@ Singleton-ы, но в заданном заранее N-ном количест�
   **public function** getFriend($id) : string;
   **public function** getMessage($id) : string;
  }
- 
+
  */**
  \* ConcreteAdapter фейсбука
  \*/
 \* **class** FacebookAdapter **implements** ApiAdapter
  {
   **private** **$facebookApi**;
-  
+
   **public function** __construct(FacebookApi $facebookApi)
   {
     $this->**facebookApi** = $facebookApi;
   }
-  
+
   **public function** getFriend($id) : string 
   {
     **return** $this->**facebookApi**->getFriendFromApi($id);
   }
-  
+
   **public function** getMessage($id) : string 
   {
     **return** $this->**facebookApi**->getMessageFromApi($id);
   }
  }
- 
+
  */**
  \* ConcreteAdapter вконтакта
  \*/
 \* **class** VkontakteAdapter **implements** ApiAdapter
  {
   **private** **$vkontakteApi**;
-  
+
   **public function** __construct(VkontakteApi $vkontakteApi)
   {
     $this->**vkontakteApi** = $vkontakteApi;
   }
-  
+
   **public function** getFriend($id) : string 
   {
     **return** $this->**vkontakteApi**->getFriends()[$id][**'name'**];
   }
-  
+
   **public function** getMessage($id) : string 
   {
     **return** $this->**vkontakteApi**->getMessages()[$id][**'text'**];
@@ -3475,17 +3476,17 @@ Singleton-ы, но в заданном заранее N-ном количест�
 \* **class** User
  {
   **private** **$api**;
-  
+
   **public function** setApi(ApiAdapter $api)
   {
     $this->**api** = $api;
   }
-  
+
   **public function** getFriendName($id)
   {
     **return** $this->**api**->getFriend($id);
   }
-  
+
   **public function** getMessageText($id)
   {
     **return** $this->**api**->getMessage($id);
@@ -3568,7 +3569,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
 ·  Decorator поддерживает рекурсивную агрегацию
 
 /// Subject - субъект
- 
+
  /// определяет общий для Math и "Proxy" интерфейс, так что класс
  /// "Proxy" можно использовать везде, где ожидается 
  **interface** IMath
@@ -3578,12 +3579,12 @@ Singleton-ы, но в заданном заранее N-ном количест�
    **function** Mul($x, $y);
    **function** Div($x, $y);
  }
+
  
- 
- 
+
  /// RealSubject - реальный объект
  /// определяет реальный объект, представленный заместителем
- 
+
  **class** Math **implements** IMath
  {
    **public** **function** __construct()
@@ -3591,14 +3592,14 @@ Singleton-ы, но в заданном заранее N-ном количест�
      **print** (**"****Create** **object** **Math****.** **Wait****..."**);
      sleep(5);
    }
- 
+
    **public** **function** Add($x, $y){**return** $x + $y;}
    **public** **function** Sub($x, $y){**return** $x - $y;}
    **public** **function** Mul($x, $y){**return** $x * $y;}
    **public** **function** Div($x, $y){**return** $x / $y;}
  }
- 
- 
+
+
  /// Proxy - заместитель
  /// хранит ссылку, которая позволяет заместителю обратиться к реальному
  /// субъекту. Объект класса "MathProxy" может обращаться к объекту класса
@@ -3618,7 +3619,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
  **class** MathProxy **implements** IMath
  {
    **protected** **$****math**;
- 
+
    **public** **function** __construct()
    {
      $this->**math** = **null**;
@@ -3628,13 +3629,13 @@ Singleton-ы, но в заданном заранее N-ном количест�
    {
      **return** $x + $y;
    }
- 
+
    **public** **function** Sub($x, $y)
    {
      **return** $x - $y;
    }
- 
- 
+
+
    /// Медленная операция - требует создания реального субъекта
    **public** **function** Mul($x, $y)
    {
@@ -3642,7 +3643,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
        $this->**math** = **new** Math();
      **return** $this->**math**->Mul($x, $y);
    }
- 
+
    **public** **function** Div($x, $y)
    {
      **if** ($this->**math** == **null**)
@@ -3651,7 +3652,7 @@ Singleton-ы, но в заданном заранее N-ном количест�
    }
  }
  $p = **new** MathProxy;
- 
+
  // Do the math
  **print**(**"4 + 2 = "**.$p->Add(4, 2));
  **print**(**"4 - 2 = "**.$p->Sub(4, 2));
@@ -3749,18 +3750,18 @@ Question – текстовые и аудиовидео вопросы Marker �
 Допустим, у нас есть программный инструмент, позволяющий тестировать, проводить контроль качества кода (lint), выполнять сборку, генерировать отчёты сборки (отчёты о покрытии кода, о качестве кода и т. д.), а также развёртывать приложение на тестовом сервере.
 
 
- 
+
  
 
 Сначала наш базовый класс определяет каркас алгоритма сборки.
 
 
- 
+
  
 
 **abstract class** Builder
  {
- 
+
    *// Шаблонный метод
 \*   **final public function** build()
    {
@@ -3769,7 +3770,7 @@ Question – текстовые и аудиовидео вопросы Marker �
      $this->assemble();
      $this->deploy();
    }
- 
+
    **abstract public function** test();
    **abstract public function** lint();
    **abstract public function** assemble();
@@ -3777,13 +3778,13 @@ Question – текстовые и аудиовидео вопросы Marker �
  }
 
 
- 
+
  
 
 Теперь создаём реализации:
 
 
- 
+
  
 
 class AndroidBuilder extends Builder
@@ -3792,40 +3793,40 @@ class AndroidBuilder extends Builder
    {
      echo 'Running android tests';
    }
- 
+
    public function lint()
    {
      echo 'Linting the android code';
    }
- 
+
    public function assemble()
    {
      echo 'Assembling the android build';
    }
- 
+
    public function deploy()
    {
      echo 'Deploying android build to server';
    }
  }
- 
+
  class IosBuilder extends Builder
  {
    public function test()
    {
      echo 'Running ios tests';
    }
- 
+
    public function lint()
    {
      echo 'Linting the ios code';
    }
- 
+
    public function assemble()
    {
      echo 'Assembling the ios build';
    }
- 
+
    public function deploy()
    {
      echo 'Deploying ios build to server';
@@ -3858,7 +3859,7 @@ class AndroidBuilder extends Builder
    **public abstract function** Execute();
    **public abstract function** UnExecute();
  }
- 
+
  */**
  ** *Класс* *конкретной* *"**команды**"
  \*/ 
@@ -3870,21 +3871,21 @@ class AndroidBuilder extends Builder
     \* **@var** string
     \*/
 \*   **public** **$operator**;
- 
+
    */**
     ** *Текущий* *операнд**
     \*
     \* **@var** mixed
     \*/
 \*   **public** **$operand**;
- 
+
    */**
     ** *Класс**,* *для* *которого* *предназначенна* *команда**
     \*
     \* **@var** object of class Calculator
     \*/
 \*   **public** **$calculator**;
- 
+
    */**
     ** *Конструктор**
     \*
@@ -3898,7 +3899,7 @@ class AndroidBuilder extends Builder
      $this->**operator** = $operator;
      $this->**operand** = $operand;
    }
- 
+
    */**
     ** *Переопределенная* *функция* *parent::Execute()
     \*/
@@ -3906,7 +3907,7 @@ class AndroidBuilder extends Builder
    {
      $this->**calculator**->Operation($this->**operator**, $this->**operand**);
    }
- 
+
    */**
     ** *Переопределенная* *функция* *parent::UnExecute()
     \*/
@@ -3914,7 +3915,7 @@ class AndroidBuilder extends Builder
    {
      $this->**calculator**->Operation($this->Undo($this->**operator**), $this->**operand**);
    }
- 
+
    */**
     ** *Какое* *действие* *нужно* *отменить**?
     \*
@@ -3936,7 +3937,7 @@ class AndroidBuilder extends Builder
      **return** $undo;
    }
  }
- 
+
  */**
  ** *Класс* *получатель* *и* *исполнитель* *"**команд**"
  \*/
@@ -3949,7 +3950,7 @@ class AndroidBuilder extends Builder
 **    \* **@var** int
     \*/
 \*   **private** **$curr** = 0;
- 
+
    **public function** Operation($operator,$operand)
    {
      *//**выбрать* *оператора* *для* *вычисления* *результата**
@@ -3963,7 +3964,7 @@ class AndroidBuilder extends Builder
      **print**(**"****Текущий** **результат** **=** $this->**curr** **(****после** **выполнения** $operator **c** $operand**)"**);
    }
  }
- 
+
  */**
  ** *Класс**,* *вызывающий* *команды**
  \*/
@@ -3976,7 +3977,7 @@ class AndroidBuilder extends Builder
 **    \* **@var** object of class Calculator
     \*/
 \*   **private** **$calculator**;
- 
+
    */**
     ** *Массив* *операций**
     \*
@@ -3984,7 +3985,7 @@ class AndroidBuilder extends Builder
 **    \* **@var** array
     \*/
 \*   **private** **$commands** = **array**();
- 
+
    */**
     ** *Текущая* *команда* *в* *массиве* *операций**
     \*
@@ -3992,13 +3993,13 @@ class AndroidBuilder extends Builder
 **    \* **@var** int
     \*/
 \*   **private** **$current** = 0;
- 
+
    **public function** __construct()
    {
      *//**создать* *экземпляр* *класса**,* *который* *будет* *исполнять* *команды**
 \*     $this->**calculator** = **new** Calculator();
    }
- 
+
    */**
     ** *Функция* *возврата* *отмененных* *команд**
     \*
@@ -4007,13 +4008,13 @@ class AndroidBuilder extends Builder
 \*   **public function** Redo($levels)
    {
      **print**(**"****\n****----** **Повторить** $levels **операций** **"**);
- 
+
      *//* *Делаем* *возврат* *операций**
 \*     **for** ($i = 0; $i < $levels; $i++)
        **if** ($this->**current** < *count*($this->**commands**) - 1)
          $this->**commands**[$this->**current**++]->Execute();
    }
- 
+
    */**
     ** *Функция* *отмены* *команд**
     \*
@@ -4022,13 +4023,13 @@ class AndroidBuilder extends Builder
 \*   **public function** Undo($levels)
    {
      **print**(**"****\n****----** **Отменить** $levels **операций** **"**);
- 
+
      *//* *Делаем* *отмену* *операций**
 \*     **for** ($i = 0; $i < $levels; $i++)
        **if** ($this->**current** > 0)
          $this->**commands**[--$this->**current**]->UnExecute();
    }
- 
+
    */**
     ** *Функция* *выполнения* *команд**
     \*
@@ -4040,25 +4041,25 @@ class AndroidBuilder extends Builder
      *//* *Создаем* *команду* *операции* *и* *выполняем* *её**
 \*     $command = **new** CalculatorCommand($this->**calculator**, $operator, $operand);
      $command->Execute();
- 
+
      *//* *Добавляем* *операцию* *к* *массиву* *операций* *и* *увеличиваем* *счетчик* *текущей* *операции**
 \*     $this->**commands**[]=$command;
      $this->**current**++;
    }
  }
- 
- 
+
+
    $user = **new** User();
- 
+
    *//* *Произвольные* *команды**
 \*   $user->Compute(**'+'**, 100);
    $user->Compute(**'-'**, 50);
    $user->Compute(**'\*'**, 10);
    $user->Compute(**'/'**, 2);
- 
+
    *//* *Отменяем* *4* *команды**
 \*   $user->Undo(4);
- 
+
    *//* *Вернём* *3* *отменённые* *команды**.
 \*   $user->Redo(3);
 
@@ -4171,23 +4172,23 @@ o  Если создание суперкласса нежелательно и�
 [Павел](https://vk.com/id2733257) [11:30](https://vk.com/im?sel=2733257&msgid=46498)
 
 Длинный методПравить
- 
+
  Среди объектных программ дольше всего живут программы с короткими методами. Чем длиннее процедура, тем труднее её понять. Если у метода хорошее название, то не нужно смотреть его тело[4].
- 
+
  Следует придерживаться эвристического правила: если ощущается необходимость что-то прокомментировать, нужно написать метод. Даже одну строку имеет смысл выделить в метод, если она нуждается в разъяснениях[8].
- 
+
  Для сокращения метода достаточно применить «Выделение метода» (Extract Method);Если локальные переменные и параметры препятствуют выделению метода, можно применить «Замену временной переменной вызовом метода» (Replace Temp with Query), «Введение граничного объекта» (Introduce Parametr Object) и «Сохранение всего объекта» (Preserve Whole Object)[4];Условные операторы и циклысвидетельствуют о возможности выделения в отдельный метод. Для работы с условными выражениями подходит «Декомпозиция условных операторов» (Decompose Conditional). Для работы с циклом — «Выделение метода» (Extract Method)[8].
 
 Большой классПравить
- 
+
  Когда класс реализует слишком обширную функциональность, стоит подумать о вынесении некоторой части кода в подкласс. Это избавит разработчиков от чрезмерного количества имеющихся у класса атрибутов и дублирования кода[8].
- 
+
  Для уменьшения класса используется «Выделение класса» (Extract Class) или «Выделение подкласса» (Extract Subclass). При этом следует обращать внимание на общность в названии атрибутов и на то, использует ли класс их все одновременно[4];
 
 Длинный список параметровПравить
- 
+
  В длинных списках параметров трудно разбираться, они становятся противоречивыми и сложными в использовании. Использование объектовпозволяет, в случае изменения передаваемых данных, модифицировать только сам объект. Работая с объектами, следует передавать ровно столько, чтобы метод мог получить необходимые ему данные[9].
- 
+
  «Замена параметра вызовом метода» (Replace Parameter with Method) применяется, когда можно получить данные путём вызова метода объекта. Этот объект может быть полем или другим параметром.«Сохранение всего объекта» (Preserve Whole Object) позволяет взять группу данных, полученных от объекта, и заменить их самим объектом.
 
 Посмотреть там их ещё многг
@@ -4399,7 +4400,7 @@ Dummy (манекен)
  {
    **public function** doSomething() {}
  }
- 
+
  */** *Тест* *этого* *класса* **/
 \* **class** DummyTest **extends** TestCase
  {
@@ -4446,7 +4447,7 @@ Stub (заглушка)
  {
    **public** **function** doSomething() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4454,11 +4455,11 @@ Stub (заглушка)
    {
      *// создать* *stub**
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *// указать конкретное, жестко заданное возвращаемое значение
 \*     $stub->method(**'****doSomething****'**)
        ->willReturn(**'****foo****'**);
- 
+
      *var**_dump*($stub->doSomething()); *#* *string**(3) "**foo**"
 \*   }
  }
@@ -4470,7 +4471,7 @@ Stub (заглушка)
  {
    **public function** doSomething() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4478,11 +4479,11 @@ Stub (заглушка)
    {
      *// создать stub
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *//* *возврат* *первого* *аргумента**
 \*     $stub->method(**'doSomething'**)
        ->will($this->returnArgument(0));
- 
+
      *var_dump*($stub->doSomething(5)); *# int(5)
 \*   }
  }
@@ -4494,7 +4495,7 @@ Stub (заглушка)
  {
    **public** **function** doSomething() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4502,17 +4503,17 @@ Stub (заглушка)
    {
      *// создать* *stub**
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *// Создать карту аргументов для возврата значений
 \*     $map = [
        [0, **'****zero****'**],
        [1, **'****one****'**]
      ];
- 
+
      *// указать конкретное, жестко заданное возвращаемое значение
 \*     $stub->method(**'****doSomething****'**)
        ->will($this->returnValueMap($map));
- 
+
      *var**_dump*($stub->doSomething(1)); *#* *string**(3) "**one**"
 \*   }
  }
@@ -4524,7 +4525,7 @@ Stub (заглушка)
  {
    **public** **function** doSomething() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4532,13 +4533,13 @@ Stub (заглушка)
    {
      *// создать* *stub**
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *// указать конкретное, жестко заданное возвращаемое значение
 \*     $stub->method(**'****doSomething****'**)
        ->will($this->returnCallback(**function** (int $i): int {
          **return** $i + 1;
        }));
- 
+
      *var**_dump*($stub->doSomething(1)); *#* *int**(2)
 \*   }
  }
@@ -4550,7 +4551,7 @@ Stub (заглушка)
  {
    **public function** doSomething() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4558,11 +4559,11 @@ Stub (заглушка)
    {
      *// создать stub
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *// указать конкретное, жестко заданное возвращаемое значение
 \*     $stub->method(**'doSomething'**)
        ->will($this->throwException(**new** Exception));
- 
+
      *var_dump*($stub->doSomething()); *# Fatal error: Uncaught Exception
 \*   }
  }
@@ -4581,7 +4582,7 @@ with() позволяет указать, какие условия наклад
  {
    **public function** func() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4589,12 +4590,12 @@ with() позволяет указать, какие условия наклад
    {
      *# Создать mock
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *# Настроить ожидание
 \*     $stub->expects($this->once())
        ->method(**'func'**)
        ->with($this->equalTo(**'param'**));
- 
+
      *# Сам тест
 \*     $stub->func(**'param'**);
    }
@@ -4607,7 +4608,7 @@ with() позволяет указать, какие условия наклад
  {
    **public function** func() {}
  }
- 
+
  */\* Тест этого класса \*/
 \* **class** StubTest **extends** TestCase
  {
@@ -4615,14 +4616,14 @@ with() позволяет указать, какие условия наклад
    {
      *# Создать mock
 \*     $stub = $this->createMock(SomeClass::***class\***);
- 
+
      *# Настроить ожидание
 \*     $stub->expects($this->once())
        ->method(**'func'**)
        ->with($this->callback(**function**($param) {
          **return** $param **instanceof** SomeClass;
        }));
- 
+
      *# Сам тест
 \*     $stub->func($stub);
    }
@@ -4673,12 +4674,12 @@ vfsStream (virtual file system)— обёртка потока для имита
      vfsStreamWrapper::*register*();
      vfsStreamWrapper::*setRoot*(**new** vfsStreamDirectory(**'exampleDir'**));
    }
- 
+
    **public function** testDirectoryIsCreated()
    {
      $example = **new** Example();
      $this->assertFalse(vfsStreamWrapper::*getRoot*()->hasChild(**'exampleDir'**));
- 
+
      $example->createDirectory(vfsStream::*url*(**'exampleDir'**));
      $this->assertTrue(vfsStreamWrapper::*getRoot*()->hasChild(**'exampleDir'**));
    }
@@ -4831,10 +4832,10 @@ vfsStream (virtual file system)— обёртка потока для имита
 Исходный класс:
 
 *# Demo/ExampleClass.php
- 
+
 \* **namespace** Demo;
- 
- 
+
+
  **class** ExampleClass
  {
    **public function** a() {}
@@ -4854,12 +4855,12 @@ vfsStream (virtual file system)— обёртка потока для имита
 Необходимо отнаследоваться от класса AspectKernel и зарегистрировать будущий аспект в методе configureAop():
 
 *# Demo\ExampleAspectKernel.php
- 
+
 \* **namespace** Demo;
- 
+
  **use** Go\Core\AspectKernel;
  **use** Go\Core\AspectContainer;
- 
+
  */**
  \* Пример создания класса Aspect Kernel для приложения
  \*/
@@ -4880,11 +4881,11 @@ vfsStream (virtual file system)— обёртка потока для имита
 
 *# index.php
 \* **include** ***__DIR__\*** . **'/../vendor/autoload.php'**;
- 
+
  **use** Demo\ExampleAspectKernel;
  **use** Demo\ExampleClass;
  **use** Go\Aop\Features;
- 
+
  */**
  \* Инициализация класса Aspect Kernel для приложения
  \*/
@@ -4894,13 +4895,13 @@ vfsStream (virtual file system)— обёртка потока для имита
 \*   **'cacheDir'** => ***__DIR__\*** . **'/cache'**,   *# Директория для кеширования weaves classes
 \*   **'features'** => Features::***INTERCEPT_FUNCTIONS\***, *# Перехват системных функций
 \* ]);
- 
+
  *# Создание класса, в которые внедряются аспекта и вызовы методов
 \* $example = **new** ExampleClass();
  $example->a();
  $example->b();
  $example->c();
- 
+
  *# Здесь используется внедренный интерфейс Countable и трейт CountableImpl
 \* **echo** *count*($example);
 
@@ -4909,9 +4910,9 @@ vfsStream (virtual file system)— обёртка потока для имита
 Необходимо реализовать в классе интерфейс Aspect, каждый метод класса это advice, перед которым может быть указано в аннотации через @Before, @After, @AfterTrowing или @Around куда он внедряется:
 
 *# Demo/ExampleAspect.php
- 
+
 \* **namespace** Demo;
- 
+
  **use** Go\Aop\Aspect;
  **use** Go\Lang\Annotation\Before;
  **use** Go\Lang\Annotation\After;
@@ -4919,7 +4920,7 @@ vfsStream (virtual file system)— обёртка потока для имита
  **use** Go\Lang\Annotation\Pointcut;
  **use** Go\Aop\Intercept\MethodInvocation;
  **use** Go\Lang\Annotation\DeclareParents;
- 
+
  **class** ExampleAspect **implements** Aspect
  {
    */**
@@ -4930,7 +4931,7 @@ vfsStream (virtual file system)— обёртка потока для имита
    {
      **echo** **"Before method: "** . $invocation->getMethod()->getName() . ***PHP_EOL\***;
    }
- 
+
    */**
    \* Совет, который выполняется вместо функции c(), но вызывает ее внутри себя
    \* **@Around**("execution(public Demo\ExampleClass->c(\*))")
@@ -4941,7 +4942,7 @@ vfsStream (virtual file system)— обёртка потока для имита
      **echo** $invocation->proceed() . ***PHP_EOL\***; *# Вызов оригинального метода
 \*     **echo** **"After method c()"** . ***PHP\******_\******EOL\***;
    }
- 
+
  }
 
 Ниже приведен пример совета для функции, возвращающей кешируемую выборку. Также можно дополнительно реализовать совет cacheInvalidatorAdvice для метода update($id, $value) для сбора кэша.
@@ -4957,7 +4958,7 @@ vfsStream (virtual file system)— обёртка потока для имита
  **public** **function** aroundCacheable(MethodInvocation $invocation)
  {
    **static** $memoryCache = **array**();
- 
+
    $obj  = $invocation->getThis();
    $class = is_object($obj) ? get_class($obj) : $obj;
    $key  = $class . **':'** . $invocation->getMethod()->**name**;
@@ -4974,7 +4975,7 @@ vfsStream (virtual file system)— обёртка потока для имита
 Можно объявить pointcut – функция с пустым телом и аннотацией @Pointcut . После такого объявления на pointcut можно ссылаться в функциях-advice:
 
 **# Demo/ExampleAspect.php
- 
+
  
 
 ...
@@ -4991,7 +4992,7 @@ vfsStream (virtual file system)— обёртка потока для имита
    \* **@Pointcut**("execution(public Demo\ExampleClass->a(*))")
    */
    **protected function** pointcutFunc() {}
- 
+
    /**
    \* Совет, который выполняется в join point, соответствующих срезу pointcutFunc()
    \* **@After**("$this->pointcutFunc")
@@ -5000,7 +5001,7 @@ vfsStream (virtual file system)— обёртка потока для имита
    {
      **echo** **"After method: "** . $invocation->getMethod()->getName() . **PHP_EOL**;
    }
- 
+
  
 
    ...
@@ -5011,13 +5012,13 @@ vfsStream (virtual file system)— обёртка потока для имита
 Позволяют добавить к классу дополнительный интерфейс и обеспечить реализацию этого интерфейса через трейт. В аспекте используется аннотация @DeclareParents, которая указывается перед свойством в классе аспекта.   
 
 *# Demo/ExampleAspect.php
- 
+
 \* **...**
- 
+
  **class** ExampleAspect **implements** Aspect
  {
    ...
- 
+
    */**
    \* Внедрение в класс интерфейса Countable, функция из которого реализуется
    \* в трейте CountableImpl
@@ -5030,15 +5031,15 @@ vfsStream (virtual file system)— обёртка потока для имита
    \* **@var** null
    \*/
 \*   **protected** **$introduction** = **null**;
- 
+
  }
 
  
 
 *# Demo/CountableImpl.php
- 
+
 \* **namespace** Demo;
- 
+
  */**
  \* Трейт, который реализует интерфейс
  \*/
@@ -5226,7 +5227,7 @@ Pointcut || Pointcut
 **class** Account
  {
    **protected** **$balance** = 0.0;
- 
+
    */**
    \* **@Contract\Verify**("$amount>0 && is_numeric($amount)")
    \*/
@@ -5252,14 +5253,14 @@ Pointcut || Pointcut
 **class** BankAccount
  {
    **protected** **$balance** = 0.0;
- 
+
    **public function** deposit($amount)
    {
      $__old = **clone** $this;
      *assert*($amount>0 && *is_numeric*($amount));
- 
+
      $this->**balance** += $amount;
- 
+     
      *assert*($this->**balance** == $__old->**balance**+$amount);
    }
  }
@@ -5269,13 +5270,13 @@ Pointcut || Pointcut
 **class** BankAccount
  {
    **protected** **$balance** = 0.0;
- 
+
    **public function** getBalance()
    {
      $__result = $this->**balance**;
-  
+
      *assert*($__result == $this->**balance**);
- 
+     
      **return** $__result;
    }
  }
@@ -5286,9 +5287,9 @@ Pointcut || Pointcut
 
 **class** Account 
  {
- 
+
    **protected** **$balance** = 0.0;
- 
+
    */**
    \* **@Contract\Ensure**("$this->***balance** *== $__old->***balance***+$amount")
    \*/
@@ -5296,7 +5297,7 @@ Pointcut || Pointcut
    {
      $this->**balance** += $amount;
    }
- 
+
    */**
    \* **@Contract\Ensure**("$__result == $this->***balance***")
    \*/

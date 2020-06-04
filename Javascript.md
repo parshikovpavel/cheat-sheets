@@ -182,6 +182,10 @@ var obj = { a: 1 };
 var copy = Object.assign({}, obj); // copy = { a: 1 }
 ```
 
+## `Promise`
+
+!!!
+
 # Function
 
 Объявление метода:

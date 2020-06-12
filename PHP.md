@@ -4594,19 +4594,33 @@ foreach($generator as $number) {
 
 ```php
 Generator implements Iterator {
-public current ( void ) : mixed
-public getReturn ( void ) : mixed # Получить значение, возвращаемое генератором
-public key ( void ) : mixed
-public next ( void ) : void
-public rewind ( void ) : void
-public send ( mixed $value ) : mixed # Передать значение в генератор
-public throw ( Throwable $exception ) : mixed # Бросить исключение в генератор
-public valid ( void ) : bool
-public __wakeup ( void ) : void
+	public current ( void ) : mixed
+	public getReturn ( void ) : mixed # Получить значение, возвращаемое генератором
+	public key ( void ) : mixed
+	public next ( void ) : void
+	public rewind ( void ) : void
+	public send ( mixed $value ) : mixed # Передать значение в генератор
+	public throw ( Throwable $exception ) : mixed # Бросить исключение в генератор
+	public valid ( void ) : bool
+	public __wakeup ( void ) : void
 }
 ```
 
 Когда все значения в генераторе закончились, функция просто завершит работу ничего не вернув. После этого основной код продолжит работу, аналогично как, например, когда в массиве закончились элементы для перебора. 
+
+Любая функция, содержащая `yield`, возвращает объект `Generator`, даже если `yield` не достигается:
+
+```php
+function gen() {
+    if (0) {
+        yield 1; 
+    }
+}
+
+var_dump(gen()); # object(Generator)#1 (0) {}
+```
+
+
 
 Начиная с PHP 7, используя `Generator::getReturn()` можно получить значение, возвращаемое генератором через `return` после завершения генератора.  
 

@@ -3170,17 +3170,40 @@ WHERE ID <= 5;
 
 #### InnoDB
 
-Для транзакционной InnoDB невозможно хранение точного количества строк, т.к. одновременно могут совершаться несколько транзакций, каждый из которых может влиять на количество.
+Для транзакционной InnoDB невозможно хранение точного количества строк, т.к. одновременно могут совершаться несколько транзакций, каждый из которых может влиять на количество. Т.е. значение  `SELECT COUNT(*) FROM ...`зависит от текущего уровня изоляции и всех параллельных транзакций.
 
  Способы получения приблизительного количества строк:
 
 - команда [`SHOW TABLE STATUS`](#show-table-status).
+
+- использовать аналог, таблицу `INFORMATION_SCHEMA`:
+
+  ```mysql
+  SELECT TABLE_ROWS FROM INFORMATION_SCHEMA.TABLES
+  WHERE TABLE_NAME = 'line_items';
+  ```
+
+- если записи из таблицы практически не удаляются, можно рассчитать на основе автоинкрементного `id`:
+
+  ```mysql
+  SELECT MAX(id) - MIN(id) AS count FROM table
+  ```
 
 - добавить к запросу `EXPLAIN` и посмотреть оценку количества строк, выполненную оптимизатором:
 
   ```mysql
   EXPLAIN SELECT COUNT(*) ...
   ```
+
+Ускорение подсчета точного количества строк:
+
+- посмотреть какой используется индекс для подсчета количества строк, если не используется индекс, то подсказать его:
+
+  ```mysql
+  SELECT count(*) FROM `table` USE INDEX (`idx`);
+  ```
+
+  
 
 ### Любые `COUNT(*) + WHERE`
 
@@ -5424,28 +5447,62 @@ UPDATE [LOW_PRIORITY] [IGNORE] table_references
     [WHERE where_condition]
 ```
 
-MySQL не позволяет в `UPDATE` использовать коррелированный подзапрос `SELECT`  к той же самой таблице.
+В `table_references` указываются таблицы, участвующие в соединении. Могут использовать любые типы соединений, разрешенные в операторе `SELECT`, например `LEFT JOIN`. Обновляются только те таблицы и те поля, которые указаны в блоке `SET`.
 
-```mysql
-mysql> UPDATE tbl AS outer_tbl 
-	   SET cnt = ( 
-			SELECT count(*) FROM tbl AS inner_tbl 
-			WHERE inner_tbl.type = outer_tbl.type 
-       ); 
-ERROR 1093 (HY000): You can’t specify target table 
-‘outer_tbl’ for update in FROM clause
-```
+Примеры:
 
-Необходимо использовать многотабличный синтаксис с `INNER JOIN`. Второй раз таблица должна использоваться как производная, тогда MySQL материализует ее в виде временной таблицы.
+- Обновление двух таблиц сразу:
 
-```mysql
-UPDATE tbl INNER JOIN
-	(SELECT type, count(*) AS cnt 
-	 FROM tbl 
-	 GROUP BY type 
-	) AS derived USING(type) 
-SET tbl.cnt = derived.cnt;
-```
+  ```mysql
+  UPDATE t1, t2
+  SET  t1.c2 = t2.c2,
+  	t2.c3 = expr
+  WHERE T1.c1 = T2.c1 AND condition
+  ```
+
+  Можно явно написать `JOIN`:
+
+  ```mysql
+  UPDATE t1
+  	INNER JOIN t2 ON t1.c1 = t2.c1
+  SET  t1.c2 = t2.c2,
+       t2.c3 = expr
+  WHERE condition
+  ```
+
+- Обновление записей в `t1`, которые не имеют соответствующих записей в `t2`:
+
+  ```mysql
+  UPDATE  t1 
+  	LEFT JOIN t2 ON t1.id = t2.id
+  SET t1.col1 = newvalue
+  WHERE t2.id IS NULL
+  ```
+
+- Записать в поле `cnt` таблицы `tbl` количество записей с тем же типом `type` в этой же таблице:
+
+  MySQL не позволяет в `UPDATE` использовать коррелированный подзапрос `SELECT`  к той же самой таблице.
+
+  ```mysql
+  mysql> UPDATE tbl AS outer_tbl 
+  	   SET cnt = ( 
+  			SELECT count(*) FROM tbl AS inner_tbl 
+  			WHERE inner_tbl.type = outer_tbl.type 
+         ); 
+  ERROR 1093 (HY000): You can’t specify target table 
+  ‘outer_tbl’ for update in FROM clause
+  ```
+
+  Необходимо использовать многотабличный синтаксис с `INNER JOIN`. Второй раз таблица должна использоваться как производная, тогда MySQL материализует ее в виде временной таблицы.
+
+  ```mysql
+  UPDATE tbl INNER JOIN
+  	(SELECT type, count(*) AS cnt 
+  	 FROM tbl 
+  	 GROUP BY type 
+  	) AS derived USING(type) 
+  SET tbl.cnt = derived.cnt;
+  ```
 
 ### Общее
 
@@ -5458,6 +5515,76 @@ UPDATE t1 SET col1 = col1 + 1, col2 = col1;
 ```
 
 `col2 = col1+1`, т.е. второе присваивание использует уже новое (обновленное) `col1` значение. Это поведение отличается от стандарта SQL.
+
+## `DELETE`
+
+Возможно две формы синтаксиса:
+
+- однотабличный синтаксис
+- многотабличный синтаксис
+
+### Однотабличный синтаксис
+
+```mysql
+DELETE [LOW_PRIORITY] [QUICK] [IGNORE] FROM tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [WHERE where_condition]
+    [ORDER BY ...]
+    [LIMIT row_count]
+```
+
+### Многотабличный синтаксис
+
+```mysql
+DELETE [LOW_PRIORITY] [QUICK] [IGNORE]
+    tbl_name[.*] [, tbl_name[.*]] ...
+    FROM table_references
+    [WHERE where_condition]
+
+DELETE [LOW_PRIORITY] [QUICK] [IGNORE]
+    FROM tbl_name[.*] [, tbl_name[.*]] ...
+    USING table_references
+    [WHERE where_condition]
+```
+
+Строки удаляются из таблиц `tbl_name`, т.е. можно удалить строки из нескольких таблиц одновременно. В `table_references` могут быть указаны дополнительные таблицы, которые используются в процессе поиска. 
+
+<u>Примеры:</u>
+
+- Удалить из таблиц `t1` и `t2` строки, для которых выполняется `t1.key = t2.key`:
+
+  ```mysql
+  DELETE t1, t2
+  FROM t1
+  	INNER JOIN t2 ON t1.key = t2.key
+  WHERE condition;
+  ```
+
+- Удалить из таблицы `t1` строки с `id=1` (первичный ключ), из таблицы `t2` строки с `ref=1 ` (внешний ключ):
+
+  ```mysql
+  DELETE t1 , t2 
+  FROM t1
+  	INNER JOIN t2 ON t2.ref = t1.id
+  WHERE t1.id = 1;
+  ```
+
+- Удалить из таблицы `t1` строки, не имеющих соответствующих строк в таблице `t2`:
+
+  ```mysql
+  DELETE t1
+  FROM t1
+  	LEFT JOIN t2 ON t1.key = t2.key 
+  WHERE t2.key IS NULL;
+  ```
+
+- Удалить все дубликаты из таблицы за исключением одной строки, сохранив строку с наименьшим `id`:
+
+  ```mysql
+  DELETE t1 FROM tabl t1, tabl t2 WHERE t1.id > t2.id AND t1.name = t2.name
+  ```
+
+  
 
 # Functions and operators
 
@@ -5641,6 +5768,33 @@ group by a
 
 При выполнении `ORDER BY ... ASC` – `NULL`-значения будут идти первыми, при выполнении `ORDER BY ... DESC` – последними.
 
+## `IN`
+
+Могут сравниваться группы значений, объединенных в скобки `(..., ..., ...)`:
+
+```mysql
+mysql> SELECT (3,4) IN ((1,2), (3,4));
+1
+```
+
+## `IFNULL`
+
+Синтаксис:
+
+```
+IFNULL(expr1, expr2)
+```
+
+- Если `expr1 IS NOT NULL` – возвращает `expr1`
+- иначе – `expr2`.
+
+```mysql
+mysql> SELECT IFNULL(1,0); 
+-> 1 
+mysql> SELECT IFNULL(NULL,10); 
+-> 10 
+```
+
 # Типичные задачи
 
 ## Количество совпадающих и отличающихся значений
@@ -5768,279 +5922,79 @@ FROM items
 GROUP BY user;
 ```
 
-
-
-#### Нахождение корня, внутренних узлов и листьев
-
-Дана таблица с двумя столбцами: id – номер узла, p_id – номер родительского узла. Варианты решения от худших к лучшим
-
-**1 вариант.** Использование подзапроса с IN
-
-SELECT id,
-
-case 
-
-when p_id is null then 'root'
-
-when id in (select p_id from tree) then 'inner'
-
-else 'leaf'
-
-end as str
-
-from tree
-
-**2 вариант.** Использование подзапроса с NOT EXISTS
-
-SELECT id,
-
-case 
-
-when p_id is null then 'root'
-
-when not exists (select * from tree r WHERE r.p_id=f.id) then 'leaf'
-
-else 'inner'
-
-end as str
-
-from tree f
-
-**3 вариант**. Использование left join с колонкой p_id
-
-SELECT f.id,
-
-case 
-
-when f.p_id is null then 'root'
-
-when r.p_id is null then 'leaf'
-
-else 'inner'
-
-end as str
-
-from tree f left join (select distinct p_id from tree) r on r.p_id=f.id
-
-Можно вывести имя родителя через подзапрос:
-
-SELECT
-
-​     CASE
-
-​          WHEN tree.p_id = '0' THEN tree.p_id
-
-​          ELSE (SELECT parent.name FROM tree parent WHERE parent.id = tree.p_id)
-
-​     END AS parentName
-
-FROM tree
-
-### Подсчитать количество строк в InnoDB
-
- 
-
- 
-
-IN может использоваться для сравнения конструкторов строк:
-
-mysql> SELECT (3,4) IN ((1,2), (3,4));
-
-​        -> 1
-
-Удалить все дубликаты из таблицы за исключением одной строки
-
-1) Если вы хотите сохранить строку с наименьшим id:
-
-DELETE n1 FROM names n1, names n2 WHERE n1.id > n2.id AND n1.name = n2.name
-
-2) Если вы хотите сохранить строку с наибольшим id:
-
-DELETE n1 FROM names n1, names n2 WHERE n1.id < n2.id AND n1.name = n2.name
-
-Гораздо быстрее через временную таблицу
-
-INSERT INTO tempTableName(cellId,attributeId,entityRowId,value)
-
-​    SELECT DISTINCT cellId,attributeId,entityRowId,value
-
-​    FROM tableName;
-
-Функция CASE
-
-1 вариант
-
-SELECT CASE 1 WHEN 1 THEN 'one' 
-
-WHEN 2 THEN 'two' 
-
-ELSE 'more' END; 
-
--> 'one' 
-
-2 вариант
-
-SELECT CASE WHEN 1>0 THEN 'true' 
-
-ELSE 'false' END; 
-
--> 'true' 
-
-mysql> SELECT CASE BINARY 'B' 
-
-WHEN 'a' THEN 1 
-
-WHEN 'b' THEN 2 END; 
-
--> NULL
-
-Оператор IF
-
-mysql> SELECT IF(1>2,2,3); 
-
--> 3 
-
-mysql> SELECT IF(1<2,'yes','no'); 
-
--> 'yes' 
-
-mysql> SELECT IF(STRCMP('test','test1'),'no','yes');
-
- -> 'no'
-
-Оператор IFNULL
-
-Если expr1 не NULL, IFNULL() возвращает expr1; в противном случае expr2.
-
-mysql> SELECT IFNULL(1,0); 
-
--> 1 
-
-mysql> SELECT IFNULL(NULL,10); 
-
--> 10 
-
-mysql> SELECT IFNULL(1/0,10); 
-
--> 10 
-
-BINARY *str* сокращение для CAST(*str* AS BINARY).
-
-Оператор BINARY приводит строку после него к двоичной строке. Это простой способ вынудить сравнение быть выполненным байт в байт, а не символ в символ. BINARY также заставляет конечные пробелы быть значительными.
-
-mysql> SELECT 'a' = 'A';
-
-– > 1
-
-mysql> SELECT BINARY 'a' = 'A';
-
-– > 0
-
-mysql> SELECT 'a' = 'a ';
-
-– > 1
-
-mysql> SELECT BINARY 'a' = 'a ';
-
-– > 0
-
-Запрос, получить количество значений в таблице больше или меньше текущего значения
-
-Можно через коррелированный подзапрос, также можно его раскрыть через JOIN
-
-SELECT t1.num_marks, 
-
-​    (SELECT count(t2.couple_id) 
-
-​    FROM table_name t2 
-
-​    WHERE t2.num_marks >= t1.num_marks ) AS num_couples 
-
-FROM table_name t1 
-
-GROUP BY t1.num_marks 
-
-ORDER BY t1.num_marks DESC;
-
-### DELETE JOIN
-
-Примеры
-
-Удаление строк из двух таблиц t1и t2:
-
-DELETE t1, t2
-
-FROM t1
-
-​     INNER JOIN t2 ON t1.key = t2.key
-
-WHERE condition;
-
-Удаление строк с id=1 в таблице t1 и строки с ref=1 в таблице t2:
-
-DELETE t1 , t2 
-
-FROM t1
-
-​     INNER JOIN t2 ON t2.ref = t1.id
-
-WHERE t1.id = 1;
-
-Удаление строки из таблицы t1, не имеющих соответствующих строк в таблице t2:
-
-DELETE t1
-
-FROM t1
-
-​     LEFT JOIN t2 ON t1.key = t2.key 
-
-WHERE t2.key IS NULL;
-
-### UPDATE JOIN
-
-Синтаксис UPDATE с несколькими таблицами:
-
-UPDATE [LOW_PRIORITY] [IGNORE] table_references
-
-​    SET assignment_list
-
-​    [WHERE where_condition]
-
-В table_references указываются таблицы, участвующие в соединении. Могут использовать любые типы соединений, разрешенные в операторе SELECT, например LEFT JOIN. Обновляются только те таблицы и те таблицы, которые указаны в блоке SET.
-
-Обновление двух таблиц:
-
-UPDATE t1, t2
-
-SET  t1.c2 = t2.c2,
-
-​     T2.c3 = expr
-
-WHERE T1.c1 = T2.c1 AND condition
-
-Можно явно написать JOIN:
-
-UPDATE T1,T2
-
-​     INNER JOIN T2 ON T1.C1 = T2.C1
-
-SET  T1.C2 = T2.C2,
-
-​     T2.C3 = expr
-
-WHERE condition
-
-Обновление записей, которые не имеют соответствующих в другой таблице
-
-UPDATE  t1 
-
-​     LEFT JOIN t2 ON t1.id = t2.id
-
-SET t1.col1 = newvalue
-
-WHERE t2.id IS NULL
-
-## Команды SHOW
+## Нахождение корня, внутренних узлов и листьев
+
+Дана таблица:
+
+```mysql
+CREATE TABLE tree (
+	id INT, # Номер узла
+    p_id INT # Номер родительского узла
+)
+```
+
+Способы нахождения корня, внутренних узлов и листьев, от худшего к лучшему
+
+1. Использование подзапроса с `IN`:
+
+   ```mysql
+   SELECT id,
+   	case 
+   		when p_id is null then 'root'
+   		when id in (select p_id from tree) then 'inner'
+   		else 'leaf'
+   	end as str
+   from tree
+   ```
+
+2. Использование подзапроса с `NOT EXISTS`
+
+   ```mysql
+   SELECT id,
+   	case 
+   		when p_id is null then 'root'
+   		when not exists (select * from tree r WHERE r.p_id=f.id) then 'leaf'
+   		else 'inner'
+   	end as str
+   from tree f
+   
+   ```
+
+3. Использование `LEFT JOIN` с колонкой `p_id`:
+
+   ```mysql
+   SELECT f.id,
+   	case 
+   		when f.p_id is null then 'root'
+   		when r.p_id is null then 'leaf'
+   		else 'inner'
+   	end as str
+   FROM tree f LEFT JOIN 
+   	(select distinct p_id from tree) r on r.p_id=f.id
+   
+   ```
+
+## Количество значений в таблице больше или меньше текущего значения
+
+- Через коррелированный подзапрос:
+
+  ```mysql
+  SELECT t1.value, 
+  	(
+          SELECT count(*) 
+  		FROM table_name t2 
+  		WHERE t2.value >= t1.value 
+      ) AS num_couples 
+  FROM table_name t1 
+  ORDER BY t1.num_marks DESC
+  
+  ```
+
+- Можно его раскрыть через `JOIN`
+
+
+
+# Команды SHOW
 
 ### Show table status
 

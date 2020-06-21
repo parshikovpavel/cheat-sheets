@@ -3183,7 +3183,7 @@ WHERE ID <= 5;
   WHERE TABLE_NAME = 'line_items';
   ```
 
-- если записи из таблицы практически не удаляются, можно рассчитать на основе автоинкрементного `id`:
+- если записи из таблицы практически не удаляются, можно рассчитать на основе автоинкрементного `id`. Другие методы могут давать погрешность до 50%, поэтому этот метод может быть самым точным:
 
   ```mysql
   SELECT MAX(id) - MIN(id) AS count FROM table
@@ -3197,7 +3197,7 @@ WHERE ID <= 5;
 
 Ускорение подсчета точного количества строк:
 
-- посмотреть какой используется индекс для подсчета количества строк, если не используется индекс, то подсказать его:
+- посмотреть какой используется индекс для подсчета количества строк, если не используется индекс, то подсказать его. Говорят (?), что использование не *primary key* значительно ускоряет подсчет:
 
   ```mysql
   SELECT count(*) FROM `table` USE INDEX (`idx`);
@@ -3459,7 +3459,7 @@ FROM (
 		id,
 		@num := if(@prev_post_id = post_id, @num + 1, 1) AS row_number,
 		@prev_post_id := post_id AS dummy_p
-	FROM fishki_comment,
+	FROM `comment`,
 		(SELECT @num := 0, @prev_post_id := -1) as t
 	ORDER BY post_id, dt DESC
 ) AS x
@@ -5994,53 +5994,35 @@ CREATE TABLE tree (
 
 
 
-# Команды SHOW
+# Команды `SHOW`
 
-### Show table status
+### `SHOW TABLE STATUS`
 
-Информация о таблице 
+Информация о таблице:
 
-mysql> show table status like 'fishki_pg_data' \G;
-
+```mysql
+mysql> SHOW TABLE STATUS like 'pg_data' \G;
 *************************** 1. row ***************************
-
-​           Name: fishki_pg_data
-
-​         Engine: InnoDB  //подсистема
-
-​        Version: 10
-
-​     Row_format: Compact //формат строки, возможно dynamic, compressed
-
-​           Rows: 40067 //число строк
-
+           Name: pg_data
+         Engine: InnoDB  //подсистема
+        Version: 10
+     Row_format: Compact //формат строки, возможно dynamic, compressed
+           Rows: 40067 //число строк
  Avg_row_length: 170  //средняя длина строки в байтах
-
-​    Data_length: 6832128 //объем данных в байтах
-
+    Data_length: 6832128 //объем данных в байтах
 Max_data_length: 0 //макс объем данных
-
    Index_length: 77725696 //размер индексов
-
-​      Data_free: 18304991232
-
+      Data_free: 18304991232
  Auto_increment: 40001
-
-​    Create_time: 2015-11-07 18:08:55
-
-​    Update_time: NULL
-
-​     Check_time: NULL
-
-​      Collation: utf8_general_ci
-
-​       Checksum: NULL
-
+    Create_time: 2015-11-07 18:08:55
+    Update_time: NULL
+     Check_time: NULL
+      Collation: utf8_general_ci
+       Checksum: NULL
  Create_options:
-
-​        Comment:
-
+        Comment:
 1 row in set (5.92 sec)
+```
 
 ### `SHOW INDEX`
 
@@ -6055,99 +6037,75 @@ Column_name: actor_id
 Cardinality: 200
 ```
 
-### Show engines
-
-Доступные движки
-
-​                                                  
-
-### Show databases
+### `SHOW DATABASES`
 
 Cписок названий всех доступных текущему пользователю баз данных. 
 
+```mysql
 SHOW DATABASES [LIKE 'pattern']
+```
 
+```mysql
 mysql> SHOW DATABASES;
-
 +--------------------+
-
 | Database           |
-
 +--------------------+
-
 | information_schema |
-
-| fishki_utf8        |
-
-| newfishki          |
-
 | test               |
-
 +--------------------+
+```
 
-### Show tables
+### `SHOW TABLES`
 
-Список таблиц конкретной базы данных db_name.
+Список таблиц конкретной базы данных `db_name`.
 
+```mysql
 SHOW TABLES [{FROM | IN} db_name] [LIKE 'pattern']
+```
 
+```mysql
 mysql> SHOW TABLES;
-
 +----------------------------------+
-
-| Tables_in_newfishki              |
-
+| Tables_in_db_name                |
 +----------------------------------+
-
-| fishki_account                   |
-
-| fishki_admin_message             |
-
+| account                          |
+| admin_message                    |
 +----------------------------------+
+```
 
-### Show columns
+### `SHOW COLUMNS`
 
-Список полей таблицы
+Список полей таблицы:
 
+```mysql
 SHOW [FULL] COLUMNS {FROM | IN} tbl_name [{FROM | IN} db_name] [LIKE 'pattern']
+```
 
-или полные алиасы этой команды (без FULL)
+синонимы этой команды
 
+```mysql
 SHOW FIELDS FROM tbl_name
-
- 
-
 DESCRIBE tbl_name
-
- 
-
 DESC tbl_name
+```
 
- 
+Пример:
 
-mysql> SHOW COLUMNS FROM fishki_tag;
-
+```mysql
+mysql> SHOW COLUMNS FROM tag;
 +--------------+------------------+------+-----+---------+----------------+
-
 | Field        | Type             | Null | Key | Default | Extra          |
-
 +--------------+------------------+------+-----+---------+----------------+
-
 | id           | int(11)          | NO   | PRI | NULL    | auto_increment |
-
 | post_id      | int(11)          | NO   | MUL | 0       |                |
-
 | gallery_id   | int(11)          | NO   |     | NULL    |                |
-
 | category_id  | int(11)          | NO   | MUL | 0       |                |
-
 | tag_old      | varchar(100)     | YES  | MUL | NULL    |                |
-
 | tag_id       | int(11) unsigned | NO   | MUL | NULL    |                |
-
 | community_id | int(11)          | NO   | MUL | 0       |                |
-
 +--------------+------------------+------+-----+---------+----------------+
+
+```
 
 # `EXPLAIN`
 

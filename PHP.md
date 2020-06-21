@@ -2832,7 +2832,7 @@ $a->b = 5;
 
 - Корректные определения свойств:
 
-- ```php
+  ```php
   class SimpleClass
   {
       public $var1 = 'hello ' . 'world';
@@ -2846,7 +2846,7 @@ $a->b = 5;
 
 - Некорректное определение *property*'s:
 
-- ```php
+  ```php
   class SimpleClass
   {
       public $var4 = self::myStaticMethod();
@@ -8284,9 +8284,9 @@ JIT используется в реализациях Java, JavaScript, .NET Fr
 
 Преимущество байт-кода в большей эффективности и портируемости. То же самое преимущество дают непосредственно интерпретируемые языки, однако, поскольку байт-код обычно менее абстрактен и более компактен, чем исходный код, эффективность интерпретации байт-кода обычно выше, чем чистая интерпретация исходного кода
 
-# Библиотека SPL
+# Структуры данных
 
-## Структуры SPL
+## Структуры `SPL`
 
 ### `SplDoublyLinkedList`
 
@@ -8613,6 +8613,14 @@ SplObjectStorage implements Countable , Iterator , Serializable , ArrayAccess {
       var_dump($s[$o2]); # array(3) {1,2,3)
   }
   ```
+
+## Структуры `DS`
+
+## Другие
+
+### Set
+
+*Set* (множество) нативно реализуется через `array`. Элементы *set*'а записываются в ключи массива. Значения массива – произвольные (чаще `1` или `true`).
 
 # Безопасность
 
@@ -9057,7 +9065,7 @@ namespace {
 
 ## 7.4
 
-- введены *typed property*'s (типизированные свойства) – определение *property* может включать *typehint*, кроме типов `void` и `callable `([1](#property)). 
+- введены *typed property*'s (типизированные свойства) – определение *property* может включать *typehint*, кроме типов `void` и `callable ` ([1](#property)). 
 - введены *arrow function*'s (стрелочные функции), также называются *short closure*'s (короткие замыкания) – сокращенная запись для *anonymous function*'s с неявной привязкой *parent scope by value* ([1](#arrow-function)).
 - *Null Coalescing Assignment Operator* `??=` (присваивающий оператор объединения с *null*) ([1]())
 - *unpacking* `iterable` внутри  `array` с использованием многоточия `...` (*spread operator*) ([1](#unpacking-iterable-внутри-array))

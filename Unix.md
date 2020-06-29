@@ -1165,6 +1165,8 @@ telnet localhost 80
 
 nc localhost 80
 
+## `curl`
+
 ## `top`
 
 ### `Load average`

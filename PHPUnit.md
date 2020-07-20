@@ -1135,13 +1135,17 @@ composer require --dev phpunit/dbunit
 Тестирование базы данных требует выполнения следующих этапов:
 
 1. Очистка базы данных. PHPUnit выполняет операцию `TRUNCATE` для всех таблиц, чтобы вернуть их в пустое состояние.
-2. Настройка фикстур. PHPUnit выполнит итерацию по всем указанным строкам фикстуры и вставит их в соответствующие таблицы.
+2. Настройка фикстур. PHPUnit вызывает функцию `getDataSet()` и получает первоначальное содержимое базы данных. Затем это содержимое вставляется в соответствующие таблицы. 
+3. Испытание системы под тестом.
+4. Проверка утверждений для базы данных. Состоит из 3 шагов:
+   1. Получить фактические данные, выбрать данные из таблицы в БД в виде `IDataSet` или `ITable`  
+   2. Получить ожидаемые данные, загрузить в виде `IDataSet` или `ITable` 
+   3. Проверить, что объекты совпадают
+5. Возврат к исходному состоянию (`teardown`).
 
-2. Испытание системы под тестом.
 
-3. Проверка результата.
 
-4. Возврат к исходному состоянию (`teardown`).
+
 
 Для тестирования базы данных необходимо использовать трейт `TestCaseTrait` из `DbUnit`:
 
@@ -1235,14 +1239,14 @@ abstract class DatabaseTestCase extends TestCase
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
-<dataset>
+<phpunit>
     <php>
         <var name="DB_DSN" value="mysql:dbname=myguestbook;host=localhost" />
         <var name="DB_USER" value="user" />
         <var name="DB_PASSWD" value="passwd" />
         <var name="DB_DBNAME" value="myguestbook" />
     </php>
-</dataset>
+</phpunit>
 ```
 
 ## `getDataSet()`
@@ -1264,395 +1268,383 @@ abstract class DatabaseTestCase extends TestCase
 
 
 
-Процесс проверки утверждений для базы данных:
+## DataSet и DataTable
 
-·   Указать таблицы в БД (актуальные данные)
+В `DbUnit` введены два ключевых интерфейса:
 
-·   Указать ожидаемые данные в формате (YAML, XML, ..)
+- `IDataSet` – абстракция вокруг набора таблиц (базы данных)
+- `ITable` – абстракция вокруг одной таблицы.
 
-·   Убедитесь, что данные совпадают.
+Эти интерфейсы используются, чтобы представить содержимое базы данных в виде объектов в коде.  
 
-Существует три различных типа наборов  datasets/datatables:
+Над этими объектами выполняются следующие операции:
 
-·   Файловые
+- `IDataSet` используется для настройки *fixture*. `IDataSet` задает первоначальное содержимое базы данных, должен быть возвращен в методе `getDataSet()`
+- `IDataSet` и `ITable` используются в тесте для извлечения содержимого таблицы (набора таблиц) из БД в виде объекта.
+- `IDataSet` и `ITable` используются в тесте для получения ожидаемых данных в тестах. При проверки утверждений два объекта сравниваются.
+
+### DataTable
+
+Структура:
+
+```php
+interface ITable
+{
+    /**
+     * Returns the number of rows in this table.
+     *
+     * @return int
+     */
+    public function getRowCount();
+    
+    /* ... */
+}
+```
 
-·   На основе запросов
+### DataSet
+
+Структура:
 
-·   Фильтр и композиция
+```php
+interface IDataSet extends IteratorAggregate
+{
+     /**
+     * Returns a table object for the given table.
+     *
+     * @param string $tableName
+     *
+     * @return ITable
+     */
+    public function getTable($tableName);
+    
+    /* ... */
+}
+```
 
-Файловые datasets/datatables  используются как фикстуры и описание ожидаемого состояния БД, его варианы: плоский xml dataset (все таблицы определяются на одном уровне, одним тегом), XML Dataset (каждая таблица отдельная нода, внутри которой описываются тегом столбцы и строки), MySQL XML DataSet (получается через mysqldump –xml), YAML DataSet, CSV DataSet, DataSet на базе массива PHP, Query (SQL) DataSet (формирование на основе запроса в базу), Database (DB) Dataset (либо полная база, либо часть таблиц). Можно фильтровать полученные данные через методы фильтров. Можно проверить число строк в таблице через assertEquals. Можно проверить содержимое таблицы путем сравнение с датасетом, представленном в любом из вышеперечисленных вариантов с помощью функции 
+
+
+#### Dataset на основе файлов
+
+*Dataset* на основе файлов используется в основном в 1 и 3 случаях.
+
+##### `FlatXmlDataSet`
+
+Очень простой (*flat*) XML-формат. Все таблицы определяются на одном уровне. Тег внутри корневого узла `<dataset>` представляет ровно одну строку в базе данных. Имена тегов соответствуют таблице, куда будут добавляться строки (записи), а атрибуты тега представляют столбцы записи. 
+
+Пример для таблицы
+
+```mysql
+CREATE TABLE guestbook (
+	id,
+    content,
+    user,
+    created
+)
+```
+
+```xml
+<?xml version="1.0" ?>
+<dataset>
+    <guestbook id="1" content="Hello buddy!" user="joe" created="2010-04-24 17:15:23" />
+    <guestbook id="2" content="I like it!" user="nancy" created="2010-04-26 12:14:20" />
+</dataset>
+```
+
+Недостаток:
 
-assertTablesEqual($expectedTable, $queryTable)
+- сложности с описание значения `NULL` в виде строки (подробнее в документации)
 
+Создать `FlatXmlDataSet` по заданному файлу `$xmlFile`.
 
+```php
+$this->createFlatXMLDataSet($xmlFile)
+```
 
-- 
+##### `XmlDataSet`
 
-  
+Более многословный формат XML, которые не имеет проблем с описание `NULL`
 
-- 
+Внутри корневого узла `<dataset>` можно указать теги `<table>`, `<column>`, `<row>`, `<value>` и `<null>` />. В итоге, каждая таблица – это отдельный узел `<table>`.
+
+```xml
+<?xml version="1.0" ?>
+<dataset>
+    <table name="guestbook">
+        <column>id</column>
+        <column>content</column>
+        <column>user</column>
+        <column>created</column>
+        <row>
+            <value>1</value>
+            <value>Привет, дружище!</value>
+            <value>joe</value>
+            <value>2010-04-24 17:15:23</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>Мне нравится это!</value>
+            <null />
+            <value>2010-04-26 12:14:20</value>
+        </row>
+    </table>
+</dataset>
+```
+
+Создать `XmlDataSet` по заданному файлу `$xmlFile`.
+
+```php
+$this->createXMLDataSet($xmlFile)
+```
+
+##### `MysqlXmlDataSet`
+
+Файлы в этом формате могут быть сгенерированы с помощью утилиты `mysqldump`.
+
+```bash
+$ mysqldump --xml -t -u [username] --password=[password] [database] > /path/to/file.xml
+```
+
+Создать `MysqlXmlDataSet` по заданному файлу `$xmlFile`.
+
+```php
+$this->createMySQLXMLDataSet($xmlFile)
+```
+
+##### `YamlDataSet`
+
+Данные в формате YAML:
+
+```yaml
+guestbook:
+  -
+    id: 1
+    content: "Привет, дружище!"
+    user: "joe"
+    created: 2010-04-24 17:15:23
+  -
+    id: 2
+    content: "Мне нравится это!"
+    user:
+    created: 2010-04-26 12:14:20
+```
 
-  \1. Вручную
+Создать `YamlDataSet` по заданному файлу `$yamlFile`.
 
-  
+```php
+new YamlDataSet($yamlFile);
+```
+
+##### `CsvDataSet`
+
+Каждая таблица записывается в отдельный CSV-файл.
+
+```csv
+id,content,user,created
+1,"Привет, дружище!","joe","2010-04-24 17:15:23"
+2,"Мне нравится это!","nancy","2010-04-26 12:14:20"
+```
+
+Создать `CsvDataSet` и добавить в него таблицу `guestbook` с данными в файле `$csvFile`.
+
+```php
+$dataSet = new CsvDataSet();
+$dataSet->addTable('guestbook', $csvFile);
+```
+
+##### `ArrayDataSet`
+
+`DataSet` на основе массива PHP.
+
+Формат массива:
+
+```php
+$array = [
+                'guestbook' => [
+                    [
+                        'id' => 1,
+                        'content' => 'Привет, дружище!',
+                        'user' => 'joe',
+                        'created' => '2010-04-24 17:15:23'
+                    ],
+                    [
+                        'id' => 2,
+                        'content' => 'Мне нравится это!',
+                        'user' => null,
+                        'created' => '2010-04-26 12:14:20'
+                    ],
+                ];
+```
+
+Ключи 1-го уровня –  таблицы, ключи 2-го уровня – столбцы.
+
+Создание `ArrayDataSet` из массива `$array`:
+
+```php
+$dataset = new ArrayDataSet($array)
+```
+
+#### DataSet на основе запросов
+
+Используются в основном во 2 случае (для извлечения содержимого таблицы (набора таблиц) из БД в виде объекта.)
+
+##### `QueryDataSet`
+
+Создание `QueryDataSet` по запросу к таблице:
+
+```php
+$ds = new PHPUnit\DbUnit\DataSet\QueryDataSet($this->getConnection());
+$ds->addTable('guestbook', 'SELECT id, content FROM guestbook ORDER BY created DESC');
+```
+
+Создание `QueryDataSet` с полным содержимым таблицы:
+
+```php
+$ds = new PHPUnit\DbUnit\DataSet\QueryDataSet($this->getConnection());
+$ds->addTable('guestbook');
+```
+
+это аналогично следующему определению по запросу:
+
+```php
+$ds = new PHPUnit\DbUnit\DataSet\QueryDataSet($this->getConnection());
+$ds->addTable('guestbook', 'SELECT * FROM guestbook');
+```
+
+##### `FilteredDataSet`
+
+Создание `FilteredDataSet` по всем таблицам со всем их содержимым из базы данных, которая указана в `getConnection()`:
+
+```php
+$dataSet = $this->getConnection()->createDataSet();
+```
+
+Создание `FilteredDataSet` по некоторым таблицам из базы данных:
+
+```php
+$tableNames = ['guestbook'];
+$dataSet = $this->getConnection()->createDataSet($tableNames);
+```
+
+## `Connection`
+
+Интерфейс `Connection` возвращается из метода `getConnection()`:
+
+```php
+interface Connection
+{
+    /**
+     * Создать `FilteredDataSet`. Использование описано в (1)[#filtereddataset]
+     *
+     * @param array $tableNames
+     *
+     * @return IDataSet
+     */
+    public function createDataSet(array $tableNames = null);
+
+    /**
+     * Создать экземпляр `class QueryTable implements ITable`. Использование
+     * описано в (1)[#утверждение-состояния-таблицы], для утверждения содержания таблицы
+     *
+     * @param string $resultName
+     * @param string $sql
+     *
+     * @return ITable
+     */
+    public function createQueryTable($resultName, $sql);
+
+    /**
+     * Следует использовать для утверждения количества строк в таблице. 
+     * Использование описано в (1)[#утверждение-количества-строк-в-таблице]
+     *
+     * @param string $tableName
+     * @param string $whereClause
+     * @param int
+     */
+    public function getRowCount($tableName, $whereClause = null);
+    
+    /* ... */
+}
+```
+
+## Утверждения
+
+### Утверждение количество строк таблицы
+
+Проверить, что таблица содержит определённое количество строк.
+
+```php
+class ObserverTest extends DatabaseTestCase
+{
+	public function getDataSet()
+    {
+        return new ArrayDataSet([
+                'log' => []
+        ]);
+    }
+	
+	public function testCount()
+	{
+        $this->assertEquals(0, $this->getConnection()->getRowCount('log'), "Pre-Condition");
+	    /* Inserting 1 row */
+        $this->assertEquals(1, $this->getConnection()->getRowCount('log'), "Logging failed");
+    }
+}
+
+```
+
+### Утверждение состояния таблицы и SQL-запроса
+
+Проверить, что содержимое таблицы или SQL-запроса после теста совпадает с ожидаемым. Необходимо получить фактические и ожидаемые данные в виде `ITable` и сравнить их.
+
+```php
+class GuestbookTest extends DatabaseTestCase
+{
+    public function testAddEntry()
+    {
+        $guestbook = new Guestbook();
+        $guestbook->addEntry("suzy", "Hello world!");
+
+        /* 1 шаг проверки утверждений, получение фактических данных */
+        $queryTable = $this->getConnection()->createQueryTable(
+            'guestbook', 'SELECT * FROM guestbook');
+        /* 2 шаг проверки утверждений, получение ожидаемых данных */
+        $expectedTable = $this->createFlatXmlDataSet("expectedBook.xml")
+                              ->getTable("guestbook");
+        /* 3 шаг проверки утверждений, сравнение объектов */
+        $this->assertTablesEqual($expectedTable, $queryTable);
+    }
+}
+```
+
+### Утверждения состояния нескольких таблиц
+
+Необходимо получить фактические и ожидаемые данные в виде `IDataSet` и сравнить объекты.
+
+```php
+class GuestbookTest extends DatabaseTestCase
+{
+    public function testFoo()
+    {
+        /* 1 шаг проверки утверждений, получение фактических данных */
+        $dataSet = new QueryDataSet();
+        $dataSet->addTable('guestbook', 'SELECT id, content, user FROM guestbook'); 
+        
+        /* 2 шаг проверки утверждений, получение ожидаемых данных */
+        $expectedDataSet = $this->createFlatXmlDataSet('guestbook.xml');
+
+        /* 3 шаг проверки утверждений, сравнение объектов */
+        $this->assertDataSetsEqual($expectedDataSet, $dataSet);
+    }
+}
+```
+
+
+
+Xdebug либо
 
-  
 
-- 
 
-  \2. Через —bootstrap
 
-  
-
-  
-
-##### 4 сентября 2019
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [11:19](https://vk.com/im?sel=2733257&msgid=82368)
-
-- 
-
-  Рабочий процесс для утверждений базы данных в ваших тестах, таким образом, состоит из трёх простых шагов:
-
-  Указать одну или более таблиц в базе данных по имени таблицы (фактический набор данных)Указать ожидаемый набор данных в предпочтительном формате (YAML, XML, ..)Проверить утверждение, что оба представления набора данных равны друг другу (эквивалентны).
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [11:38](https://vk.com/im?sel=2733257&msgid=82369)
-
-- 
-
-  Наиболее распространённый набор называется Flat XML. Это очень простой (flat) XML-формат, где тег внутри корневого узла <dataset> представляет ровно одну строку в базе данных. Имена тегов соответствуют таблице, куда будут добавляться строки (записи), а атрибуты тега представляют столбцы записи. Пример для приложения простой гостевой книги мог бы выглядеть подобным образом:
-
-  <?xml version="1.0" ?> <dataset> <guestbook id="1" content="Hello buddy!" user="joe" created="2010-04-24 17:15:23" /> <guestbook id="2" content="I like it!" user="nancy" created="2010-04-26 12:14:20" /> </dataset>
-
-  
-
-  
-
-- 
-
-  <guestbook> — имя таблицы, в которую добавляются две строки с четырьмя столбцами «id», «content», «user» и «created» с соотве
-
-  
-
-  
-
-- 
-
-  атрибуты в первой определённой строке таблицы определяют столбцы этой таблицы.
-
-  
-
-  
-
-- 
-
-  е я могу только посоветовать использовать наборы данных Flat XML, только если вам не нужны значения NULL
-
-  
-
-  
-
-- 
-
-  методcreateFlatXmlDataSet($filename):
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [20:37](https://vk.com/im?sel=2733257&msgid=82448)
-
-- 
-
-  XML DataSet
-
-  Есть ещё один структурированный набор данных XML, который немного более многословный при записи, но не имеет проблем с NULL-значениями из набора данных Flat XML. Внутри корневого узла <dataset> вы можете указать теги <table>, <column>, <row>,<value> и <null />.
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [20:42](https://vk.com/im?sel=2733257&msgid=82460)
-
-- 
-
-  createXmlDataSet($filename):
-
-  
-
-  
-
-- 
-
-  MySQL XML DataSet
-
-  
-
-  
-
-- 
-
-  \5. Файлы в этом формате могут быть сгенерированы с помощью утилиты mysqldump. В
-
-  
-
-  
-
-  
-
-  
-
-
-##### 5 сентября 2019
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [10:34](https://vk.com/im?sel=2733257&msgid=82485)
-
-- 
-
-  $ mysqldump —xml -t -u [username] —password=[password] [database] > /path/to/file.xml
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [10:43](https://vk.com/im?sel=2733257&msgid=82486)
-
-- 
-
-  YAML DataSet
-
-  
-
-  
-
-- 
-
-  guestbook: - id: 1 content: "Привет, дружище!" user: "joe" created: 2010-04-24 17:15:23
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [14:42](https://vk.com/im?sel=2733257&msgid=82517)
-
-- 
-
-  return new YamlDataSet(dirname(__FILE__)."/_files/guestbook.yml"); } }
-
-  
-
-  
-
-- 
-
-  В расширении базы данных PHPUnit не существует (пока) массива на основе DataSet, но мы может легко реализовать свой собственный. Пр
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [19:50](https://vk.com/im?sel=2733257&msgid=82588)
-
-- 
-
-  CSV DataSet
-
-  
-
-  
-
-- 
-
-  Каждая таблица набора данных представлена одним CSV-файлом.
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [20:05](https://vk.com/im?sel=2733257&msgid=82602)
-
-- 
-
-  вы не можете указать значения NULL в наборе данных CSV.
-
-  
-
-  
-
-- 
-
-  $dataSet = new CsvDataSet(); $dataSet->addTable('guestbook', dirname(__FILE__)."/_files/guestbook.csv"); return $dataSet; }
-
-  
-
-
-- , указав произвольные запросы для своих таблиц, на
-
-  
-
-  
-
-- 
-
-  $ds = new PHPUnit\DbUnit\DataSet\QueryDataSet($this->getConnection()); $ds->addTable('guestbook', 'SELECT id, content FROM guestbook ORDER BY created DESC');
-
-  В ра
-
-  
-
-  
-
-##### 7 сентября 2019
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [12:50](https://vk.com/im?sel=2733257&msgid=82652)
-
-- 
-
-  создать DataSet, который состоит из всех таблиц с их содержимым в базе данных,
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [13:10](https://vk.com/im?sel=2733257&msgid=82653)
-
-- 
-
-  либо ограничится набором указанных имён таблиц
-
-
-
-
-
-##### 8 сентября 2019
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [12:53](https://vk.com/im?sel=2733257&msgid=82655)
-
-- 
-
-  Утверждение количество строк таблицы
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [13:01](https://vk.com/im?sel=2733257&msgid=82656)
-
-- 
-
-  $this->assertSame(3, $this->getConnection()->getRowCount('guestbook'), "Inserting failed"); }
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [13:10](https://vk.com/im?sel=2733257&msgid=82657)
-
-- 
-
-  проверить фактическое содержимое таблицы
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [13:18](https://vk.com/im?sel=2733257&msgid=82658)
-
-- 
-
-  $queryTable = $this->getConnection()->createQueryTable( 'guestbook', 'SELECT * FROM guestbook' ); $expectedTable = $this->createFlatXmlDataSet("expectedBook.xml") ->getTable("guestbook"); $this->assertTablesEqual($expectedTable, $queryTable); } }
-
-  
-
-  
-
-##### 9 сентября 2019
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [11:18](https://vk.com/im?sel=2733257&msgid=82677)
-
-- 
-
-  ы можете утверждать состояние одновременно нескольких таблиц и
-
-  
-
-  
-
-- 
-
-  ) DataSet из Connection и сравнить её с набором данных
-
-  
-
-  
-
-- 
-
-  Вы можете создать DataSet самостоятельно
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [11:29](https://vk.com/im?sel=2733257&msgid=82680)
-
-- 
-
-  , PHPUnit требует, чтобы все объекты базы данных были доступны при запуске набора.
-
-  
-
-  
-
-[![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
-
-[Павел](https://vk.com/id2733257) [20:11](https://vk.com/im?sel=2733257&msgid=82736)
-
-- 
-
-  Xdebug либо
-
-  
-
-  
 
 [![Павел](https://sun9-11.userapi.com/c857124/v857124641/726bd/NdDYf3YgDRA.jpg?ava=1)](https://vk.com/id2733257)
 

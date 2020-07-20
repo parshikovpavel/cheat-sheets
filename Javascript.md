@@ -277,6 +277,43 @@ for (let i = 0; i < arr.length; i++) {
 }
 ```
 
+#### Аналог `in_array()`
+
+```javascript
+arr.indexOf(searchElement[, fromIndex])
+```
+
+Параметры:
+
+- `searchElement` – искомый элемент
+- `fromIndex` – стартовый индекс
+
+Результат:
+
+- Первый индекс искомого элемента в массиве; `-1` если не найден
+
+```javascript
+var array = [2, 9, 9];
+array.indexOf(2);     // 0
+array.indexOf(7);     // -1
+```
+
+## `document.cookie`
+
+Установить куки:
+
+```javascript
+function mySetCookie(name,value,days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+```
+
 
 
 # Function
@@ -296,6 +333,28 @@ for (let i = 0; i < arr.length; i++) {
     name() {}
 }
 ```
+
+## Arrow function
+
+Общий синтаксис:
+
+```javascript
+(argument1, argument2, ... argumentN) => {
+  // тело функции
+}
+```
+
+Упрощенный синтаксис, его особенности:
+
+- тело функции представлено единственным выражением. 
+- без фигурных скобок, обрамляющих тело функции
+- нет необходимости явного возврата результатов вычисления выражения, так как этот результат будет возвращён автоматически. 
+
+```javascript
+let add = (a, b) => a + b;
+```
+
+Cтрелочные функции не имеют собственного контекста выполнения. На практике это означает, что они наследуют `this` и `arguments` от родительской функции.
 
 # Event
 

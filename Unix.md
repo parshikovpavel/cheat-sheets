@@ -837,6 +837,297 @@ $ wc -c 2.jpg
 
 #### grep
 
+
+
+#### Опции
+
+<u>Выбор типа регулярного выражения:</u>
+
+Программа `grep` понимает три различных типа синтаксисов регулярных выражений: *basic* (BRE), *extended* (ERE) и *perl* (PCRE).
+
+- `-E`, `--extended-regexp` – интерпретировать `pattern` как расширенное регулярное выражение.
+
+  В базовых регулярных выражениях метасимволы `?`, `+`, `{`, `|`, `(`, и `)` теряют свое специальное значение; вместо них необходимо использовать версии с обратным слешем `\?`, `\+`, `\{`, `\|`, `\(`, и `\)`.
+
+grep
+
+[                                                    ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [12:21](https://vk.com/im?sel=2733257&msgid=78236)
+
+ 
+
+grep — утилита командной строки, которая находит на вводе строки, отвечающие заданному регулярному выражению, и выводит их, если вывод не отменён специальным ключом. Название представляет собой акроним английской фразы «search globally for lines matching the regular expression, and print them» — «искать везде строки, соответствующие регулярному выражению, и выводить их».
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [12:27](https://vk.com/im?sel=2733257&msgid=78237)
+
+ 
+
+[https://ru.m.wikipedia.org/wiki/Grep](https://vk.com/away.php?to=https%3A%2F%2Fru.m.wikipedia.org%2Fwiki%2FGrep&cc_key=)
+
+[grep — Википедия](https://vk.com/away.php?to=https%3A%2F%2Fru.m.wikipedia.org%2Fwiki%2FGrep&el=snippet)[ru.m.wikipedia.org](https://vk.com/away.php?to=https%3A%2F%2Fru.m.wikipedia.org%2Fwiki%2FGrep&el=snippet)
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [12:48](https://vk.com/im?sel=2733257&msgid=78238)
+
+ 
+
+$ grep [опции] шаблон [имя файла...]
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [14:57](https://vk.com/im?sel=2733257&msgid=78250)
+
+ 
+
+-c - подсчитать количество вхождений шаблона;
+
+ 
+
+-i - не учитывать регистр
+
+ 
+
+-n - показывать номер строки в файле;
+
+ 
+
+-w - искать шаблон как слово, окружённое пробелами
+
+ 
+
+-An - показать вхождение и n строк до него;-Bn - показать вхождение и n строк после него;-Cn - показать n строк до и после вхождения;
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [15:24](https://vk.com/im?sel=2733257&msgid=78255)
+
+ 
+
+выполнить поиск текста grep в файле /etc/passwd введите следующую команду:
+ 
+ grep User /etc/passwd
+
+ 
+
+мы хотим выбрать все ошибки из лог-файла, но знаем, что в следующей строчке после ошибки может содержаться полезная информация, тогда с помощью grep отобразим несколько строк. Ошибки будем искать в Xorg.log по шаблону "EE":
+ 
+ grep -A4 "EE" /var/log/xorg.0.log
+
+ 
+
+активации этого режима используйте опцию -e.
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [15:41](https://vk.com/im?sel=2733257&msgid=78258)
+
+ 
+
+Для включения рекурсивного поиска в grep есть опция -r.
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [15:46](https://vk.com/im?sel=2733257&msgid=78259)
+
+ 
+
+Следующая команда займётся поиском текста в файлах Linux во всех подкаталогах /etc/apache2 на предмет вхождения строки [mydomain.com](https://vk.com/away.php?to=http%3A%2F%2Fmydomain.com&cc_key=):
+ 
+ grep -r "mydomain.com" /etc/apache2/
+
+[MyDomain | Domain Names, Web Hosting, and..www.mydomain.com](https://vk.com/away.php?to=http%3A%2F%2Fmydomain.com)
+
+ 
+
+grep -w "abc" имя_файла
+
+ 
+
+grep -c 'word' /path/to/file
+
+ 
+
+ь grep выводить только имя файла, в котором было найдено заданное слово с помощью опции -l.
+
+ 
+
+у выделять другим цветом вхождения в выводе:
+ 
+ grep —color root /etc/passwd
+
+ 
+
+after (-A) - после
+ before (-B) - до
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [16:19](https://vk.com/im?sel=2733257&msgid=78265)
+
+ 
+
+g/re/p (global/regular expression/print),
+
+ 
+
+[http://aidalinux.ru/w/Grep](https://vk.com/away.php?to=http%3A%2F%2Faidalinux.ru%2Fw%2FGrep&cc_key=)
+
+[Grep — Ай да Linux Wikiaidalinux.ru](https://vk.com/away.php?to=http%3A%2F%2Faidalinux.ru%2Fw%2FGrep)
+
+ 
+
+Если не указано имени файла, то команда обрабатывает стандартный ввод, например строки, набранные на клавиатуре:
+
+ 
+
+Юниксовидных системах символ новой строки обозначается обратным слэшем с буквой n (\n).
+
+ 
+
+любое количество файлов одновременно
+
+ 
+
+grep '*' 123.txt ast.txt alice.txt
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [16:36](https://vk.com/im?sel=2733257&msgid=78271)
+
+ 
+
+нужно заключать в кавычки (одинарные или двойные):
+
+ 
+
+Опция -c
+
+ 
+
+grep -c root /etc/group 8
+
+ 
+
+Опция -x
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [20:58](https://vk.com/im?sel=2733257&msgid=78316)
+
+ 
+
+отберет только те строки исследуемого файла или файлов, которые полностью совпадают с ОБРАЗЦОМ.
+
+ 
+
+8 июня
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [13:43](https://vk.com/im?sel=2733257&msgid=78359)
+
+ 
+
+Опция -G
+ 
+ --basic-regexp
+ 
+ Рассматривает ОБРАЗЕЦ как базовое регулярное выражение. Эта опция используется по умолчанию.
+ 
+ Опция -E
+ 
+ --extended-regexp
+ 
+ Рассматривает ОБРАЗЕЦ как расширенное регулярное выражение.
+ 
+ Опция -P
+ 
+ --perl-regexp
+ 
+ Рассматривает ОБРАЗЕЦ как регулярное выражение языка Perl.
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [14:34](https://vk.com/im?sel=2733257&msgid=78389)
+
+ 
+
+Команда grep чувствительна к регистру, это означает, что он будет искать только данное слово в файле
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [14:55](https://vk.com/im?sel=2733257&msgid=78390)
+
+ 
+
+[https://andreyex.ru/operacionnaya-sistema-linux/polno..](https://vk.com/away.php?to=https%3A%2F%2Fandreyex.ru%2Foperacionnaya-sistema-linux%2Fpolnoe-rukovodstvo-komanda-grep-v-linux%2F&cc_key=)
+
+[Полное руководство: Команда grep в Linux](https://vk.com/away.php?to=https%3A%2F%2Fandreyex.ru%2Foperacionnaya-sistema-linux%2Fpolnoe-rukovodstvo-komanda-grep-v-linux%2F&el=snippet)[andreyex.ru](https://vk.com/away.php?to=https%3A%2F%2Fandreyex.ru%2Foperacionnaya-sistema-linux%2Fpolnoe-rukovodstvo-komanda-grep-v-linux%2F&el=snippet)
+
+9 июня
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [16:47](https://vk.com/im?sel=2733257&msgid=78400)
+
+ 
+
+du | grep 'mp3' | more
+
+ 
+
+выводит постранично список mp3 файлов найденых в текущей директории
+
+10 июня
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [12:50](https://vk.com/im?sel=2733257&msgid=78408)
+
+ 
+
+удалить все прокомментированные строки? А
+
+ 
+
+\# grep –v “#” /etc/apache2/sites-available/default-ssl
+
+ 
+
+Опция -v указывает grepинвертировать свой вывод, что означает, что вместо печати совпадающих строк grep сделает противоположное и выведутся строки, которые не соответствуют выражению,
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [13:02](https://vk.com/im?sel=2733257&msgid=78411)
+
+ 
+
+Можно grep вызывать подряд
+
+ 
+
+grep –i JayZ | grep –vi “remix”
+
+[     ](https://vk.com/id2733257)
+
+[Павел](https://vk.com/id2733257) [17:07](https://vk.com/im?sel=2733257&msgid=78443)
+
+ 
+
+[https://sonikelf.ru/find-i-grep-v-linux-i-kak-instrum..](https://vk.com/away.php?to=https%3A%2F%2Fsonikelf.ru%2Ffind-i-grep-v-linux-i-kak-instrument-dlya-administrirovaniya%2F&cc_key=)
+
+[find и grep в Linux как инструмент для администрирования](https://vk.com/away.php?to=https%3A%2F%2Fsonikelf.ru%2Ffind-i-grep-v-linux-i-kak-instrument-dlya-administrirovaniya%2F&el=snippet)[sonikelf.ru](https://vk.com/away.php?to=https%3A%2F%2Fsonikelf.ru%2Ffind-i-grep-v-linux-i-kak-instrument-dlya-administrirovaniya%2F&el=snippet)
+
+ 
+
+grep -bn sonikelf file.txtпоказать строку (-n) и столбец (-b), где был найден sonikelf
+
+14 июня
+
 #### zgrep
 
 Поиск строки в архиве `xxx.tar.gz`:

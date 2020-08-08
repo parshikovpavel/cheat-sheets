@@ -185,7 +185,7 @@ Tagger: pparshikov <paw-p@yandex.ru>
   git push origin --tags
   ```
 
-# `checkout`
+# `git checkout`
 
 https://ru.stackoverflow.com/questions/431520/%D0%9A%D0%B0%D0%BA-%D0%B2%D0%B5%D1%80%D0%BD%D1%83%D1%82%D1%8C%D1%81%D1%8F-%D0%BE%D1%82%D0%BA%D0%B0%D1%82%D0%B8%D1%82%D1%8C%D1%81%D1%8F-%D0%BA-%D0%B1%D0%BE%D0%BB%D0%B5%D0%B5-%D1%80%D0%B0%D0%BD%D0%BD%D0%B5%D0%BC%D1%83-%D0%BA%D0%BE%D0%BC%D0%BC%D0%B8%D1%82%D1%83
 
@@ -259,6 +259,104 @@ git checkout -b pparshikov_6374 remotes/origin/pparshikov_6374
  
 
 https://habr.com/ru/post/157175/
+
+# `git cherry-pick`
+
+Перенести *commit* из одной *branch* в другую.
+
+Применить последний *commit* из ветки `<branch>` в текущую ветку:
+
+```bash
+git cherry-pick <branch>
+```
+
+Применить *commit* с указанным `<hash>` в текущий *branch*:
+
+```bash
+git cherry-pick <hash>
+```
+
+Можно аналогично применить несколько *commit*'ов c  `<hash_1>`, `<hash_2>`,...
+
+```bash
+git cherry-pick <hash_1> <hash_2> ...
+```
+
+Применить несколько подряд идущих *commit*'ов от  `<hash_begin>`, `<hash_end>`,...
+
+```bash
+git cherry-pick <hash_begin>..<hash_end>
+```
+
+
+
+# `git log`
+
+История *commit*'ов.
+
+# `git merge` и `git rebase`
+
+`git merge` и `git rebase` предназначены для одной задачи – для интеграции изменений из одной *branch* в другую. Но используют разные алгоритмы.
+
+## `git merge`
+
+Команда принимает содержимое *source branch* и объединяет их с *target branch*. В этом процессе изменяется только *target branch*. Все *commit*'s *source branch*  крепятся в конец *target branch*. История *source branch* остается неизменной.
+
+Будет создан новый «*Merge commit*» в *target branch*, который содержит историю обеих *branch*'es.
+
+Пример: *merge* `master` *branch* в `feature` *branch*.
+
+```bash
+$ git checkout feature
+$ git merge master
+```
+
+![merge](https://parshikovpavel.github.io/img/git/merge.png)
+
+<u>Плюсы</u>:
+
+- простота;
+- сохраняет полную историю и хронологический порядок;
+- поддерживает контекст ветки.
+
+<u>Минусы</u>:
+
+- история коммитов может быть заполнена (загрязнена) множеством коммитов;
+
+Use case:
+
+- `git merge` используется для мержа фич и фиксов в `master` ветку
+
+## `git rebase`
+
+Интегрирует *source branch* в *target branch*. Как собачка на молнии, "сшивает" *commit*'s по дате их создания
+(*source branch* "растворяется" в *target branch*). Сжимает *source branch* в один *patch* (???).
+
+*Rebase* перезаписывает историю, потому что он передает *commit*'s из одной *branch* в другую. В процессе устраняется нежелательная история.
+
+Если вы сделаете *rebase* неправильно, история изменится, а это может привести к серьезным проблемам, поэтому убедитесь в том, что делаете!
+
+Пример: *Rebase* `feature` *branch* в `master` *branch*. Создаются новые *commit*'s для каждого *commit* в `master` *branch*..
+
+```bash
+$ git checkout feature
+$ git rebase master
+```
+
+![merge](https://parshikovpavel.github.io/img/git/rebase.png)
+
+<u>Плюсы</u>:
+
+- Упрощает потенциально сложную историю
+- Исключение многих *merge commit* в перегруженных *branch*.
+
+<u>Минусы</u>:
+
+- Сжатие фич до нескольких коммитов может скрыть контекст.
+
+<u>Use case</u>:
+
+- Для синхронизации с *master branch*, в которую коммитят все разработчики проекта, Это полезно когда кто-то изменил участок кода с которым ты сейчас работаешь в своей *branch*, дабы через неделю ты смог без проблем сделать *merge* с *master branch*. Обычно делается каждое утро перед началом рабочего дня и в конце когда фича готова.
 
 
 

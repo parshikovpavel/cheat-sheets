@@ -5924,7 +5924,7 @@ user_group(user_id, group_id)
   	SELECT group_id
       FROM user_group
       WHERE user_id IN (:user1,:user2)
-      GROUP BY user_id
+      GROUP BY group_id
       HAVING COUNT(*)=2
   )
   ```

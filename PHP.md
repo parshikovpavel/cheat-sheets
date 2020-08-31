@@ -27,7 +27,7 @@ pecl install <extension_name>
 pecl config-get ext_dir
 ```
 
-Какие-то ошибки исправляет:
+Какие-то ошибкwи исправляет:
 
 ```bash
 mkdir -p /tmp/pear/cache

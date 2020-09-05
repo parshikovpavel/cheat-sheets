@@ -8,6 +8,8 @@
 - Стоп – `/usr/local/opt/mysql@5.7/bin/mysql.server stop`
 - Рестарт – `/usr/local/opt/mysql@5.7/bin/mysql.server restart`
 
+В MacOS  `datadir` *by default* – `/usr/local/var/mysql`.
+
 https://habr.com/ru/post/217245/
 
 # Конфигурирование

@@ -399,7 +399,7 @@ MySQL не слишком хорошо масштабируется по вер�
 CREATE TABLE users ( 
 	user_id int unsigned not null, 
 	shard_new int unsigned not null, 
-	shard_archive int unsigned not null, 
+	shard_archive int unsigned not null, =]
 	archive_timestamp timestamp, 
 	PRIMARY KEY (user_id) 
 );

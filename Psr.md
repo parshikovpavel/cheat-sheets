@@ -550,6 +550,14 @@ composer global require squizlabs/php_codesniffer
 
 Проверка выполняется утилитой `vendor/bin/phpcs`.
 
+<u>Запуск из папки `vendor`</u>
+
+```bash
+./vendor/bin/phpcs -h
+```
+
+
+
 <u>Указать проверяемые файлы и папки.</u>
 
 ```bash

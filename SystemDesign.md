@@ -5,8 +5,8 @@
 - Grokking the system design interview (https://www.educative.io/courses/grokking-the-system-design-interview/m2yDVZnQ8lG, есть копия в папке tricks
 - Высоконагруженные приложения. Программирование, масштабирование, поддержка | Клеппман Мартин
 - https://leetcode.com/discuss/general-discussion/125038/system-design-interview-prep
-
 - https://engineering.videoblocks.com/web-architecture-101-a3224e126947
+- https://bege13mot.github.io/grokking/#caching
 
 # Общее
 

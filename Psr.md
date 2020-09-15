@@ -553,7 +553,7 @@ composer global require squizlabs/php_codesniffer
 <u>Запуск из папки `vendor`</u>
 
 ```bash
-./vendor/bin/phpcs -h
+./vendor/bin/phpcs index.php
 ```
 
 
@@ -564,6 +564,24 @@ composer global require squizlabs/php_codesniffer
 phpcs index.php # проверка файла
 phpcs src tests # проверка каталогов
 ```
+
+### Изменение уровней severity (серьезности) 
+
+По умолчанию PHP_CodeSniffer отображает все *error*'s и *warning*'s с уровнем *severity* 5 или выше. 
+
+Можно изменить эти настройки:
+
+- для конкретного запуска проверки, используя опции `--severity`, `--error-severity` и `--warning-severity` 
+
+- для всех запусков (*severity by default*):
+
+  ```bash
+  $ phpcs --config-set severity 1          # severity для errors и warnings
+  $ phpcs --config-set error_severity 1    # severity для errors
+  $ phpcs --config-set warning_severity 8  # severity для warnings
+  ```
+
+  
 
 <u>Указать проверяемый стандарт.</u> 
 

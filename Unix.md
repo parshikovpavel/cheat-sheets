@@ -135,7 +135,7 @@ PATH=$PATH:.
 В файле `~/.bash_profile` необходимо вписать новый *terminal prompt*:
 
 ```bash
-export PS1="$ "
+export PS1="%~$ "
 ```
 
 

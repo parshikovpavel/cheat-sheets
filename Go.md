@@ -1219,9 +1219,159 @@ f(g(p1, p2))
 
 
 
-# Организация кода
+# Go modules
 
-## Legacy GOPATH
+Основные принципы:
+
+- Программы размещаются внутри *package*. 
+
+- *Package* – набор из *source* файлов, размещенных в одном каталоге, которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом файле некоторого *package* видны внутри всех других файлов этого же *package*.
+
+- *Repository*, как правило, содержит только один *module*, расположенный в корне репозитория (но может и несколько *module*'s). 
+
+- *Module* – набор связанных *package*'s, которые *released* (релизятся) вместе. *Module* содержит *package*'s в каталоге, содержащем файл `go.mod`, а также подкаталогах этого каталога, вплоть до следующего подкаталога, содержащего другой файл `go.mod` (если есть).
+
+- *Module path* (путь к модулю) – префикс для *import path* для всех *package*'s внутри *module*, объявляется в файле `go.mod`. 
+
+  ```
+  module example.com/service
+  ```
+
+  *Module path* позволяет указать, где `go` *command* будет искать его его для загрузки. Например, чтобы *module* `golang.org/x/tools` будет извлекаться из *repository* `https://golang.org/x/tools`.
+
+- Даже если *module* изначально не опубликован в *repository* (*github*), желательно его сразу структурировать так, как будто он будет опубликован в *repository* (*github*).
+
+- Путь к каждому модулю не только служит префиксом пути импорта для его пакетов, но также указывает, где `go`команда должна искать его для его загрузки. Например, чтобы загрузить модуль `golang.org/x/tools`, `go`команда обращается к репозиторию, указанному `https://golang.org/x/tools`(подробнее описано [здесь](https://golang.org/cmd/go/#hdr-Relative_import_paths) ).
+
+## Import path
+
+*Import path* (путь импорта) – строка, используемая для импорта *package* (не файла, а *package*). *Import path* = *module path* + подкаталог внутри модуля.
+
+Если в *module* с *module path* `github.com/google/go-cmp` находится *package* в каталоге `cmp/`, то *import path* этого *package* - `github.com/google/go-cmp/cmp`. 
+
+*Package*'s из *standard library* имеют короткие *import path* (нет *module path*), такие как `"fmt"` и `"net/http"`.
+
+Принято, что если код хранится в некотором удаленном *repository*, то необходимо использовать корень этого удаленного *repository* в качестве *base path*. 
+
+## `go mod`
+
+Операции с *module*'s.
+
+```
+go mod <command> [arguments]
+```
+
+Перечень команд:
+
+```
+download    загрузить module's в локальный кеш
+edit        редактировать go.mod из инструментов или скриптов
+graph       напечатать граф требований для module
+init        инициализировать новый module в текущей директории
+tidy        добавить отсутствующие и удалить неиспользуемые module's
+vendor      сделать копию dependency's в vendor
+verify      верифицировать, что dependency's имеют ожидаемый контент (???)
+why         объяснить, почему package's или module's требуется
+```
+
+## `go mod init`
+
+ТУТ!!!!
+
+
+
+## `go get`
+
+# Структура файла с кодом
+
+Общая структура любого файла с кодом:
+
+```go
+SourceFile = 
+		PackageClause ";"     // package ..., определяет package, к которому принадлежит файл
+		{ ImportDecl ";" }    // import ..., определяется package's, которые будут использованы
+		{ TopLevelDecl ";" } . // основное содержимое, определение var, func, constant, type
+```
+
+
+
+
+
+## `package`
+
+Любой фрагмент программного кода должен быть включен в *package* (пакет).
+
+Объявление `package` указывает, к какому *package* принадлежит файл. Все файла с одним и тем же `PackageName` составляют *package*. `PackageName` не содержит `/`, он содержит только последнюю часть *import path*.
+
+Первый оператор в исходном файле Go должен быть:
+
+```go
+package <name>
+package stack
+```
+
+```
+PackageClause  = "package" PackageName .
+PackageName    = identifier .
+```
+
+
+
+Каждая программа должна иметь `main` *package* с функцией `main()` , которая является точкой входа в программу:
+
+```go
+package main
+
+func main() {
+	// ...    
+}
+```
+
+Функция `main()` всегда не имеет аргументов и ничего не возвращает. Когда функция `main.main()` завершается, одновременно с ней
+завершается выполнение программы, и она возвращает операционной системе значение 0.
+
+Также можно использовать функцию `init()`, которая выполняется перед функцией `main()`.
+
+Язык Go оперирует в терминах *package*'s, а не файлов. То есть *package* можно разбить на любое количество файлов, и если все они будут иметь одинаковое объявление `package`, то все они будут являться частями одного и того же *package*, как если бы все их содержимое находилось в единственном файле.
+
+## `import`
+
+`import` позволяет импортировать *package* и использовать *exported identifier*'s из этого *package*.
+
+```
+ImportDecl       = "import" ( ImportSpec | "(" { ImportSpec ";" } ")" ) .
+ImportSpec       = [ "." | PackageName ] ImportPath .
+ImportPath       = string_lit .
+```
+
+`PackageName` в файле может использоваться в *qualified identifier*'s для обращения к *exported identifier*'s из импортированного *package*. Если `PackageName` опущен, то используется `PackageName` из импортированного *package*.
+
+
+
+ТУТ!!!
+
+Импортирование *package*: 
+
+```go
+import (
+    "fmt"
+    "os"
+    "strings"
+    "github.com/user/stringutil"
+)
+```
+
+Здесь указывается *package import path* (не файла, а *package*).
+
+Импортируемые пакеты можно не отделять друг от друга запятыми.
+
+## Использование package
+
+Обращение к `type`, `func`, `var` (переменным) и другим элементам *package* записывается в виде `<package>.<элемент>`, где `<package>` – это последний (или единственный) компонент в имени *package*. Например, обращение к функции `Reverse()` в *package* `github.com/user/stringutil` записывается так `stringutil.Reverse()` 
+
+
+
+# Legacy GOPATH
 
 Код должен быть структурирован определенным образом.
 
@@ -1312,44 +1462,7 @@ src/
   go run github.com/user/hello
   ```
 
-## Go modules
-
-Основные принципы:
-
-- Программы размещаются внутри *package*. 
-
-- *Package* – набор из *source* файлов, размещенных в одном каталоге, которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом файле некоторого *package* видны внутри всех других файлов этого же *package*.
-
-- *Repository*, как правило, содержит только один *module*, расположенный в корне репозитория (но может и несколько *module*'s). 
-
-- *Module* – набор связанных *package*'s, которые *released* (релизятся) вместе. 
-
-- В файле `go.mod` объявляется *module path* (путь к модулю) – префикс для *import path* для всех *package*'s внутри *module*.
-
-  ```
-  module example.com/service
-  ```
-
-  
-
-- *Module* содержит *package*'s в каталоге, содержащем файл `go.mod`, а также подкаталогах этого каталога, вплоть до следующего подкаталога, содержащего другой файл `go.mod` (если есть).
-
-
-
-## Структура файла с кодом
-
-Общая структура любого файла с кодом:
-
-```go
-SourceFile = 
-		PackageClause ";"     // package ..., определяет package, к которому принадлежит файл
-		{ ImportDecl ";" }    // import ..., определяется package's, которые будут использованы
-		{ TopLevelDecl ";" } . // основное содержимое, определение var, func, constant, type
-```
-
-
-
-## Import path
+### Import path
 
 *Import path* (путь импорта) – строка, используемая для импорта *package* (не файла, а *package*). *Import path* соответствует местоположению *package* внутри *workspace* (в папке `src`) или в *remote repository* (удаленном репозитории).
 
@@ -1361,82 +1474,6 @@ SourceFile =
 
 - путь к каталогу с *repository* – `$GOPATH/src/github.com/user`
 - путь к каталогу с `hello` *package* – `$GOPATH/src/github.com/user/hello`.  *Package import path* – `github.com/user/hello`
-
-## `package`
-
-Любой фрагмент программного кода должен быть включен в *package* (пакет).
-
-Объявление `package` указывает, к какому *package* принадлежит файл. Все файла с одним и тем же `PackageName` составляют *package*. `PackageName` не содержит `/`, он содержит только последнюю часть *import path*.
-
-Первый оператор в исходном файле Go должен быть:
-
-```go
-package <name>
-package stack
-```
-
-```
-PackageClause  = "package" PackageName .
-PackageName    = identifier .
-```
-
-
-
-Каждая программа должна иметь `main` *package* с функцией `main()` , которая является точкой входа в программу:
-
-```go
-package main
-
-func main() {
-	// ...    
-}
-```
-
-Функция `main()` всегда не имеет аргументов и ничего не возвращает. Когда функция `main.main()` завершается, одновременно с ней
-завершается выполнение программы, и она возвращает операционной системе значение 0.
-
-Также можно использовать функцию `init()`, которая выполняется перед функцией `main()`.
-
-Язык Go оперирует в терминах *package*'s, а не файлов. То есть *package* можно разбить на любое количество файлов, и если все они будут иметь одинаковое объявление `package`, то все они будут являться частями одного и того же *package*, как если бы все их содержимое находилось в единственном файле.
-
-## `import`
-
-`import` позволяет импортировать *package* и использовать *exported identifier*'s из этого *package*.
-
-```
-ImportDecl       = "import" ( ImportSpec | "(" { ImportSpec ";" } ")" ) .
-ImportSpec       = [ "." | PackageName ] ImportPath .
-ImportPath       = string_lit .
-```
-
-`PackageName` в файле может использоваться в *qualified identifier*'s для обращения к *exported identifier*'s из импортированного *package*. Если `PackageName` опущен, то используется `PackageName` из импортированного *package*.
-
-
-
-ТУТ!!!
-
-Импортирование *package*: 
-
-```go
-import (
-    "fmt"
-    "os"
-    "strings"
-    "github.com/user/stringutil"
-)
-```
-
-Здесь указывается *package import path* (не файла, а *package*).
-
-Импортируемые пакеты можно не отделять друг от друга запятыми.
-
-## Использование package
-
-Обращение к `type`, `func`, `var` (переменным) и другим элементам *package* записывается в виде `<package>.<элемент>`, где `<package>` – это последний (или единственный) компонент в имени *package*. Например, обращение к функции `Reverse()` в *package* `github.com/user/stringutil` записывается так `stringutil.Reverse()` 
-
-
-
-
 
 # Тестирование
 

@@ -7,6 +7,7 @@
 - https://leetcode.com/discuss/general-discussion/125038/system-design-interview-prep
 - https://engineering.videoblocks.com/web-architecture-101-a3224e126947
 - https://bege13mot.github.io/grokking/#caching
+- https://github.com/donnemartin/system-design-primer
 
 # Общее
 

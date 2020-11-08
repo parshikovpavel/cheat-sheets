@@ -1721,3 +1721,14 @@ cat filename.ext | gzip > anotherfile.gz
 gzip -cd filename.ext.gz > anotherfile
 gunzip -c filename.ext.gz > anotherfile
 ```
+
+## `netstat`, `lsof`
+
+Посмотреть на Mac порты, которые находятся в состоянии `listen`:
+
+```bash
+lsof -i -P | grep -i "listen"
+```
+
+
+

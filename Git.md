@@ -8,6 +8,8 @@ https://tproger.ru/translations/beginner-git-cheatsheet/
 
 https://habr.com/ru/post/432420/
 
+https://habr.com/ru/post/106912/
+
 # Клонирование *github repo*
 
 - Создать ключи:

@@ -4897,8 +4897,9 @@ foreach(new myArrayObject([1,2,3]) as $key => $value) {
 
 
 
-
 # zval
+
+http://www.phpinternalsbook.com/
 
 ### Структура `zval`
 

@@ -350,27 +350,31 @@ if ($expr1) {
 
 Особенности:
 
-`·       `case` смещается на один отступ от уровня `switch``
+- `case` смещается на один отступ от уровня `switch`
+- `break` находится на одном уровне с телом блока `case`
 
-·      break находится на одном уровне с телом блока case
+- если в непустом блоке `case` преднамеренно не указан `break`, то необходимо указать комментарий `// no break`:
 
-`·       `если в непустом блоке case преднамеренно не указан break, то необходимо указать комментарий //no break`:```
+```php
+switch ($expr) {
+    case 0:
+        echo 'First case, with a break';
+        break;
+    case 1:
+        echo 'Second case, which falls through';
+    		// no break
+    case 2:
+    case 3:
+    case 4:
+        echo 'Third case, return instead of break';
+        return;
+    default:
+        echo 'Default case';
+        break;
+}
+```
 
-**switch** ($expr) {
-     **case** 0:
-         **echo** **'First case, with a break'**;
-         **break**;
-     **case** 1:
-         **echo** **'Second case, which falls through'**;
-     *// no break*     **case** 2:
-     **case** 3:
-     **case** 4:
-         **echo** **'Third case, return instead of break'**;
-         **return**;
-     **default**:
-         **echo** **'Default case'**;
-         **break**;
- }
+
 
 ### `while`
 
@@ -833,6 +837,14 @@ class MyClass
      @return (int|string)[]
      ```
    
+   * с указанием *key type* и *value type*:
+   
+     ```
+     @return array<int, bool>
+     ```
+     
+     
+     
    * (не PSR, но поддерживается статическими анализаторами) массивы-структуры с фиксированным набором ключей, где каждый ключ имеет значение конкретного типа:
    
      ```
@@ -1225,10 +1237,10 @@ class Foo
 
 ```php
 /**
- * @var $this yii\web\View 
- * @var $searchModel app\models\WordSearch 
+ * @var yii\web\View $this
+ * @var app\models\WordSearch $searchModel
  */
-/* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var yii\data\ActiveDataProvider $dataProvider */
 ```
 
 #### @version

@@ -4149,6 +4149,131 @@ $user = new User;
 
 $user->setName('John')->setSurname('Doe')->setPassword('root');
 
+#### Pattern matching
+
+*Pattern matching* (сопоставление с образцом) – паттерн обработки данных, основанный на выполнение некоторой логики в зависимости от совпадения исследуемого значения с тем или иным образцом (константой, типом данных...).
+
+Как правило, pattern matching реализуется через оператор `if/elseif/else` или `switch/case`. Например, вычисление логического отрицания.
+
+```php
+if ($x === true) {
+  $neg = false;
+}
+else {
+  $neg = true;
+}
+```
+
+```php
+switch ($x) {
+  true: 
+  	$neg = false;
+  break;
+  false: 
+    $neg = true;
+  break;  
+}
+```
+
+Сопоставление типа данных:
+
+```php
+if ($x instanceof 'X') {
+  ...
+}
+else {
+  ...
+}
+```
+
+#### Guard clause
+
+*Guard clause* (охранное, охраняющее выражение) – *boolean expression*, которое должно быть `true`, чтобы выполнение программы продолжалось по ветке, которую охраняет этот *guard*. 
+
+Примеры:
+
+- проверить, что объект `!== null`, чтобы избежать ошибок при обращении к `null` с использованием оператора `->`:
+
+  ```php
+  if ($object !== null) {
+    $object->property = ...;
+  }
+  ```
+
+Часто *guard clause* – это фрагмент кода в начале функции или метода, который делает ранний выход (*early exit*) до выполнения основного кода функции, чтобы избежать объемных блоков `if() {}`:
+
+```php
+function f($object) 
+{
+	if ($object === null) {
+  	return; 
+	}
+}
+```
+
+```php
+function f($username) {
+    if ($username === null) {
+        throw new Exception(...));
+    }
+    ...
+}
+```
+
+
+
+##### Замена вложенных условий на guard clause's
+
+Если есть группа вложенных условных операторов, среди которых сложно выделить нормальный ход выполнения кода.
+
+```php
+public double getPayAmount() {
+  double result;
+  if (isDead){
+    result = deadAmount();
+  }
+  else {
+    if (isSeparated){
+      result = separatedAmount();
+    }
+    else {
+      if (isRetired){
+        result = retiredAmount();
+      }
+      else{
+        result = normalPayAmount();
+      }
+    }
+  }
+  return result;
+}
+```
+
+Можно выделите все проверки в отдельные условия и поместите их перед основным кодом. В итоге получаем «плоский» список условных операторов, идущих один за другим.
+
+```php
+public double getPayAmount() {
+  if (isDead){
+    return deadAmount();
+  }
+  if (isSeparated){
+    return separatedAmount();
+  }
+  if (isRetired){
+    return retiredAmount();
+  }
+  return normalPayAmount();
+}
+```
+
+
+
+![guard-clause](img/guard-clause.png)
+
+
+
+
+
 ## Рефакторинг
 
 Рефакторинг – это процесс улучшения исходного кода без создания новой функциональности. 

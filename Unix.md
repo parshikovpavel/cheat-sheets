@@ -1476,6 +1476,56 @@ nc localhost 80
 
 ## `curl`
 
+`curl` – утилита для отправки HTTP-запросов.
+
+Отправить `GET` запрос:
+
+```bash
+$ curl https://ya.ru
+<!DOCTYPE html><html ....
+```
+
+`-i` – Включить (*include*) в вывод HTTP-header's.
+
+```bash
+$ curl -i https://www.ya.ru
+HTTP/1.1 302 Found
+Cache-Control: no-cache, ...
+```
+
+`-X` – Задает конкретный *request method* (e.g. `POST`, `DELETE`) при взаимодействии с HTTP-сервером. По умолчанию, метод `GET`
+
+```
+$ curl -X <method>
+$ curl -X POST https://ya.ru
+```
+
+`-d` (*data*) – часто используется вместе с `POST`. Отправляет указанные *data* в `POST` *request* в таком виде, как если бы пользователь заполнил HTML-форму и нажал кнопку отправки. Поэтому, по умолчанию данные передаются с заголовком (`"Content-Type": "application/x-www-form-urlencoded"`):
+
+```bash
+$ curl -d <data>
+$ curl -X POST -d '{"answer":42}' https://httpbin.org/post
+{
+ "headers": {
+    "Content-Type": "application/x-www-form-urlencoded", 
+		...
+```
+
+`-H` – *Header*, используемый при *request*. Можно указать любое количество *header*'s. Параметр можно использовать несколько раз для добавления нескольких заголовков.
+
+```bash
+$ curl -H <header>
+$ curl -X POST -d '{"answer":42}' -H "Content-Type: application/json" https://httpbin.org/post
+{
+  "headers": {
+    "Content-Type": "application/json",
+    ...
+```
+
+
+
+
+
 ## `top`
 
 ### `Load average`

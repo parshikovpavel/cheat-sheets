@@ -1200,6 +1200,8 @@ fastcgi_param QUERY_STRING  $query_string;
 
 ##### Кеширование ответов fastcgi в nginx
 
+Хорошая статья https://habr.com/ru/post/428127/
+
 В модуле fastcgi есть группа директив fastcgi_cache_* для кеширования ответов FastCGI-сервера в nginx. При использовании связки nginx+apache+mod_php и директивы proxy_pass, для кеширования нужно использовать группу директив proxy_cache_*.
 
 ###### **fastcgi_cache_path**

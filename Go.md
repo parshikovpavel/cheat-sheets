@@ -37,6 +37,27 @@ godoc -http=:8000
 Программы записываются в виде текста на UTF-8. Все ключевые слова и операторы языка Go записываются символами ASCII, однако идентификаторы в языке Go могут начинаться с любых алфавитных символов *Unicode* и содержать любые алфавитные символы *Unicode* или
 цифры. Поэтому идентификаторы могут определяться на любом языке (в том числе русском).
 
+## Проблемы с загрузкой библиотек
+
+- проект должен быть за пределами `GOPATH` 
+
+  ```bash
+  $ go mod init go.avito.ru/bx/service-user-search-history
+  ```
+
+- команда
+
+  ```bash
+  $ go mod vendor
+  $ avito service run
+  ```
+
+- в GoLand нужно проверить, что в `Settings/Preferences | Go | Go Modules` включена поддержка *Go modules*, и сделать `File -> Invalidate Caches / Restart` 
+
+- почистить кеш go modules:
+
+  - 
+
 ## Создание сценариев на Go
 
 Существует возможность создания сценариев на Go, начинающихся со строки `#!` ([shebang]()). Для этого необходимо использовать инструмент для
@@ -106,96 +127,76 @@ export PATH=$PATH:$GOPATH/bin
 
 
 
-## Сборка программы
-
-При сборке программы можно указать *import path* пакета. В этом случае команду можно выдать из любой *directory*. *Package* будет автоматически найден внутри *workspace*.
-
-```
-$ go install github.com/user/hello
-```
-
-Если текущей является *package path*, то можно запускать без указания *package path*
-
-```
-$ cd $GOPATH/src/github.com/user/hello
-$ go install
-```
-
-
-
-### `go build`
-
-Сборка *package* по его *import path*, вместе с его dependency's, но без процесса *install* (размещения исполняемого файла в `bin`).
-
-```bash
-go build [-o output] [-i] [build flags] [packages]
-```
-
-
-
-Поведение:
-
-- при компиляции `package main` – записывает полученный исполняемый файл в выходной файл с именем первого исходного файла (`go build ed.go rx.go` записывает в файл `ed`) или в файл с именем каталога исхожного кода (`go build unix/sam` пишет в файл `sam`)
-
-- При компиляции нескольких *package*'s или одного не `package main` – компилирует пакеты, но отбрасывает получившийся файл, и может использоваться только для проверки возможности сборки *package*.
-
-Флаги:
-
--  `-o` заставляет `build` писать результирующий исполняемый файл или объект в указанный *output file* или *directory* вместо поведения по умолчанию, описанного ранее. 
-
-### `go install`
-
-*Compile* и *install* программу. При этом программа помещается в каталог:
-
-- по пути `GOBIN` *environment variable*
-- если `GOBIN` не установлена, то по пути `$GOPATH/bin`. Если в `GOPATH` вписано несколько каталогов, то будет найден соответствующий каталог в `GOPATH` и программа будет сохранена в соответствующем каталоге `bin`.
-
-Таким образом, различные скомпилированные программы помещаются в один и тот же каталог. Можно включить путь к этому каталогу в `PATH`:
-
- ```bash
-export PATH=$PATH:$GOPATH/bin
- ```
-
-### `go run`
-
-запуск программы с компиляцией во временную папку
-
-```
-go run <package>
-```
-
-Компилирует и исполняет указанный *main* (?) пакет `<package>`. 
-
-- `package` – может задаваться, как:
-  - список исходных файлов `.go` из одного каталога
-  
-  - *import path*. 
-  
-    Например для каталога `$GOPATH\src\hello` из любого места можно запустить:
-  
-    ```bash
-    go run hello
-    ```
-  
-    
-  
-  - путь в файловой системе
-  
-  - шаблон, соответствующий одному известному пакету (?). Например, `go run .` или `go run my/cmd`.
-
-
-
-## Запуск программы
-
-Запуск программы:
-
-```bash
-./hello
-```
-
 # Типизация
 
 Язык Go использует строгую типизацию. Это не позволяет, например, сложить значения типов `int32` и `int16` без явного их преобразования.
+
+
+
+
+
+
+
+# Lexical elements
+
+## Literal
+
+Literal (литерал) является описанием *constant*'ы (константы). 
+
+
+
+## Rune literal
+
+Rune literal (строковый литерал) – *integer value*, которое задает *Unicode code point*. Записывается в *single quote*'s, например, `'x'`или `'\n'`. 
+
+По умолчанию, *rune literal* приводится к типу `rune` (псевдоним для `int32`).
+
+```go
+tst := 'a'
+fmt.Println(reflect.TypeOf(tst)) // int32
+```
+
+Однако может быть приведено к любому *integer type*, необходимо чтобы значение поместилось в этот integer type:
+
+```go
+var a byte
+
+a = 'w'  // OK
+a = 'ц'  // constant 1094 overflows byte
+```
+
+## String literal
+
+*String literal* является описанием *string constant*'ы. 
+
+# Constant
+
+В Go есть *constant*'ы:
+
+- *boolean*
+- *numeric*, к ним относятся:
+  - *rune*
+  - *integer*
+  - *floating*
+  - *complex*
+- *string*. 
+
+*Constant*'ы создаются во время компиляции, даже если они определены как локальные переменные в функциях. В *constant decalaration* ([1](#constant-declaration)) можно использовать только *constant expression* ([1](#constant-expression)), которое вычисляется компилятором.
+
+*Constant*'e можно явно присвоить тип при объявлении *constant*, объявлении *variable*, как *operand* в *expression* и т.д. Если *constant*'а не может быть представлена с помощью указанного типа, то выбрасывается ошибка.
+
+У *constant*'ы есть тип *by default*, в который *constant*'а неявно преобразуется, когда требуется значение с явно определенным типом, например *short variable declaration*  `i := 0`. 
+
+Типы *constant* *by default*:
+
+- *boolean* – `bool`
+- *rune* – `rune`
+- *integer* – `int`
+- *floating-point* – `float64`
+- *complex* – `complex128`
+- *string* – `string`
+
+
 
 
 
@@ -205,16 +206,44 @@ go run <package>
 
 <pre>
 Block = "{" StatementList "}" .
-StatementList = { Statement ";" } .  
+StatementList = { <a href="#statement">Statement</a> ";" } .  
 </pre>
 
+Выделяют следующие *block*'и:
 
+- явно объявленные *block*'и в коде с помощью `{}`
+- неявно объявленные *block*'и:
+  - *Universe block* – весь код.
+  - *Package block* – код в *package*. 
+  - *File block* – код в *file*.
+  - `if`, `for` и `switch`  *statement*'s – отдельный *block*
+  - *clause* (`case`) внутри `switch` и `select` – отдельный *block*
 
 # Declarations и scope
 
+<pre>
+Declaration   = <a href="#constant-declaration">ConstDecl</a> | <a href="#type-declaration">TypeDecl</a> | <a href="#variable-declaration">VarDecl</a> .
+TopLevelDecl  = Declaration | <a href="#function-declaration">FunctionDecl</a> | <a href="#method-declaration">MethodDecl</a> .  
+</pre>
 
+Один и тот же *identifier* не может быть объявлен одновременно на уровне *file* и *package block*.
 
-## Predeclared identifiers
+*Scope* любого *identifier* определяется [block](#block)'ом, в котором он объявлен:
+
+- *Scope* любой *constant*'ы, *type*, *variable* и *function* (но не *method*), объявленных на *top level* (вне *function*), – *package block*.
+- *Scope* любого [`PackageName`](#import)  из директивы [`import`](#import-declaration) – *file block*.
+- *Scope* любого *method receiver*'а, *function parameter*'а и *result variable* – *function body*.
+
+- *Scope* любой *constant* или *variable* внутри *function* начинается с точки *declaration* и до конца самого вложенного *block*'а ([1](#block))
+- *Scope* любого `type` внутри *function* начинается с точки *declaration* и до конца самого вложенного *block*'а ([1](#block)).
+
+*Identifier*, объявленный внутри *block*'а, может быть переобъявлен в любом внутреннем *block*'е. До тех пора пока внутренний *identifier* находится в *scope*, он перекрывает внешние *identifier*'s.
+
+## Identifier
+
+### Predeclared identifier
+
+*Predeclared identifier* всегда объявлены в [universe block](#block).
 
 ````
 Types:
@@ -229,9 +258,9 @@ Zero value:
 	nil
 ````
 
-### `nil`
+#### `nil`
 
-`nil` – *Predeclared identifiers* (!!!)
+`nil` – *Predeclared identifier* (!!!)
 
 *Identifier* `nil` используется как значение для пустых *pointer*'ов и пустых значений.
 
@@ -239,7 +268,16 @@ Zero value:
 
 `nil` играет почти ту же роль, что и `null` в PHP и Java.
 
+### Exported identifier
 
+Чтобы получить доступ к *identifier* из другого *package*, он должен быть объявлен как *exported*. 
+
+*Identifier* является *exported*, если выполняется два условия:
+
+1. первый символ *identifier*'а – это буква в *Unicode upper case*; И!!!!
+2. *identifier* объявлен в *package block* ([1](#block)) или является *field* ([1](#struct-type)) или *method* ([1](#method-declaration)) (т.е. *field* и *method* могут быть *exported*, и должны в этом случае начинаться с буквы в *Unicode upper case*)
+
+Все остальные *identifier*'s – *non-exported*.
 
 ## *Constant declaration*
 
@@ -251,15 +289,15 @@ ExpressionList = Expression { "," Expression } .
 </pre>
 
 
+[Constant](#constant)
+
+*Array type* ([1](#array-type)) не может использоваться для *constant*, также как и *array* не может быть частью *constant expression*. Поэтому в качестве константных *array* нужно использовать *variable*:
 
 
 
 
 
-
-
-
-## Объявление `type`
+## `type` *declaration*
 
 В Go отсутствуют такие понятия, как классы и наследование (отношение IS-A). В языке Go поддерживается возможность определения пользовательских *type*'s и чрезвычайно простой способ агрегации типов (отношение Has-A).
 
@@ -363,7 +401,31 @@ err := errors.New("Description")
 
 
 
-## Объявление *variable*
+## *Variable declaration*
+
+*Variable declaration* создает одну или более *variable*'s, привязывает к ним *identifier*'s и дает им *type* и *initial value*.
+
+<pre>
+VarDecl     = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
+VarSpec     = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) .  
+</pre>
+
+```go
+var i int
+var U, V, W float64
+var k = 0
+var x, y float32 = -1, -2
+var (
+	i       int
+	u, v, s = 2.0, 3.0, "bar"
+)
+var re, im = complexSqrt(-1)
+var _, found = entries[name]  // map lookup; only interested in "found"
+```
+
+Если `ExpressionList` не указан, *variable* инициализируется *zero value*.
+
+
 
 Виды объявлений:
 
@@ -403,17 +465,15 @@ err := errors.New("Description")
 
 ## *Function declaration*
 
-Смотреть [function type и `Signature`](#function-тип)
+Смотреть [function type и `Signature`](#function-type)
 
 Объявление *function* связывает *function name* с ее *signature* и *body*.
 
-```
-FunctionDecl = "func" FunctionName Signature [ FunctionBody ] .
+<pre>
+FunctionDecl = "func" FunctionName <a href="#function-type">Signature</a> [ FunctionBody ] .
 FunctionName = identifier .
-FunctionBody = Block .
-```
-
-
+FunctionBody = <a href="#block">Block</a> .  
+</pre>
 
 ```go
 func min(x int, y int) int {
@@ -423,6 +483,8 @@ func min(x int, y int) int {
 	return y
 }
 ```
+
+Открывающая фигурная скобка ставится на одной строке с `Signature`.
 
 Существует два способа передачи *parameter*'ов (и *receiver*'а):
 
@@ -446,7 +508,7 @@ item, err := haystack.Pop()
 
 ## Объявление *method*'а
 
-Смотреть [function type и `Signature`](#function-тип).
+Смотреть [function type и `Signature`](#function-type).
 
 *Method* – это *function* с *receiver*'ом (приёмником). Объявление *method*'а связывает *method name* с *signature*, *body* и *base type receiver*'а. 
 
@@ -486,55 +548,6 @@ func (stack Stack) Cap() int {
     return cap(stack)
 }
 ```
-
-
-
-# Literal и constant
-
-## Literal
-
-Literal (литерал) является описанием *constant*'ы (константы). 
-
-
-
-### Rune literal
-
-Rune literal (строковый литерал) – *integer value*, которое задает *Unicode code point*. Записывается в *single quote*'s, например, `'x'`или `'\n'`. 
-
-По умолчанию, *rune literal* приводится к типу `rune` (псевдоним для `int32`).
-
-```go
-tst := 'a'
-fmt.Println(reflect.TypeOf(tst)) // int32
-```
-
-Однако может быть приведено к любому *integer type*, необходимо чтобы значение поместилось в этот integer type:
-
-```go
-var a byte
-
-a = 'w'  // OK
-a = 'ц'  // constant 1094 overflows byte
-```
-
-### String literal
-
-*String literal* является описанием *string constant*'ы. 
-
-## Constant
-
-*Constant*'e можно явно присвоить тип при объявлении *constant*, объявлении *variable*, как *operand* в *expression* и т.д. Если *constant*'а не может быть представлена с помощью указанного типа, то выбрасывается ошибка.
-
-У *constant*'ы есть тип *by default*, в который *constant*'а неявно преобразуется, когда требуется значение с явно определенным типом, например *short variable declaration*  `i := 0`. 
-
-Типы *constant* *by default*:
-
-- *boolean* – `bool`
-- *rune* – `rune`
-- *integer* – `int`
-- *floating-point* – `float64`
-- *complex* – `complex128`
-- *string* – `string`
 
 
 
@@ -767,7 +780,7 @@ a := A{b: 1}
 
 ## Коллекции
 
-### `array`
+### `array` type
 
 `array` – это нумерованная последовательность элементов одного *type*. 
 
@@ -778,6 +791,8 @@ ElementType = Type .
 ```
 
 Длина является частью *type* массива. Поэтому в качества параметра функции может подставляться только массив определенного размера. Поэтому массивы практически никогда не используются напрямую. А используются через `slice`.
+
+Длину массива можно узнать с помощью встроенной функции `len` ([1](#len)). Элементы имеют индексы от `0` до `len(a)-1`.
 
  `array` всегда одномерны, но в одномерный `array` могут быть вложены другие одномерные `array` – получается многомерный `array`.
 
@@ -864,7 +879,7 @@ BaseType    = Type .
 
 ## *Function type*
 
-Смотреть также [объявление function](#объявление-function)
+Смотреть также [объявление function](#function-declaration)
 
 Функции и методы в языке Go определяются с помощью ключевого слова `func`. 
 
@@ -910,18 +925,15 @@ func(a, b int, z float32) (bool) // или можно Type result'а запис�
 func(prefix string, values ...int)
 ```
 
-## `interface`
+## *Interface* *type*
 
 `interface`  – описывает некоторый *method set*.
 
 `interface` является абстрактными типом и не позволяет создавать его экземпляры.
 
-Для того чтобы конкретный `type` удовлетворял *interface*'у, достаточно (!!!) чтобы он имел реализацию *method*'ов, определяемых *interfacе*'ом. Т.е. не требуется формально определять связь между `interface` и конкретным `type`. `type` будет автоматически удовлетворять всем `interface`'s, методы которых он реализует требованиям
-нескольких интерфейсов, реализуя методы всех этих интерфейсов.
+`interface` лежит в основе *duck typing*, поддерживаемой в Go (аналогично реализовано в Python). Для того чтобы конкретный `type` удовлетворял *interface*'у, достаточно (!!!) чтобы он имел реализацию *method*'ов, определяемых *interfacе*'ом. Т.е. не требуется формально определять связь между `interface` и конкретным `type`. `type` будет автоматически удовлетворять всем `interface`'s, методы которых он реализует.
 
 Реализующий `interface` конкретный `type` может подставляться в те места кода, где требуется этот `interface`. 
-
-В определении *interface*'а
 
 ```
 InterfaceType      = "interface" "{" { ( MethodSpec | InterfaceTypeName ) ";" } "}" .
@@ -930,7 +942,7 @@ MethodName         = identifier .
 InterfaceTypeName  = TypeName .
 ```
 
- могут:
+ В определении *interface*'а могут:
 
 - явно указываться спецификации *method*'ов (`MethodSpec`)
 
@@ -951,7 +963,7 @@ InterfaceTypeName  = TypeName .
 
 *Method set interface*'а – это объединение явно указанных *method*'ов и *method*'ов *embedding interface*'s.
 
-### Empty interface
+### Empty interface `interface{}`
 
 Все `type`'s реализуют *empty interface* (пустой интерфейс), т.к. он не требует от `type` реализации ни каких методов:
 
@@ -967,7 +979,86 @@ interface{}
 type Stack []interface{}
 ```
 
+### Internal
 
+Рассмотрим тип:
+
+```go
+type Binary uint64
+
+func (i Binary) String() string {
+    return strconv.Uitob64(i.Get(), 2)
+}
+
+func (i Binary) Get() uint64 {
+    return uint64(i)
+}
+```
+
+в результате присвоения выделяется ячейка памяти:
+
+```go
+B := Binary(200)
+```
+
+![interface1](img/go/interface1.png)
+
+Если объявить интерфейс:
+
+```go
+type Stringer interface {
+    String() string
+}
+```
+
+и привести переменную к типу этого интерфейса:
+
+```go
+s := Stringer(b)
+```
+
+
+
+![interface2](img/go/interface2.png)
+
+
+
+то значение будет представлено в виде пары из двух word:
+
+- *pointer* на информацию о типе, хранящемся в интерфейсе. Указывает на *interface table* или *itable*. *itable* относится к *interface type* (`Stringer`), а не к к *dynamic type* (`Binary`). В начале *Itable* расположена информация о типе (*type(Binary)*), затем – список *pointer*'ов на *method*'s. *itable* для интерфейса `Stringer`, в который вложен тип `Binary`, содержит только *pointer*'ы на *method*'ы, которые определены в интерфейсе `Stringer` (метод `String`). *Pointer*'s на те *method*'s, которые отсутствуют в типе `Stringer` (`Binary.Get()`), отсутствуют в этой itable. 
+- *pointer* на данные. 
+
+
+
+https://research.swtch.com/interfaces
+
+https://jordanorelli.com/post/32665860244/how-to-use-interfaces-in-go
+
+https://stackoverflow.com/questions/23148812/whats-the-meaning-of-interface/23148998#23148998
+
+https://stackoverflow.com/questions/27178635/cast-a-struct-pointer-to-interface-pointer-in-golang
+
+https://stackoverflow.com/questions/27178635/cast-a-struct-pointer-to-interface-pointer-in-golang/27178682
+
+https://stackoverflow.com/questions/51530429/type-inode-is-pointer-to-interface-not-interface
+
+https://stackoverflow.com/questions/62146693/whats-the-difference-between-interface-pointer-and-interface-value-in-golang
+
+https://stackoverflow.com/questions/59630086/is-empty-interface-in-golang-as-function-argument-is-pass-by-value-or-pointer
+
+https://www.airs.com/blog/archives/277
+
+https://jordanorelli.com/post/32665860244/how-to-use-interfaces-in-go
+
+https://stackoverflow.com/questions/20874798/does-assigning-value-to-interface-copy-anything
+
+https://stackoverflow.com/questions/13511203/why-cant-i-assign-a-struct-to-an-interface
+
+https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
+
+https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
+
+ТУТ!!!
 
 
 
@@ -1243,236 +1334,6 @@ func main() {
 
 
 
-# Statement
-
-Statement контролируют исполнение.
-
-<pre>
-Statement =
-	Declaration | LabeledStmt | SimpleStmt |
-	GoStmt | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
-	FallthroughStmt | Block | IfStmt | SwitchStmt | SelectStmt | ForStmt |
-	DeferStmt .
-
-SimpleStmt = EmptyStmt | ExpressionStmt | SendStmt | IncDecStmt | Assignment | ShortVarDecl .  
-</pre>
-
-
-
-
-
-
-
-Блоки программного кода заключаются в фигурные скобки:
-
-- тело функций 
-
-  ```go
-  func main() {
-  	// ...
-  }
-  ```
-
-- тело управляющих конструкций:
-
-  ```go
-  if ... { 
-      //...
-  }
-  ```
-
-Отступы используются исключительно для удобства человека.
-
-При разделении операторов:
-
-- можно использовать точку с запятой `;`. Обязательно, если в одной строке располагается несколько инструкций
-
-  ```go
-  a := 1;
-  ```
-
-- можно не использовать точку с запятой `;`. Тогда они автоматически будут добавлена компилятором.
-
-  ```go
-  a := 1
-  ```
-
-## `if`
-
-<pre>
-IfStmt = "if" [ <a href="#statement">SimpleStmt</a> ";" ] <a href="#operator">Expression</a> <a href="#block">Block</a> [ "else" ( IfStmt | <a href="#block">Block</a> ) ] .  
-</pre>
-
-Условное выражение в инструкции `if` не заключается в круглые скобки.
-
-- Пример 1:
-
-  ```
-  "if" Expression Block
-  ```
-
-  ```go
-  if a > 1 { 
-  	// ...    
-  }
-  ```
-
-- Пример 2:
-
-  ```
-  IfStmt = "if" Expression Block "else" IfStmt.
-  ```
-
-  ```go
-  if x < y {
-  	return x
-  } else if x > z {
-  	return z
-  }
-  ```
-
-*Expression*'у может предшествовать *simple statement* (`SimpleStmt`), который выполняется до вычисления *expression*'а.
-
-- Пример:
-
-  ```
-  IfStmt = "if" SimpleStmt ";" Expression Block .
-  ```
-
-  ```go
-  if x := f(); x < y {
-  	return x
-  }
-  ```
-
-  
-
-
-
-## `for`
-
-Существует три формы цикла `for`:
-
-- с одним условием (в других языках используется `while`). Цикл выполняется до тех пор, пока условие – `true`. 
-
-  ```go
-  for a < b {
-  	// ...
-  }
-  ```
-
-  Условие может быть вообще не указано, тогда считается что оно всегда `true` (аналог `while(1)`, бесконечный цикл):
-
-  ```go
-  for {
-  		// ...
-  }
-  ```
-
-  
-
-- c `range` *clause*. Итерирует все элементы *array*, *slice*, *string* или *map* или значений, полученных по *channel*. Для каждого элемента присваивает переменным (может быть несколько переменных в `IdentifierList`) некоторые значения, зависящие от типа `Expression` (см. таблицу ниже), а затем выполняет блок.
-
-  ```go
-  RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
-  for a := range slice {
-      // ...
-  }
-  ```
-
-  Значения *value*'s зависящие от типа `Expression` следующим образом:
-
-  ```
-  Range expression                          1st value          2nd value
-  
-  array or slice  a  [n]E, *[n]E, or []E    index    i  int    a[i]       E
-  string          s  string type            index    i  int    see below  rune
-  map             m  map[K]V                key      k  K      m[k]       V
-  channel         c  chan E, <-chan E       element  e  E
-  ```
-
-  
-
-- с *for clause*. Стандартная форма для C++ и PHP:
-
-  ```go
-  ForClause = [ InitStmt ] ";" [ Условие ] ";" [ PostStmt ].
-  for i := 0; i < 10; i++ {
-  	// ...
-  }
-  ```
-
-## `return`
-
-<pre>
-ReturnStmt = "return" [ <a href="#constant-declaration">ExpressionList</a> ] .  
-</pre>
-
-В функции без [*result parameters*](#result-parameters) используется пустой `return`:
-
-```go
-func noResult() {
-	return
-}
-```
-
-Если у функции есть [*result parameters*](#result-parameters):
-
-1. явно указать *value* в `return`:
-
-   ```go
-   func simpleF() int {
-   	return 2
-   }
-   ```
-
-2. указать вызов функции в `return`. Работает, как будто каждое значение, возвращаемое функцией, было присвоено временной переменной, за которыми следует `return`, перечисляющий эти переменные (как в 1 случае):
-
-   ```go
-   func complexF2() (re float64, im float64) {
-   	return complexF1()
-   }
-   ```
-
-3. Если для [*result parameters*](#result-parameters) указаны имена, то можно использовать пустой `return`. `return` просто возвращает значения этих переменных.
-
-   ```go
-   func complexF3() (re float64, im float64) {
-   	re = 7.0
-   	im = 4.0
-   	return
-   }
-   ```
-
-   
-
-
-
-
-
-
-
-## `break`
-
-Завершает выполнение самого внутреннего оператора `for`, `switch` или `select`
-
-```
-BreakStmt = "break" [ Label ]
-```
-
-Можно поставить `label` перед внешним `for`, `switch` или `select` и указать этот `label` в операторе `break`. Тогда будет завершено выполнение внешнего *statement*. 
-
-```
-OuterLoop:
-	for i = 0; i < n; i++ {
-		for j = 0; j < m; j++ {
-			break OuterLoop
-		}
-	}
-```
-
-
-
 
 
 # Область видимости
@@ -1515,16 +1376,27 @@ if <condition> {
 
 *Expression* (выражение) позволяет вычислить значение путем применения *operator*'s и *function*'s к *operand*'s.
 
+## *Qualified identifier*
+
+Обращение к `type`, `func`, `var` (переменным) и другим элементам *package* записывается в виде `<package>.<элемент>`, где `<package>` – это последний (или единственный) компонент в имени *package*. Например, обращение к функции `Reverse()` в *package* `stringutil` записывается так `stringutil.Reverse()` 
+
 ## *Composite literal*
 
-*Composite literal* (составной литерал) конструирует значение следующих типов: `struct`, `array`,  `slice` и `map`. При этом новое значение конструируется при каждом очередном вычислении.
+*Composite literal* (составной литерал) конструирует значение следующих типов:
+
+- `struct`
+- `array`
+-  `slice`
+- `map`. 
+
+Новое значение конструируется при каждом очередном вычислении.
 
 ------
 
 <pre>
 CompositeLit  = LiteralType LiteralValue .
-LiteralType   = StructType | ArrayType | "[" "..." "]" ElementType |
-                SliceType | MapType | TypeName .
+LiteralType   = StructType | ArrayType | "[" "..." "]" <a href="#array-type">ElementType</a> |
+                SliceType | MapType | <a href="#type">TypeName</a> .
 LiteralValue  = "{" [ ElementList [ "," ] ] "}" .
 ElementList   = KeyedElement { "," KeyedElement } .
 KeyedElement  = [ Key ":" ] Element .
@@ -1533,7 +1405,31 @@ FieldName     = identifier .
 Element       = Expression | LiteralValue .  
 </pre>
 
+
+
 ------
+
+Для *composite literal* – *underlying type* должен быть: 
+
+- *struct type*
+- *array type*
+- *slice type*
+- *map type*
+
+
+
+The LiteralType's underlying type must be a struct, array, slice, or map type (the grammar enforces this constraint except when the type is given as a TypeName). The types of the elements and keys must be [assignable](https://golang.org/ref/spec#Assignability) to the respective field, element, and key types of the literal type; there is no additional conversion. The key is interpreted as a field name for struct literals, an index for array and slice literals, and a key for map literals. For map literals, all elements must have a key. It is an error to specify multiple elements with the same field name or constant key value. For non-constant map keys, see the section on [evaluation order](https://golang.org/ref/spec#Order_of_evaluation).
+
+For struct literals the following rules apply:
+
+- A key must be a field name declared in the struct type.
+- An element list that does not contain any keys must list an element for each struct field in the order in which the fields are declared.
+- If any element has a key, every element must have a key.
+- An element list that contains keys does not need to have an element for each struct field. Omitted fields get the zero value for that field.
+- A literal may omit the element list; such a literal evaluates to the zero value for its type.
+- It is an error to specify an element for a non-exported field of a struct belonging to a different package.
+
+
 
 TODO!!! Zero value
 
@@ -1550,6 +1446,50 @@ type Line struct { p, q Point3D }
 origin := Point3D{}                            // zero value for Point3D
 line := Line{origin, Point3D{y: -4, z: 12.3}}  // zero value for line.q.x
 ```
+
+Можно использовать *address operator* ([1](#address-operator)) для *composite literal*, чтобы получить pointer на новое значение:
+
+```go
+var pointer *Point3D = &Point3D{y: 1000}
+```
+
+
+
+
+
+Способы указания длины для *array literal*:
+
+- явно указать длину в `ArrayType`. Варианты:
+
+  - если в *array literal* записано меньше элементов, чем длина в `ArrayType`, для отсутствующих элементов устанавливается *zero value* в соответствии с *element type*:
+
+    ```go
+    buffer := [10]string{}             // len(buffer) == 10
+    intSet := [6]int{1, 2, 3, 5}       // len(intSet) == 6
+    ```
+
+  - если в *array literal* записано больше элементов, чем длина в `ArrayType`, это приводит к ошибке.
+
+-  Конструкция `[...]ElementType` позволяет указать длину массива, равную максимальному индексу элемента +1:
+
+  ```go
+  days := [...]string{"Sat", "Sun"}  // len(days) == 2
+  ```
+
+  
+
+Каждая строка *composite literal* должна заканчиваться запятой `,`, даже если это последняя или единственная строка в expression. Это результат  автоматической простановки точек с запятой ([1](#точка-с-запятой)).
+
+```go
+mapa := map[string]string{
+    "jedan": "one",
+    "dva":   "two"  // ошибка, здесь будет поставлена ;
+}
+```
+
+
+
+## *Function literal*
 
 
 
@@ -1634,6 +1574,53 @@ a[<low> : <high> : <max>]
 
 При этом будет создан *slice* как и для простого *slice expression* `a[<low> : <high>]`. Но для него устанавливается `capacity = <max> - <low>`.
 
+## Type assertions
+
+Позволяет проверить, что `x != nil` и что значение в `x`  имеет тип `T`.
+
+```go
+x.(T)
+```
+
+где:
+
+- `x` – *expression of interface type*
+- `T` – *type*
+
+Если *type assertions* выполняется, возвращает значение, хранящееся в `x` и его тип - `T`. 
+
+Возможны такие формы *type assertions*:
+
+- 1 форма:
+
+  Если *type assertions* не выполняется, происходить *run-time panic*:
+
+  ```go
+  v = x.(T)
+  ```
+
+- 2 форма:
+
+  ```go
+  v, ok = x.(T)
+  ```
+
+  Если *type assertions* выполняется – `ok == true`, иначе – `ok == false` и значение `v` – *zero value* для типа `T`. *Run-time panic* не происходит.
+
+  Аналог *type switch*:
+
+  ```go
+  if v, ok := any.(Stringer); ok {
+    return v.String()
+  }
+  ```
+
+  
+
+
+
+
+
 ## Вызов *function* и *method*
 
 Вызов *function*:
@@ -1670,7 +1657,436 @@ func f(s, t string) string {
 f(g(p1, p2))
 ```
 
+Каждая строка списка параметров должна заканчиваться запятой `,`, даже если это последняя или единственная строка. Это результат  автоматической простановки точек с запятой ([1](#точка-с-запятой)).
 
+```go
+response.BadRequest(
+			web1brokerautodictionariesget.BadRequestRespData{
+				...
+			}  // ошибка, здесь будет поставлена ;
+)
+```
+
+
+
+
+
+## Operator
+
+*Operator* соединяет *operand*'ы в *expression*:
+
+<pre>
+Expression = UnaryExpr | Expression binary_op Expression .
+UnaryExpr  = PrimaryExpr | unary_op UnaryExpr .
+binary_op  = "||" | "&&" | rel_op | add_op | mul_op .
+rel_op     = "==" | "!=" | "<" | "<=" | ">" | ">=" .
+add_op     = "+" | "-" | "|" | "^" .
+mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
+unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .  
+</pre>
+
+
+
+# Statement
+
+Statement контролируют исполнение.
+
+<pre>
+Statement =
+	Declaration | LabeledStmt | SimpleStmt |
+	GoStmt | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
+	FallthroughStmt | Block | IfStmt | SwitchStmt | SelectStmt | ForStmt |
+	DeferStmt .
+SimpleStmt = EmptyStmt | ExpressionStmt | SendStmt | IncDecStmt | Assignment | ShortVarDecl .  
+</pre>
+
+
+
+
+
+
+
+Блоки программного кода заключаются в фигурные скобки:
+
+- тело функций 
+
+  ```go
+  func main() {
+  	// ...
+  }
+  ```
+
+- тело управляющих конструкций:
+
+  ```go
+  if ... { 
+      //...
+  }
+  ```
+
+Отступы используются исключительно для удобства человека.
+
+## Точка с запятой `;`
+
+При разделении операторов:
+
+- можно использовать точку с запятой `;`. Обязательно, если в одной строке располагается несколько инструкций
+
+  ```go
+  a := 1;
+  ```
+
+- можно не использовать точку с запятой `;`. Тогда они автоматически будут добавлена лексическим анализатором.
+
+  ```go
+  a := 1
+  ```
+
+Лексический анализатор использует следующее правило для автоматической вставки точек с запятой `;`  перед *newline*:  если *newline* стоит после токена, который может завершить *statement*, лексический анализатор вставляет точку с запятой `;`.
+
+<u>Последствия из правила:</u>
+
+Нельзя поставить открывающую фигурную скобку `{` структуры управления ( `if`, `for`, `switch`, или `select`) на следующей строке. Иначе перед скобкой будет вставлена точка с запятой:
+
+```
+if i <f () // ошибка, здесь будет вставлена ;
+{ 
+    г()
+}
+```
+
+## `if`
+
+<pre>
+IfStmt = "if" [ <a href="#statement">SimpleStmt</a> ";" ] <a href="#operator">Expression</a> <a href="#block">Block</a> [ "else" ( IfStmt | <a href="#block">Block</a> ) ] .  
+</pre>
+
+
+Условное выражение в инструкции `if` не заключается в круглые скобки.
+
+- Пример 1:
+
+  ```
+  "if" Expression Block
+  ```
+
+  ```go
+  if a > 1 { 
+  	// ...    
+  }
+  ```
+
+- Пример 2:
+
+  ```
+  IfStmt = "if" Expression Block "else" IfStmt.
+  ```
+
+  ```go
+  if x < y {
+  	return x
+  } else if x > z {
+  	return z
+  }
+  ```
+
+*Expression*'у может предшествовать *simple statement* (`SimpleStmt`), который выполняется до вычисления *expression*'а.
+
+- Пример:
+
+  ```
+  IfStmt = "if" SimpleStmt ";" Expression Block .
+  ```
+
+  ```go
+  if x := f(); x < y {
+  	return x
+  }
+  ```
+
+  
+
+## `switch` *statement*
+
+У `switch` *statement* есть две формы: 
+
+- *expression switch*
+- *type switch*
+
+<pre>
+SwitchStmt = <a href="#expression-switch">ExprSwitchStmt</a> | <a href="#type-switch">TypeSwitchStmt</a> .  
+</pre>
+*Expresson* внутри `switch` вычисляется только один раз
+
+### *Expression switch*
+
+
+
+### *Type switch*
+
+Специальная форма `switch`, в которой сравниваются не *value*, а *type*. 
+
+*Expression* внутри `switch` имеет специальную форму, похожую на [type assertion](#type-assertion), но используется специальное зарезервированное слово `type`.
+
+```go
+TypeSwitchStmt  = "switch" [ SimpleStmt ";" ] TypeSwitchGuard "{" { TypeCaseClause } "}" .
+TypeSwitchGuard = [ identifier ":=" ] PrimaryExpr "." "(" "type" ")" .
+TypeCaseClause  = TypeSwitchCase ":" StatementList .
+TypeSwitchCase  = "case" TypeList | "default" .
+TypeList        = Type { "," Type } .
+```
+
+```go
+switch x.(type) {
+case <type1>:
+  ...
+case <type2>:
+  ...
+default:
+  ...
+}
+```
+
+Как и в *type assertion* ([1](#type-assertion)), `x` должен быть *interface type*, `Type` внутри `case` должен быть *non-interface type*. 
+
+`TypeSwitchGuard` может включать *short variable declaration*. *Scope* такой *variable* – неявно объявленный *block* ([1](#block)) для `swith` *statement*.
+
+
+
+```go
+switch i := x.(type) {
+case nil:
+	printString("x is nil")                // type of i is type of x (interface{})
+case int:
+	printInt(i)                            // type of i is int
+case float64:
+	printFloat64(i)                        // type of i is float64
+case func(int) float64:
+	printFunction(i)                       // type of i is func(int) float64
+case bool, string:
+	printString("type is bool or string")  // type of i is type of x (interface{})
+default:
+	printString("don't know the type")     // type of i is type of x (interface{})
+
+```
+
+
+
+
+
+
+
+
+
+
+
+ТУТ!!!
+
+
+
+## `for`
+
+Существует три формы цикла `for`:
+
+- с *single* `Condition` ([1](#с-одиночным-condition))
+- с `ForClause`
+- с `RangeClause`
+
+<pre>
+ForStmt = "for" [ <a href="#с-single-condition">Condition</a> | ForClause | RangeClause ] Block . 
+</pre>
+
+### С *single* `Condition`
+
+<pre>
+Condition = Expression .  
+</pre>
+
+
+
+В других языках используется `while`. Цикл выполняется до тех пор, пока `Condition` – `true`. 
+
+```go
+for a < b {
+	// ...
+}
+```
+
+Условие может быть вообще не указано, тогда считается что оно всегда `true` (аналог `while(1)`, бесконечный цикл):
+
+```go
+for {
+		// ...
+}
+```
+
+
+
+### c `range` *clause*
+
+<pre>
+RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .  
+</pre>
+
+
+
+(??? Не разобрался почему слева `ExpressionList`)
+
+Итерирует все элементы *array*, *slice*, *string* или *map* или значений, полученных по *channel*. Для каждого элемента присваивает переменным (может быть несколько переменных в `IdentifierList`) некоторые значения, зависящие от типа `Expression` (см. таблицу ниже), а затем выполняет блок.
+
+
+```go
+for index, value := range <slice> {
+  // ...
+}
+
+for key, val = range <map> {
+	h(key, val)
+}
+```
+
+
+
+*Value*'s зависят от типа `Expression` следующим образом:
+
+```
+Range expression                          1st value          2nd value
+
+array or slice  a  [n]E, *[n]E, or []E    index    i  int    a[i]       E
+string          s  string type            index    i  int    see below  rune
+map             m  map[K]V                key      k  K      m[k]       V
+channel         c  chan E, <-chan E       element  e  E
+```
+
+### С *for clause*
+
+<pre>
+ForClause = [ InitStmt ] ";" [ Condition ] ";" [ PostStmt ] .
+InitStmt = SimpleStmt .
+PostStmt = SimpleStmt .  
+</pre>
+
+
+
+
+
+Стандартная форма для C++ и PHP:
+
+```go
+for i := 0; i < 10; i++ {
+	// ...
+}
+```
+
+## `return`
+
+<pre>
+ReturnStmt = "return" [ <a href="#constant-declaration">ExpressionList</a> ] .  
+</pre>
+
+
+В функции без [*result parameters*](#result-parameters) используется пустой `return`:
+
+```go
+func noResult() {
+	return
+}
+```
+
+Если у функции есть [*result parameters*](#result-parameters):
+
+1. явно указать *value* в `return`:
+
+   ```go
+   func simpleF() int {
+   	return 2
+   }
+   ```
+
+2. указать вызов функции в `return`. Работает, как будто каждое значение, возвращаемое функцией, было присвоено временной переменной, за которыми следует `return`, перечисляющий эти переменные (как в 1 случае):
+
+   ```go
+   func complexF2() (re float64, im float64) {
+   	return complexF1()
+   }
+   ```
+
+3. Если для [*result parameters*](#result-parameters) указаны имена, то можно использовать пустой `return`. `return` просто возвращает значения этих переменных.
+
+   ```go
+   func complexF3() (re float64, im float64) {
+   	re = 7.0
+   	im = 4.0
+   	return
+   }
+   ```
+
+   
+
+
+
+
+
+
+
+## `break`
+
+Завершает выполнение самого внутреннего оператора `for`, `switch` или `select`
+
+```
+BreakStmt = "break" [ Label ]
+```
+
+Можно поставить `label` перед внешним `for`, `switch` или `select` и указать этот `label` в операторе `break`. Тогда будет завершено выполнение внешнего *statement*. 
+
+```
+OuterLoop:
+	for i = 0; i < n; i++ {
+		for j = 0; j < m; j++ {
+			break OuterLoop
+		}
+	}
+```
+
+
+
+## *Concurrency*
+
+### *Channel*
+
+Одна из основных проблем *concurrent programming* – корректный доступ к *shared variable*. При разработке на Go рекомендуется передавать *shared variable* по *channel*. В итоге, доступ к конкретной ячейке памяти имеет только одна *goroutine*. *Race condition* не может произойти *by design*.
+
+### *Goroutine*
+
+В Go было выбрано название *goroutine*, т.к. существующие термины (*thread*, *coroutine*, *process* и др.) – наполнены неточным смыслом. 
+
+*Goroutine* – это *function*, которая выполняется в независимом *concurent thread of control*, в том же самом *address space* (вместе с другими *goroutine*'s). 
+
+*Goroutine* –  *lightweight* (легковесная), и стоит немного больше, чем *allocation* в *stack space* (??? почему *stack*). *Stack* изначально маленький по размеру, поэтому он дешевый, и растет путем *allocating* (и *freeing*) в *heap storage* (почему *heap*???) по мере необходимости.
+
+*Goroutine*'s мультиплексируются (что это значит???) в множество *OS thread*'s, поэтому если одна из них блокируется (например, по I/O), другие продолжают выполняться. *Goroutine design* скрывает многие сложности создание и управления *thread*'ами.
+
+Выполнение программы не дожидается завершения вызванной *function* (*goroutine*). Вызванная *function* начинает выполняться независимо в новой горутине. Когда функция завершается, ее горутина также тихо (???) завершается. Если функция имеет какие-либо возвращаемые значения, они отбрасываются по завершении функции.
+
+### `go` *statement*
+
+`go` *statement* начинает выполнение *goroutine* (1) в в том же самом *address space*. 
+
+<pre>
+GoStmt = "go" <a href="#operator">Expression</a> .   
+</pre>
+
+*Expression* должнл быть *function call* или *method call*, оно не может быть заключено в круглые скобки `(...)`. Использовать *built-in function* нельзя. 
+
+```go
+go foo()                    // использование function declaration
+go func() {                 // использование function literal
+        time.Sleep(delay)
+        fmt.Println(message)
+}()                         // Важно, что ставяться скобки () - необходимо вызвать function
+```
+
+*Function literal* – *closure*, поэтому *variable*'s, которые используются внутри *function*, не будут удалены в вызывающей *goroutine* и будут существовать до завершения выполнения *function*.
 
 # Автоматическое приведение *pointer→value* и *value→pointer*
 
@@ -1707,7 +2123,7 @@ f(g(p1, p2))
   }
   ```
 
-- так и после ее использования:
+- так и после ее использования (в соответствии с [declaration и scope](#declaration-и-scope)):
 
   ```go
   func main() {
@@ -1729,27 +2145,39 @@ f(g(p1, p2))
 
 # Go modules
 
-https://golang.org/cmd/go/#hdr-GOPATH_and_Modules
+*Go modules* полностью заменяют старый подход с управлением зависимостями через `GOPATH`. 
 
-## Package
+Выделяют два режима работы:
 
-Программы размещаются внутри *package*. 
+- *module-aware mode* – режим с поддержкой *Go Modules*
+- *GOPATH mode* – *legacy* режим с разрешением зависимостей через `GOPATH`
 
-*Package* – набор из *source* файлов, размещенных в одном каталоге, которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом файле некоторого *package* видны внутри всех других файлов этого же *package*.
+## Поддержка Go modules
 
-### Import path
+Поддержка *module*'s включена прямо в `go` *command*'у. 
 
-*Import path* (путь импорта) – строка, используемая для импорта *package* (не файла, а *package*). *Import path* = *module path* + подкаталог внутри модуля.
+*Module-aware mode* включен автоматически, если:
 
-Если в *module* с *module path* `github.com/google/go-cmp` находится *package* в каталоге `cmp/`, то *import path* этого *package* - `github.com/google/go-cmp/cmp`. 
+- `go.mod` есть в текущем каталоге
+- `go.mod` есть в любом родительском каталоге.
 
-*Package*'s из *standard library* имеют короткие *import path* (нет *module path*), такие как `"fmt"` и `"net/http"`.
+Также управлять *mode* можно с помощью `GO111MODULE` *environment variable*. Возможные значения:
 
-Принято, что если код хранится в некотором удаленном *repository*, то необходимо использовать корень этого удаленного *repository* в качестве *base path*.  
+- не задан или `GO111MODULE = auto` – включен или нет *module-aware mode* зависит от наличия файла `go.mod`  в текущем каталоге и родительских каталогах, как описано выше. 
+- `GO111MODULE=on` – включен *module-aware mode*, `GOPATH` игнорируется
+- `GO111MODULE=off` – включен *GOPATH mode*, возможности *Go modules* не используются. Зависимости ищет в каталоге `vendor` и `GOPATH`.
+
+При *module-aware mode*:
+
+- значение `GOPATH` *environment variable* не используется при поиске *dependency*'s
+- загруженные *dependency*'s продолжают сохраняться в `GOPATH/pkg/mod`
+- *command*'ы (*executable*???) устанавливаются в `GOPATH/bin` (если `GOBIN` не установлена).
 
 ## Module
 
-*Module* – набор связанных *package*'s, которые *released* (релизятся) вместе. *Module* содержит *package*'s в каталоге, содержащем файл `go.mod`, а также подкаталогах этого каталога, вплоть до следующего подкаталога, содержащего другой файл `go.mod` (если есть).
+*Module* – набор связанных *package*'s, которые *released* (релизятся) вместе. *Module* – это единица обмена исходным кодом и единица версионирования. 
+
+*Module* содержит *package*'s в каталоге, содержащем файл `go.mod`, а также подкаталогах этого каталога, вплоть до следующего подкаталога, содержащего другой файл `go.mod` (если есть).
 
 *Module* бывают:
 
@@ -1762,17 +2190,173 @@ https://golang.org/cmd/go/#hdr-GOPATH_and_Modules
 
 ### Module path
 
-*Module path* (путь к модулю) – префикс для *import path* для всех *package*'s внутри *module*, объявляется в файле `go.mod`. 
+*Module path* (путь к модулю) – префикс для *import path* для всех *package*'s внутри *module*. Объявляется в файле `go.mod`. 
 
 ```
-module example.com/service
+module github.com/parshikovpavel/hello
 ```
 
-*Module path* позволяет указать, где `go` *command* будет искать его его для загрузки. Например, *module* `golang.org/x/tools` будет извлекаться из *repository* `https://golang.org/x/tools`.
+*Module path* позволяет указать, где `go` *command* будет искать его его для загрузки. Т.е. `go` *command* при поиске некоторого *module* по его *module path* (например, `github.com/parshikovpavel/hello`) сделает запрос по соответствующему HTTPS URL-адресу (например, `https://github.com/parshikovpavel/hello`). Также по этому адресу будут считаны некоторые дополнительные метаданные из ответа HTML (популярные VCS хостинги автоматически присылают эти данные). 
+
+Поэтому самый простой способ использовать и делиться *module* – указать *repository URL* в качестве *module path*. Поэтому принято, что если код хранится в некотором удаленном *repository*, то корень этого удаленного *repository* используется в качестве *module path*.  
+
+## Package
+
+Программы размещаются внутри *package*. 
+
+*Package* – набор из *file*'s, размещенных в одном каталоге (и его подкаталогах?), которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом *file* некоторого *package* видны внутри всех других *file*'s этого же *package* (т.е. может быть несколько *file*'s в одном *package* !!!!).
+
+Подробно про `package` *clause* и `PackageName` ([1](#package-clause)).
+
+### File
+
+Язык Go оперирует в терминах *package*'s, а не файлов. То есть *package* можно разбить на любое количество файлов, и поместить в один каталог. Им всем необходимо задать одинаковое объявление `package`, и все они будут являться частями одного и же *package*, как если бы все их содержимое находилось в единственном файле.
+
+Особенности:
+
+- Несколько *file*'s могут принадлежать одному и тому же *package* (!!!! отличие от PHP). 
+- Несколько file's могут содержать `package` *clause* с одним и тем же `PackageName`.
+- *File name* никак не связано с `PackageName` (вообще никак, `PackageName` – *by conventional* последняя часть *import path* ([1](#выбор-packagename)), а file name не имеет вообще никакого отношения к *import path* и `PackageName`) (!!!!).
+
+### Import path
+
+*Import path* (путь импорта) – строка, используемая для импорта *package* (не *file*, а *package*). *Import path* = *module path* + подкаталог внутри модуля.
+
+Если в *module* с *module path* `github.com/google/go-cmp` находится *package* в каталоге `cmp/`, то *import path* этого *package* - `github.com/google/go-cmp/cmp`. 
+
+*Package*'s из *standard library* имеют короткие *import path* (нет *module path*), такие как `"fmt"` и `"net/http"`.
 
 
 
-## Порядок создания *module*
+
+
+
+
+### `package` *clause*
+
+Любой фрагмент программного кода должен быть включен в *package* (пакет).
+
+Объявление `package` указывает, к какому *package* принадлежит файл. Все *file*'s с одним и тем же `PackageName` составляют *package* (т.е. несколько *file*'s могут входить в один *package* !!!!). 
+
+`PackageName` – состоит из одной части, он содержит только последнюю часть *import path*, он не содержит `/` (!!!!).
+
+Первый оператор в исходном файле Go должен быть:
+
+```
+PackageClause  = "package" PackageName .
+PackageName    = identifier .
+```
+
+```go
+package stack
+```
+
+
+
+### Выбор `PackageName`
+
+*By convention*, последняя часть *import path* указывается в качестве `PackageName` (*"Last Segment" Convention*).
+
+Например, для файла `github.com/parshikovpavel/hello/xxx/yyy.go` (у которого *import path* `github.com/parshikovpavel/hello/xxx`) указываем:
+
+```go
+// github.com/parshikovpavel/hello/xxx/yyy.go
+package xxx
+```
+
+Но ничего не мешает не следовать этой *convention*. Например, указать `zzz` в качестве `PackageName`:
+
+```go
+// github.com/parshikovpavel/hello/xxx/yyy.go
+package zzz
+
+var Variable = "b"
+```
+
+Никаких проблем при *import*'е нет (здесь при *import*'е `PackageName` опущен, поэтому используется `PackageName` `zzz` из импортированного *package*) ([1](#import-decalration))
+
+```go
+// github.com/parshikovpavel/hello/main.go
+package main
+import (
+    "fmt"
+    "github.com/parshikovpavel/hello/xxx"
+)
+func main() {
+    fmt.Println(zzz.Variable)
+}
+```
+
+Т.е. `PackageName` в *qualified identifier* (здесь `zzz`) не обязан совпадать с последней частью в *import path* (когда `PackageName` в *import declaration* опущено) (здесь `xxx`). И `PackageName` в *qualified identifier* нужно искать соответствие среди `PackageName` в директивах `package` импортированных пакетов.
+
+
+
+### `package main`
+
+*Executable module* должен иметь `main` *package* с функцией `main()` , которая является точкой входа в программу. `main` *package* используется для создания *executable binary*. Выполнение программы начинается в  `main` *package* с вызова функции `main()`.
+
+```go
+package main
+
+func main() {
+	// ...    
+}
+```
+
+Функция `main()` всегда не имеет аргументов и ничего не возвращает. Когда функция `main.main()` завершается, одновременно с ней завершается выполнение программы, и она возвращает операционной системе значение 0.
+
+Также можно использовать функцию `init()`, которая выполняется перед функцией `main()`.
+
+
+
+### `import` *declaration*
+
+`import` позволяет импортировать *package*. Из этого импортированного *package* можно использовать только [*exported identifier*'s](#exported-identifier).
+
+<pre>
+ImportDecl       = "import" ( ImportSpec | "(" { ImportSpec ";" } ")" ) .
+ImportSpec       = [ "." | <a href="#package-clause">PackageName</a> ] ImportPath .
+ImportPath       = string_lit .  
+</pre>
+
+`PackageName` может быть:
+
+1. указан, тогда `PackageName` в импортирующем файле может использоваться в *qualified identifier*'s для обращения к *exported identifier*'s из импортированного *package*. 
+2. опущен, используется `PackageName` из импортированного *package*.
+3. вместо `PackageName` указана точка `.`, exported identifier's будут доступны без се экспортируемые идентификаторы пакета, объявленные в [блоке](https://golang.org/ref/spec#Blocks) пакета этого [пакета,](https://golang.org/ref/spec#Blocks) будут объявлены в блоке файла импортируемого исходного файла и должны быть доступны без квалификатора.
+
+
+
+Примеры:
+
+- одна `ImportSpec`:
+
+  ```go
+  import "io"    // `ImportSpec`
+  ```
+
+- несколько `ImportSpec`:
+
+  ```go
+  import (
+      "io"       // `ImportSpec`
+      "bufio"    // `ImportSpec`
+  )
+  ```
+
+  
+
+Здесь указывается *import path* (не файла, а *package*).
+
+Импортируемые пакеты можно не отделять друг от друга запятыми.
+
+Смотреть *qualified identifier* ([1]())
+
+
+
+
+
+## Порядок создания *executable module*
 
 - Создать *repository* для *module*. Например, `https://github.com/parshikovpavel/hello`.
 
@@ -1799,9 +2383,53 @@ module example.com/service
   go 1.15
   ```
 
+- Для *executable module* необходимо создать *file* (имя любое [1](#file)), входящий в [`package main`](#package-main) с функцией `main()`:
+
+  ```go
+  package main
   
+  import "fmt"
+  
+  func main() {
+  	fmt.Println("Hello!")
+  }
+  ```
+
+- выполнить *build* и *install* программы:
+
+  ```bash
+  go install example.com/user/hello
+  ```
+
+  При этом *executable* помещается в соответствующий каталог ([1](#go-install))
+
+## Порядок создания *package* внутри своего *module*
+
+Пример создания `morestrings` (*package name*) *package* внутри `github.com/parshikovpavel/hello` (*module path*) *module* и использования его.
+
+- Создаем каталог `morestring` (*package name*) для *package* внутри каталога c `hello` (*module name*) *module*:
+
+  ```bash
+  mkdir .../hello/morestring
+  ```
+
+- внутри каталога `../hello/morestring` размещаем файл (файлы) этого *package*. Имя (имена) файла могут быть любыми ([1](#file)). Например, имя файла – `reverse.go`. 
+
+- Файл `reverse.go` внутри *package* должен иметь структуру:
+
+  ```
+  package morestrings // Указан <PackageName>
+  
+  func Name(...) ... { // Начинается с заглавной буквы
+  	...
+  }
+  ```
+
+  Все *exported identifier*'s ([1](#exported-identifier)), которые должны быть доступны из других *package*'s), как `Name`, должны быть начинаться с буквы в *Unicode upper case*.
 
 
+
+<u>ТУТ!!! Закончил Importing packages from your module</u>
 
 
 
@@ -1853,24 +2481,6 @@ go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
 
 
 
-
-$ cat go.mod module example.com/user/hello go 1.14
-Example Domain
-example.com
-Павел
-Павел 8:40
-
-. Executable commands must always use package main.
-
-This command builds the hello command, producing an executable binary. It then installs that binary as $HOME/go/bin/hello (o
-
-The install directory is controlled by the GOPATH and GOBIN environment variables. If GOBIN is set, binaries are installed to that directory. If GOPATH is set, binaries are installed to the bin subdirectory of the first directory in the GOPATH list. Otherwise, binaries are installed to the bin subdirectory of the default GOPATH ($HOME/go
-Павел
-Павел 22:02
-
-Для удобства goкоманды принимают пути относительно рабочего каталога и по умолчанию используют пакет в текущем рабочем каталоге, если не указан другой путь. Итак, в нашем рабочем каталоге все следующие команды эквивалентны:
-17 сентября
-Павел
 Павел 8:26
 
 create a directory for the package named $HOME/hello/morestrings, and then a file named reverse.go i
@@ -2097,100 +2707,236 @@ go run command is a useful shortcut for compiling and running a single-file prog
 
 
 
+# `go` *command*
+
+## Параметр `packages`
+
+Для команд:
+
+- `go install`
+- ...
+
+параметр `packages` применяется следующим образом:
+
+- если `packages` указан, например:
+
+  ```bash
+  go install example.com/user/hello
+  ```
+
+  то команда ищет *package* в контексте *module*, внутри которого находится текущий каталог. Если текущий каталог не находится внутри указанного *module* (или *package*???) (здесь внутри `example.com/user/hello`), то команда выдает ошибку.
+
+- если `packages` не указан, то используется *package* в текущем каталоге. Например:
+
+   ```bash
+  go install
+  ```
+
+- в качестве `packages` можно использовать относительный *import path*, относительно текущего каталога. Например:
+
+  ```bash
+  go install .
+  ```
+
+Если в текущем каталоге находится *package* с *import path* – `example.com/user/hello`, то следующие команды эквивалентны:
+
+```bash
+go install
+go install .
+go install example.com/user/hello
+```
 
 
-# Структура файла с кодом
 
-Общая структура любого файла с кодом:
+## `go build`
+
+Сборка *package* по его *import path*, вместе с его dependency's, но без процесса *install* (размещения исполняемого файла в `bin`).
+
+```bash
+go build [-o output] [-i] [build flags] [packages]
+```
+
+
+
+Поведение:
+
+- при компиляции `package main` – записывает полученный исполняемый файл в выходной файл с именем первого исходного файла (`go build ed.go rx.go` записывает в файл `ed`) или в файл с именем каталога исходного кода (`go build unix/sam` пишет в файл `sam`)
+
+- При компиляции нескольких *package*'s или одного не `package main` – компилирует пакеты, но отбрасывает получившийся файл, и может использоваться только для проверки возможности сборки *package*.
+
+Флаги:
+
+-  `-o` заставляет `build` писать результирующий исполняемый файл или объект в указанный *output file* или *directory* вместо поведения по умолчанию, описанного ранее. 
+
+## `go install`
+
+```bash
+go install [-i] [build flags] [packages]
+```
+
+*Compile* и *install* package (или *package*'s). 
+
+- `packages` – опционально, *import path* пакета (пакетов). Подробно про параметр `packages` ([1](#параметр-packages))
+
+  ```bash
+  $ go install github.com/user/hello
+  ```
+
+  Если текущей является *import path*, то можно запускать без указания *import path*.
+
+  ```bash
+  $ go install
+  ```
+
+  
+
+
+
+- *Executable* выполняется *installing* в каталог:
+
+  - по пути `GOBIN` *environment variable*
+  - если `GOBIN` не установлено, то по умолчанию значение `GOBIN`:
+    - `$GOPATH/bin`.
+    - если `$GOPATH` не установлена, то `$HOME/go/bin`
+
+  Таким образом, различные *executable*'s помещаются в один и тот же каталог. Можно включить путь к этому каталогу в `PATH`:
+
+  ```bash
+  export PATH=$PATH:$GOPATH/bin
+  ```
+
+- *Non-executable* (подключаемый package):
+
+  -  если *module-aware mode* включен, выполняется *buiding* и *caching*, без.*installing*.
+  - если *module-aware mode* отключен, выполняется *installing* в каталог `$GOPATH/pkg/$GOOS_$GOARCH`.
+
+## `go list`
+
+```bash
+go list [-f format] [-json] [-m] [list flags] [build flags] [packages]
+```
+
+Команда выводит информацию об указанных `packages`, информация об одном *package* на каждой строке. 
+
+По умолчанию, команда выводит список *package import path*'s:
+
+```bash
+$ go list
+github.com/parshikovpavel/hello
+```
+
+Флаг `-f` позволяет задать формат для вывода информации о *package*. Команда по умолчанию эквивалентна:
+
+```bash
+go list -f '{{.ImportPath}}'
+```
+
+В шаблоне могут использоваться поля из следующей структуры:
 
 ```go
-SourceFile = 
-		PackageClause ";"     // package ..., определяет package, к которому принадлежит файл
-		{ ImportDecl ";" }    // import ..., определяется package's, которые будут использованы
-		{ TopLevelDecl ";" } . // основное содержимое, определение var, func, constant, type
-```
+type Package struct {
+    Dir           string   // directory containing package sources
+    ImportPath    string   // import path of package in dir
+    ImportComment string   // path in import comment on package statement
+    Name          string   // package name
+    Doc           string   // package documentation string
+    Target        string   // install path
+    Shlib         string   // the shared library that contains this package (only set when -linkshared)
+    Goroot        bool     // is this package in the Go root?
+    Standard      bool     // is this package part of the standard Go library?
+    Stale         bool     // would 'go install' do anything for this package?
+    StaleReason   string   // explanation for Stale==true
+    Root          string   // Go root or Go path dir containing this package
+    ConflictDir   string   // this directory shadows Dir in $GOPATH
+    BinaryOnly    bool     // binary-only package (no longer supported)
+    ForTest       string   // package is only for use in named test
+    Export        string   // file containing export data (when using -export)
+    Module        *Module  // info about package's containing module, if any (can be nil)
+    Match         []string // command-line patterns matching this package
+    DepOnly       bool     // package is only a dependency, not explicitly listed
 
+    // Source files
+    GoFiles         []string // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
+    CgoFiles        []string // .go source files that import "C"
+    CompiledGoFiles []string // .go files presented to compiler (when using -compiled)
+    IgnoredGoFiles  []string // .go source files ignored due to build constraints
+    CFiles          []string // .c source files
+    CXXFiles        []string // .cc, .cxx and .cpp source files
+    MFiles          []string // .m source files
+    HFiles          []string // .h, .hh, .hpp and .hxx source files
+    FFiles          []string // .f, .F, .for and .f90 Fortran source files
+    SFiles          []string // .s source files
+    SwigFiles       []string // .swig files
+    SwigCXXFiles    []string // .swigcxx files
+    SysoFiles       []string // .syso object files to add to archive
+    TestGoFiles     []string // _test.go files in package
+    XTestGoFiles    []string // _test.go files outside package
 
+    // Cgo directives
+    CgoCFLAGS    []string // cgo: flags for C compiler
+    CgoCPPFLAGS  []string // cgo: flags for C preprocessor
+    CgoCXXFLAGS  []string // cgo: flags for C++ compiler
+    CgoFFLAGS    []string // cgo: flags for Fortran compiler
+    CgoLDFLAGS   []string // cgo: flags for linker
+    CgoPkgConfig []string // cgo: pkg-config names
 
+    // Dependency information
+    Imports      []string          // import paths used by this package
+    ImportMap    map[string]string // map from source import to ImportPath (identity entries omitted)
+    Deps         []string          // all (recursively) imported dependencies
+    TestImports  []string          // imports from TestGoFiles
+    XTestImports []string          // imports from XTestGoFiles
 
-
-## `package`
-
-Любой фрагмент программного кода должен быть включен в *package* (пакет).
-
-Объявление `package` указывает, к какому *package* принадлежит файл. Все файла с одним и тем же `PackageName` составляют *package*. `PackageName` не содержит `/`, он содержит только последнюю часть *import path*.
-
-Первый оператор в исходном файле Go должен быть:
-
-```go
-package <name>
-package stack
-```
-
-```
-PackageClause  = "package" PackageName .
-PackageName    = identifier .
-```
-
-
-
-Каждая программа должна иметь `main` *package* с функцией `main()` , которая является точкой входа в программу:
-
-```go
-package main
-
-func main() {
-	// ...    
+    // Error information
+    Incomplete bool            // this package or a dependency has an error
+    Error      *PackageError   // error loading package
+    DepsErrors []*PackageError // errors loading dependencies
 }
 ```
 
-Функция `main()` всегда не имеет аргументов и ничего не возвращает. Когда функция `main.main()` завершается, одновременно с ней
-завершается выполнение программы, и она возвращает операционной системе значение 0.
 
-Также можно использовать функцию `init()`, которая выполняется перед функцией `main()`.
 
-Язык Go оперирует в терминах *package*'s, а не файлов. То есть *package* можно разбить на любое количество файлов, и если все они будут иметь одинаковое объявление `package`, то все они будут являться частями одного и того же *package*, как если бы все их содержимое находилось в единственном файле.
 
-## `import`
 
-`import` позволяет импортировать *package* и использовать *exported identifier*'s из этого *package*.
+
+
+## `go run`
+
+запуск программы с компиляцией во временную папку
 
 ```
-ImportDecl       = "import" ( ImportSpec | "(" { ImportSpec ";" } ")" ) .
-ImportSpec       = [ "." | PackageName ] ImportPath .
-ImportPath       = string_lit .
+go run <package>
 ```
 
-`PackageName` может быть:
+Компилирует и исполняет указанный *main* (?) пакет `<package>`. 
 
-1. указан, тогда `PackageName` в импортирующем файле может использоваться в *qualified identifier*'s для обращения к *exported identifier*'s из импортированного *package*. 
-2. опущен, используется `PackageName` из импортированного *package*.
-3. вместо `PackageName` указана точка `.`, exported identifier's будут доступны без се экспортируемые идентификаторы пакета, объявленные в [блоке](https://golang.org/ref/spec#Blocks) пакета этого [пакета,](https://golang.org/ref/spec#Blocks) будут объявлены в блоке файла импортируемого исходного файла и должны быть доступны без квалификатора.
+- `package` – может задаваться, как:
+
+  - список исходных файлов `.go` из одного каталога
+
+  - *import path*. 
+
+    Например для каталога `$GOPATH\src\hello` из любого места можно запустить:
+
+    ```bash
+    go run hello
+    ```
+
+    
+
+  - путь в файловой системе
+
+  - шаблон, соответствующий одному известному пакету (?). Например, `go run .` или `go run my/cmd`.
 
 
 
-ТУТ!!!
+## Запуск программы
 
-Импортирование *package*: 
+Запуск программы:
 
-```go
-import (
-    "fmt"
-    "os"
-    "strings"
-    "github.com/user/stringutil"
-)
+```bash
+./hello
 ```
-
-Здесь указывается *package import path* (не файла, а *package*).
-
-Импортируемые пакеты можно не отделять друг от друга запятыми.
-
-## Использование package
-
-Обращение к `type`, `func`, `var` (переменным) и другим элементам *package* записывается в виде `<package>.<элемент>`, где `<package>` – это последний (или единственный) компонент в имени *package*. Например, обращение к функции `Reverse()` в *package* `github.com/user/stringutil` записывается так `stringutil.Reverse()` 
-
-
 
 # Legacy GOPATH
 
@@ -2446,15 +3192,9 @@ Channel:    Если size не указан - channel небуферизован
             Если size указан, то buffer capacity = size
 ```
 
-### `error`
+### `error` (builtin)
 
-`error` *type* – встроенный *interface* тип для представления состояния ошибки, значение `nil` – отсутствие ошибки.
-
-```go
-type error interface {
-    Error() string
-}
-```
+Смотреть [1](#error)
 
 
 
@@ -2465,6 +3205,34 @@ type error interface {
 *Package* реализует форматированный I/O по аналогии с функциями `printf()` и `scanf()` в Си. 
 
 Некоторые функции принимают `format`, в котором можно использовать спецификаторы формата `%`, напоминающие спецификаторы функций `printf()` и `scanf()` в Си.
+
+### Плейсхолдеры
+
+- `%v` – значение в *default* формате.
+
+  *Default* форматы:
+
+  ```
+  bool:                    %t
+  int, int8 etc.:          %d
+  uint, uint8 etc.:        %d, %#x if printed with %#v
+  float32, complex64, etc: %g
+  string:                  %s
+  chan:                    %p
+  pointer:                 %p
+  ```
+
+
+
+### `fmt.Errorf()`
+
+```go
+func Errorf(format string, a ...interface{}) error
+```
+
+Форматирует и возвращает строку как значение типа `error`.
+
+
 
 
 
@@ -2489,6 +3257,151 @@ func Printf(format string, a ...interface{}) (n int, err error)
 
 - `n` – количество записанных байтов
 - `err` – все обнаруженные ошибки записи.
+
+## `json`
+
+### Encoding
+
+Для выполнения *encoding* данных в JSON нужно использовать функцию `Marshal()`:
+
+```go
+func Marshal(v interface{}) ([]byte, error)
+```
+
+<u>Пример:</u>
+
+```go
+type Message struct {
+    Name string
+    Body string
+    Time int64
+}
+
+func main() {
+	m := Message{"Alice", "Hello", 1294706395881547000}
+	b, err := json.Marshal(m)
+}
+```
+
+В случае успеха:
+
+```go
+err == nil
+b == []byte(`{"Name":"Alice","Body":"Hello","Time":1294706395881547000}`)
+```
+
+Особенности использования `Marshal` с разными *type*'s:
+
+- `struct` type – выполняется *encode* только (!!!) для *exported field*'s ([1](#exported-identifier), которые начинаются с *Unicode upper case* )
+- `map` type – поддерживаются только `string` в качестве ключей; поэтому `map` должен быть типа `map[string]T` (где `T` – любой тип).
+
+### Decoding
+
+Для выполнения *decoding* данных из JSON необходимо использовать функцию `Unmarshal()`:
+
+```go
+func Unmarshal(data []byte, v interface{}) error
+```
+
+Сначала нужно создать место, где будут храниться декодированные данные
+
+```go
+var m Message
+```
+
+и вызвать `json.Unmarshal()`, передав ему `[]byte` с JSON данными и *pointer* на `m`
+
+```go
+err := json.Unmarshal(b, &m)
+```
+
+Если `b` содержит допустимый JSON, который соответствует `m`, после вызова `err == nil` и данные из `b` будут сохранены в структуре `m`, так что:
+
+```go
+m = Message{
+    Name: "Alice",
+    Body: "Hello",
+    Time: 1294706395881547000,
+}
+```
+
+Чтобы найти, куда декодировать данные из поля `Foo` в структуру, `Unmarshal`  просматривает поля структуры назначения, чтобы найти *field* (в порядке предпочтения):
+
+- *Exported field* (!!!) с тегом `"Foo"` 
+- *Exported field* (!!!) с именем `"Foo"`
+- *Exported field* (!!!) с именем `"FOO"` или `"FoO"` или другое нечувствительное к регистру совпадение `"Foo"`
+
+Если JSON  данные не совсем соответствует типу Go, например:
+
+```go
+b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
+var m Message
+err := json.Unmarshal(b, &m)
+```
+
+`Unmarshal()` будет декодировать только те *field*'s, которые он может найти в типе назначения. В этом случае будет заполнено только поле `Name` в `m`, а поле `Food` будет игнорироваться. Это можно использовать, чтобы декодировать только несколько определенных полей из большого JSON-объекта. Это также означает, что `Unmarshal()` не затронет любые *non-exported field*'s в структуре назначения.
+
+Чтобы декодировать поля JSON, которые не начинаются с заглавных букв, необходимо использовать *tags*:
+
+```golang
+type Sample struct {
+    Name string `json:"name"`
+    Age  int    `json:"age"`
+}
+```
+
+<u>Пример 1:</u>
+
+Декодирование JSON вида:
+
+```json
+{"fruits":["apple","banana","cherry","date"]}
+```
+
+```go
+json := []byte(`{"fruits":["apple","banana","cherry","date"]}`)
+var m map[string][]string
+err := json.Unmarshal(json, &m)
+```
+
+<u>Пример 2:</u>
+
+Декодирование JSON, который имеет нерегулярную структуру (разные структуры в ключах):
+
+```json
+{
+    "sendMsg":{"user":"ANisus","msg":"Trying to send a message"},
+    "say":"Hello"
+}
+```
+
+Для этого декодирование выполняется по частям. На каждом шаге вложенная структура декодируется в `json.RawMessage`. 
+
+```go
+var objmap map[string]json.RawMessage
+err := json.Unmarshal(data, &objmap)
+```
+
+Затем вложенную структуру можно декодировать дальше:
+
+```go
+var s sendMsg
+err = json.Unmarshal(objmap["sendMsg"], &s)
+```
+
+
+
+
+
+
+
+ТУТ!!!
+
+
+
+
+
+
 
 
 
@@ -2535,10 +3448,6 @@ var Args []string
 ```
 
 
-
-## `strings`
-
-Содержит функции для работы со строками.
 
 
 
@@ -2588,15 +3497,96 @@ func main() {
 }
 ```
 
-## `error`
+## `strings`
 
-### `New()`
+Package реализует функции для изменения UTF-8 строк
+
+### `Split()`
+
+```go
+func Split(s, sep string) []string
+```
+
+Разбивает `s` на все *substring*'s, разделенные `sep`, и возвращает map из substring's между разделителями `sep`.
+
+Если `s` не содержит `sep`, а `sep` не пуст, `Split()` возвращает  *map* длиной 1, единственным элементом которого является `s`.
+
+```go
+str := "hi, this is, educative" 
+split := strings.Split(str, ",")
+fmt.Println(split)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## `time`
+
+### `Sleep()`
+
+```go
+func Sleep(d Duration)
+time.Sleep(100 * time.Millisecond)
+```
+
+Приостанавливает текущую *goroutine* как минимум на время `d`.
+
+Пример:
+
+```go
+fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
+time.Sleep(2 * time.Second)
+fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
+```
+
+
+
+
+
+
+
+
+
+## `errors`
+
+`errors` – это *package*
+
+### `error`
+
+`error` – это *type*, встроенный *interface* тип для представления состояния ошибки, значение `nil` – отсутствие ошибки.
+
+```go
+type error interface {
+    Error() string
+}
+```
+
+В соответствии с соглашениями, принятыми в языке Go, значение ошибки (или успеха когда `error = nil`) типа `error` возвращается в последнем (или единственном) значении, возвращаемом функцией или методом.
+
+```go
+item, err := haystack.Pop()
+```
+
+### `errors.New()`
 
 ```go
 func New(text string) error
 ```
 
 Возвращает ошибку с текстом `text`.
+
+Часто вместе `errors.New()` полезно использовать `fmt.Errorf()` ([1](#fmterrorf))
 
 ```go
 func ... (int, error) {
@@ -2607,6 +3597,92 @@ func ... (int, error) {
     return x, nil
 }
 ```
+
+
+
+# Стандартные приемы
+
+## `in_array()`
+
+В Go нет такой встроенной функции для *array type* и *slice type*.
+
+Можно использовать три приема:
+
+- использовать map:
+
+  ```go
+  func belongsToMap(lookup string) bool {
+  list := map[string]bool{
+      "900898296857": true,
+      "900898302052": true,
+      "900898296492": true,
+      "900898296850": true,
+      "900898296703": true,
+      "900898296633": true,
+      "900898296613": true,
+      "900898296615": true,
+      "900898296620": true,
+      "900898296636": true,
+  }
+  if _, ok := list[lookup]; ok {
+      return true
+  } else {
+      return false
+  }
+  }
+  ```
+
+- использовать *slice* и перебор в цикле:
+
+  ```go
+  func belongsToList(lookup string) bool {
+  list := []string{
+      "900898296857",
+      "900898302052",
+      "900898296492",
+      "900898296850",
+      "900898296703",
+      "900898296633",
+      "900898296613",
+      "900898296615",
+      "900898296620",
+      "900898296636",
+  }
+  for _, val := range list {
+      if val == lookup {
+          return true
+      }
+  }
+  return false
+  }
+  ```
+
+- использовать *switch statement*:
+
+  ```go
+  func belongsToSwitch(lookup string) bool {
+  switch lookup {
+  case
+      "900898296857",
+      "900898302052",
+      "900898296492",
+      "900898296850",
+      "900898296703",
+      "900898296633",
+      "900898296613",
+      "900898296615",
+      "900898296620",
+      "900898296636":
+      return true
+  }
+  return false
+  }
+  ```
+
+По тестам `switch` всегда быстрее, `slice` близок по скорости, `map` гораздо медленнее (наверно, это только для случая когда нужно еще строить сам map).
+
+
+
 
 
 
@@ -3494,50 +4570,10 @@ realclean: clean distclean
 Павел
 Павел 1:28
 
-Цель 4: Знание пользователей, предвосхищение их интересов (точнейшие
-профили всех пользователей Авито)
-○ Ключ к успеху бизнеса Авито — данные, позволяющие понимать и
-предвосхищать потребности наших клиентов. Чтобы закрывать эти
-потребности через продукты Авито, мы собираем данные и создаем из
-них детальные профили наших пользователей.
-1 октября
-Павел
-Павел 20:35
 
-Семечки
 
-Сырки матроскин
 
-Две шоколадки милка
 
-Минералка
-
-Баунти на развес
-
-Имунеле
-
-С лошадкой
-3 октября
-Павел
-Павел 9:24
-
-Нарезной колбасы
-
-Хлеб
-
-Две подложкв курица
-
-Пачка масла
-
-Одна кукуруза и два крабовых
-
-Хлебфрукты
-Павел
-Павел 10:22
-
-Строителей 38
-Павел
-Павел 10:28
 
 Командные строки могут иметь один или несколько из следующих трех префиксов:
 
@@ -3553,9 +4589,7 @@ realclean: clean distclean
 Павел
 Павел 10:43
 
-Сметана
-Павел
-Павел 10:57
+
 
 . Правила преобразования задаются в скрипте с именем Makefile, который должен находиться в корне рабочей директории проекта. Сам скрипт состоит из набора правил, которые в свою очередь описываются:
 
@@ -4013,6 +5047,8 @@ The fields of a composite literal are laid out in order and must all be present.
 Павел
 Павел 0:50
 
+
+
 https://blog.golang.org/json
 
 To encode JSON data we use the Marshal function.
@@ -4029,15 +5065,77 @@ b == []byte(`{"Name":"Alice","Body":"Hello","Time":1294706395881547000}`)
 Павел
 Павел 18:43
 
+A map is an unordered group of elements of one type, called the element type, indexed by a set of unique keys of another type, called the key type. The value of an uninitialized map is nil.
 
+MapType = "map" "[" KeyType "]" ElementType . KeyType = Type .
+4 ноября
+Павел
+Павел 2:22
 
+The number of map elements is called its length. For a map m, it can be discovered using the built-in function len and may change during execution. Elements may be added during execution using assignments and retrieved with index expressions; they may be removed with the delete built-in function.
 
+A new, empty map value is made using the built-in function make, which takes the map type and an optional capacity hint as arguments:
+
+make(map[string]int) make(map[string]int, 100)
+
+The initial capacity does not bound its size: maps grow to accommodate the number of items stored in them, with the exception of nil maps. A nil map is equivalent to an empty map except that no elements may be added.
+Павел
+Павел 14:23
+
+Maps are a convenient and powerful built-in data structure that associate values of one type (the key) with values of another type (the element or value). The key can be of any type for which the equality operator is defined, such as integers, floating point and complex numbers, strings, pointers, interfaces (as long as the dynamic type supports equality), structs and arrays. Slices cannot be used as map keys, because equality is not defined on them. Like slices, maps hold references to an underlying data structure. If you pass a map to a function that changes the contents of the map, the changes will be visible in the caller.
+
+Maps can be constructed using the usual composite literal syntax with colon-separated key-value pairs, so it's easy to build them during initialization.
+
+Maps are a convenient and powerful built-in data structure that associate values of one type (the key) with values of another type (the element or value). The key can be of any type for which the equality operator is defined, such as integers, floating point and complex numbers, strings, pointers, interfaces (as long as the dynamic type supports equality), structs and arrays. Slices cannot be used as map keys, because equality is not defined on them. Like slices, maps hold references to an underlying data structure. If you pass a map to a function that changes the contents of the map, the changes will be visible in the caller.
+
+Maps can be constructed using the usual composite literal syntax with colon-separated key-value pairs, so it's easy to build them during initialization.
+
+Maps are a convenient and powerful built-in data structure that associate values of one type (the key) with values of another type (the element or value). The key can be of any type for which the equality operator is defined, such as integers, floating point and complex numbers, strings, pointers, interfaces (as long as the dynamic type supports equality), structs and arrays. Slices cannot be used as map keys, because equality is not defined on them. Like slices, maps hold references to an underlying data structure. If you pass a map to a function that changes the contents of the map, the changes will be visible in the caller.
+
+Maps can be constructed using the usual composite literal syntax with colon-separated key-value pairs, so it's easy to build them during initialization.
+
+https://golang.org/doc/effective_go.html#maps
+Effective Go - The Go Programming Language..
+golang.org
+Павел
+Павел 16:42
+
+https://sndeep.info/en
+
+https://checkcoverage.apple.com/ru/ru/
+Проверка права на сервисное обслуживание..
+checkcoverage.apple.com
+Павел
+Павел 20:35
+
+Assigning and fetching map values looks syntactically just like doing the same for arrays and slices except that the index doesn't need to be an integer.
+
+offset := timeZone["EST"]
+Павел
+Павел 20:49
+
+An attempt to fetch a map value with a key that is not present in the map will return the zero value for the type of the entries in the map. For instance, if the map contains integers, looking up a non-existent key will return 0. A set can be implemented as a map with value type bool. Set the map entry to true to put the value in the set, and then test it by simple indexing.
+Павел
+Павел 20:57
+
+Sometimes you need to distinguish a missing entry from a zero value. Is there an entry for "UTC" or is that 0 because it's not in the map at all? You can discriminate with a form of multiple assignment.
+5 ноября
+Павел
+Павел 2:26
+
+var seconds int var ok bool seconds, ok = timeZone[tz]
+
+this is called the “comma ok” idiom. In this example, if tz is present, seconds will be set appropriately and ok will be true; if not, seconds will be set to zero and ok will be false.
+
+To test for presence in the map without worrying about the actual value, you can use the blank identifier (_) in place of the usual variable for the value.
+
+_, present := timeZone[tz]
 6 ноября
 Павел
 Павел 2:36
 
 https://golang.org/ref/spec#Declarations_and_scope
-вчера
+7 ноября
 Павел
 Павел 20:08
 
@@ -4052,10 +5150,256 @@ The scope of a declared identifier is the extent of source text in which the ide
 The scope of an identifier denoting a constant, type, variable, or function (but not method) declared at top level (outside any function) is the package block.
 
 The scope of the package name of an imported package is the file block of the file containing the import declaration.
-сегодня
+8 ноября
 Павел
 Павел 2:27
 
 The scope of a constant or variable identifier declared inside a function begins at the end of the ConstSpec or VarSpec (ShortVarDecl for short variable declarations) and ends at the end of the innermost containing block.
 
 The scope of a type identifier declared inside a function begins at the identifier in the TypeSpec and ends at the end of the innermost containing block.
+10 ноября
+Павел
+Павел 2:21
+
+Thus we could say
+
+return &File{fd: fd, name: name}
+
+https://golang.org/doc/effective_go.html#allocation_new
+Effective Go - The Go Programming Language..
+golang.org
+
+В качестве предельного случая, если составной литерал вообще не содержит полей, он создает нулевое значение для типа. Выражения new(File)и &File{}эквивалентны.
+
+Composite literals can also be created for arrays, slices, and maps, with the field labels being indices or map keys as appropriate
+11 ноября
+Павел
+Павел 2:25
+
+The built-in function make(T, args) serves a purpose different from new(T). It creates slices, maps, and channels only, and it returns an initialized (not zeroed) value of type T (not *T)
+
+. The built-in function make(T, args) serves a purpose different from new(T). It creates slices, maps, and channels only, and it returns an initialized (not zeroed) value of type T (not *T). The reason for the distinction is that these three types represent, under the covers, references to data structures that must be initialized before use. A slice, for example, is a three-item descriptor containing a pointer to the data (inside an array), the length, and the capacity, and until those items are initialized, the slice is nil. For slices, maps, and channels, make initializes the internal data structure and prepares the value for use.
+13 ноября
+Павел
+Павел 20:32
+
+allocates an array of 100 ints and then creates a slice structure with length 10 and a capacity of 100 pointing at the first 10 elements of the array. (When making a slice, the capacity can be omitted; see the section on slices for more information.) In contrast, new([]int) returns a pointer to a newly allocated, zeroed slice structure, that is, a pointer to a nil slice value.
+Павел
+Павел 20:43
+
+. To obtain an explicit pointer allocate with new or take the address of a variable explicitly.
+14 ноября
+Павел
+Павел 12:53
+
+Arrays are useful when planning the detailed layout of memory and sometimes can help avoid allocation, but primarily they are a building block for slices,
+Павел
+Павел 13:08
+
+differences between the ways arrays work in Go and C. In Go,
+
+Arrays are values. Assigning one array to another copies all the elements.
+
+In particular, if you pass an array to a function, it will receive a copy
+
+The size of an array is part of its type. The types [10]int and [20]int are distinct.
+Павел
+Павел 13:14
+
+The value property can be useful but also expensive; if you want C-like behavior and efficiency, you can pass a pointer to the array
+
+, most array programming in Go is done with slices ra
+
+Slices hold references to an underlying array, and if you assign one slice to another, both refer to the same array
+
+If a function takes a slice argument, changes it makes to the elements of the slice will be visible to the caller, analogous to passing a pointer to the underlying array.
+15 ноября
+Павел
+Павел 13:04
+
+A Read function can therefore accept a slice argument rather than a pointer and a count;
+Павел
+Павел 13:11
+
+To read into the first 32 bytes of a larger buffer buf, slice (here used as a verb) the buffer.
+Павел
+Павел 13:27
+
+. If the data exceeds the capacity, the slice is reallocated
+16 ноября
+Павел
+Павел 18:52
+
+Мише сырки
+
+Хлеб
+Павел
+Павел 20:36
+
+The function uses the fact that len and cap are legal when applied to the nil slice, and return 0.
+Павел
+Павел 20:49
+
+The length of a slice may be changed as long as it still fits within the limits of the underlying array
+Павел
+Павел 20:56
+
+}
+
+We must return the slice afterwards because, although Append can modify the elements of slice, the slice itself (the run-time data structure holding the pointer, length, and capacity) is passed by value
+Павел
+Павел 21:01
+
+like this:
+
+type Transform [3][3]float64 // A 3x3 array, really an array of arrays. type LinesOfText [][]byte // A slice of byte slices.
+21 ноября
+Павел
+Павел 11:22
+
+Because slices are variable-length, it is possible to have each inner slice be a different length. That can be a common situation, as in our LinesOfText example: each line has an independent length.
+Павел
+Павел 12:26
+
+each line has an independent length.
+
+text := LinesOfText{ []byte("Now is the time"), []byte("for all good gophers"), []byte("to bring some fun to the party."), }
+Павел
+Павел 12:40
+
+allocate a 2D slice
+Павел
+Павел 13:45
+
+to allocate each slice independently; the other is to allocate a single array and point the individual slices into it.
+Павел
+Павел 20:36
+
+You don't need to provide a format string. For each of Printf, Fprintf and Sprintf there is another pair of functions, for instance Print and Println. These functions do not take a format string but instead generate a default format for each argument. The Println versions also insert a blank between arguments and append a newline to the output while the Print versions add blanks only if the operand on neither side is a string.
+Павел
+Павел 20:45
+
+The formatted print functions fmt.Fprint and friends take as a first argument any object that implements the io.Writer interface
+Павел
+Павел 14:12
+
+%d
+
+use the type of the argument
+
+default conversion, such as decimal for integers,
+
+catchall format %v (for “value”); the result is exactly what Print and Println would produce
+25 ноября
+Павел
+Павел 9:31
+
+Посмотреть все изображения
+26 ноября
+Павел
+Павел 9:44
+
+, that format can print any value, even arrays, slices, structs, and maps
+
+which gives output:
+
+map[CST:-21600 EST:-18000 MST:-25200 PST:-28800 UTC:0]
+
+For maps, Printf and friends sort the output lexicographically by key
+29 ноября
+Павел
+Павел 12:20
+
+modified format %+v annotates the fields of the structure with their names, and for any value the alternate format %#v prints the value in full Go syntax.
+Павел
+Павел 12:30
+
+&{7 -2.35 abc def} &{a:7 b:-2.35 c:abc def} &main.T{a:7, b:-2.35, c:"abc\tdef"} map[string]int{"CST":-21600, "EST":-18000, "MST":-25200, "PST":-28800, "UTC":0}
+Павел
+Павел 20:30
+
+prints the type of a value.
+
+fmt.Printf("%T\n", timeZone)
+1 декабря
+Павел
+Павел 20:01
+
+If you want to control the default format for a custom type, all that's required is to define a method with the signature String() string on the type. For our simple type T, that might look like this.
+
+print values of type T as well as pointers to T, the receiver for String must be of value type
+Павел
+Павел 20:13
+
+calling Sprintf in a way that will recur into your String method indefinitely. This can happen if the Sprintf call attempts to print the receiver directly as a string, which in turn will invoke the method again
+Павел
+Павел 20:41
+
+Within the function Printf, v acts like a variable of type []interface{} but if it is passed to another variadic function, it acts like a regular list of arguments.
+Павел
+Павел 20:47
+
+We write ... after v in the nested call to Sprintln to tell the compiler to treat v as a list of arguments; otherwise it would just pass v as a single slice argument.
+4 декабря
+Павел
+Павел 21:11
+
+a ... parameter can be of a specific type
+
+Append
+5 декабря
+Павел
+Павел 12:39
+
+func append(slice []T, elements ...T) []T
+
+where T is a placeholder for any given type. You can't actually write a function in Go where the type T is determined by the caller.
+
+it needs support from the compiler
+Павел
+Павел 16:23
+
+https://dev-gang.ru/article/rabota-s-kontekstom-v-go-..
+Работа с контекстом в Go
+Работа с контекстом в Go
+dev-gang.ru
+Павел
+Павел 19:55
+
+чтобы поддерживать хороший контроль потока, понадобится библиотека контекста
+
+стандартной библиотекой с Go
+
+Контекст - это крайний срок, который вы можете передать в запущенный процесс в своем коде. Этот крайний срок может указывать на то, что процесс должен прекратить работу и вернуться после выполнения условия. Это становится полезным при обращении к внешним API, базам данных, как показано выше, или системным командам.
+
+горутины - это легкие потоки, которые можно запускать для процессов, а каналы - это конвейеры, используемые для передачи данных между этими новыми процессами.
+
+Библиотека контекста определяет новый интерфейс под названием Context. В интерфейсе контекста есть несколько интересных полей
+Павел
+Павел 20:40
+
+Поле Done - это канал, который закрывается, когда работа, выполненная для контекста, должна быть отменена. Эта операция может происходить асинхронно. Канал может вернуться как nil, если связанный контекст никогда не может быть отменен. Различные типы контекстов организуют отмену работы в зависимости от обстоятельств, в которые мы попадем.
+
+Err вернет nil, пока не будет закрыто Done. После чего Err либо вернет Cancelled, если контекст был отменен, либо DealineExceeded, если крайний срок контекста прошел.
+
+Поле «Значение» представляет собой интерфейс «ключ-значение», который будет возвращать значение, связанное с контекстом, как ключ или ноль, если не было связанного значения. Значения следует использовать с осторожностью, поскольку они предназначены не для передачи параметров в функцию, а для процессов передачи данных в области запроса и границ API.
+6 декабря
+Павел
+Павел 17:12
+
+у библиотека контекста является частью параллелизма. На данный момент горутины - это легкие потоки, которые можно запускать для процессов, а каналы - это конвейеры, используемые для передачи данных между этими новыми процессами.
+
+. Контекст должен принимать форму, необходимую для каждого использования. Он должен быть бесформенным, или, говоря словами Брюса Ли, быть похожим на воду. Ваш контекст должен течь через ваш код и развиваться в зависимости от потребности.
+вчера
+Павел
+Павел 0:55
+
+https://golang-blog.blogspot.com/2019/10/concurrency-..
+Паттерны конкурентности в Golang: Context
+Паттерны конкурентности в Golang: Context
+golang-blog.blogspot.com
+
+На Go серверах каждый входящий запрос обрабатывается в своей собственной goroutine. Обработчики запросов часто запускают дополнительные goroutine для доступа к бэкэндам, таким как базы данных и службы RPC. Множеству goroutine, работающих над запросом, обычно требуется доступ к специфическим для запроса значениям, таким как личность (identity) конечного пользователя, токены авторизации и крайний срок запроса (request's deadline). Когда запрос отменяется или истекает время ожидания, все goroutine, работающие над этим запросом, должны быстро завершиться, чтобы система могла вернуть любые ресурсы, которые они используют.
+
+В Google разработали пакет context, который позволяет легко передавать значения в области видимости запроса, сигналы отмены и крайние сроки (deadlines) через границы API всем goroutine, участвующим в обработке запроса. Пакет общедоступен как context
+Файл не выбран

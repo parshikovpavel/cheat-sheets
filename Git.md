@@ -399,6 +399,32 @@ $ git rebase master
 
 
 
+# Откат *commit*'а
+
+Алгоритм:
+
+- Сделать `reset --hard` до нужного *commit*'а:
+
+  ```bash
+  git reset --hard e9c99799095
+  ```
+
+  или в PHPStorm в `Git log → Reset current branch to Here`
+
+- Сделать `push --force`:
+
+  ```bash
+  git push --force origin <branchName>
+  ```
+
+- при необходимости снова подмержить `master`:
+
+  ```bash
+  git ...
+  ```
+
+  
+
 #  Просмотр Тегов в логах
 
 Вы также можете посмотреть теги в логе.

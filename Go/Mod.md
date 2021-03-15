@@ -2,7 +2,10 @@
 
 - *Main module* –  модуль, в котором `go` *command* вызывается. *Main module* определяется `go.mod` файлом в текущем или родительском каталоге.
 
+*Dependency* модуля может быть двух видов
 
+- *Direct* - это *dependency*, для которой *module* делает `import` напрямую.
+- *Indirect* – это *dependency*, для которой `import` выполняется другими, *direct dependency*'s. 
 
 # Go modules
 
@@ -24,7 +27,7 @@
 
 Также управлять *mode* можно с помощью `GO111MODULE` *environment variable*. Возможные значения:
 
-- не задан или `GO111MODULE = auto` – включен или нет *module-aware mode* зависит от наличия файла `go.mod`  в текущем каталоге и родительских каталогах, как описано выше. 
+- не задан или `GO111MODULE = auto` – включен ли *module-aware mode*, зависит от наличия файла `go.mod`  в текущем каталоге и родительских каталогах, как описано выше. 
 - `GO111MODULE=on` – включен *module-aware mode*, `GOPATH` игнорируется
 - `GO111MODULE=off` – включен *GOPATH mode*, возможности *Go modules* не используются. Зависимости ищет в каталоге `vendor` и `GOPATH`.
 
@@ -32,7 +35,7 @@
 
 - значение `GOPATH` *environment variable* не используется при поиске *dependency*'s
 - загруженные *dependency*'s продолжают сохраняться в `GOPATH/pkg/mod`
-- *command*'ы (*executable*???) устанавливаются в `GOPATH/bin` (если `GOBIN` не установлена).
+- *command*'ы (*executable*'s) устанавливаются в `GOPATH/bin` (если `GOBIN` не установлена).
 
 ## Module
 
@@ -306,10 +309,17 @@ RequireDirective = "require" ( RequireSpec | "(" newline { RequireSpec } ")" new
 RequireSpec = ModulePath Version newline .
 ```
 
-`go` *command* автоматически добавляет комментарий `// indirect` к некоторым *dependency*:
+### `indirect` комментарий
 
-- если ни один *package* в *main module* не импортирует ни один *package* из этого *module-dependency*
-- (???) если выбранная версия *module* выше, чем то, что уже подразумевается (транзитивно) другими *main module's dependencies*. 
+Определение *direct* и *indirect dependency* ([link](#glossary)).
+
+`go` *command* автоматически добавляет комментарий `//indirect` к некоторым *dependency*:
+
+- *Dependency*, для которой нет `import`  ни в одном из исходных файлов *main module*. И также для этих *dependency*'s нет `import` на нижележащих уровнях *dependency*'s.
+- *Dependency*, для которой нет `import`  ни в одном из исходных файлов *main module*. Но для этих *dependency* ЕСТЬ (!) `import` на нижележащих уровнях *dependency*'s. Такой `require` может появиться, если *module-dependency* первого уровня импортирует *module-dependency* второго уровня, но не указывает это  в своем  `go.mod` файле, или вообще не имеет своего `go.mod` файла, поэтому эта *dependency* должна быть поднята на уровень выше.
+- если указанная (в команде `go get`) версия *module* выше, чем та, которая требуется (транзитивно) другими *main module's dependencies* (зависимостями основного модуля). Т.е. (? точно indirect) *indirect dependency*  требуется в более высокой версии, чем подразумевается графом модулей. Обычно это происходит после явного *upgrade* для некоторых *direct* или *indirect dependency*'s через `go get -u ./...` .
+
+
 
 Пример:
 
@@ -326,11 +336,17 @@ require (
 
 
 
+# Module-aware commands
+
+## `go get`
+
+*Update* *dependency*'s в `go.mod` *file* для *main module*, а затем *build* и *install* их (соответственно install executable module в папку `GOPATH/bin`, если `GOBIN` не установлена [link](#поддержка-go-modules))
+
+```bash
+go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
+```
 
 
-
-
-# Команда `go mod` 
 
 ## `go mod`
 
@@ -363,13 +379,34 @@ go mod init [modulePath]
 
 - `modulePath` – *module path*.
 
-## `go get`
 
-*Update* *dependency*'s в `go.mod` *file* для *main module*, а затем *build* и *install* их.
+
+## `go mod tidy`
 
 ```bash
-go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
+go mod tidy [-e] [-v]
 ```
+
+`go mod tidy` проверяет , что `go.mod` файл соответствует исходному коду в *module*. Он добавляет отсутствующие `require`, необходимые для сборки *package*'s и *dependency*'s текущего *module*, и удаляет `require` для тех *module*'s, которые не требуются ни для каких *package*'s. Команда также добавляет любые недостающие записи в `go.sum` и удаляет ненужные записи.
+
+Флаги:
+
+- `-e` – продолжать , несмотря на возникающие ошибки во время загрузки *package*'s.
+
+- `-v` – печатать информацию об удаленных *module*'s на *standard error*.
+
+`go mod tidy` рекурсивно загружает все *package*'s в main module ([link](#glossary)) и все *package*'s, которые импортируют *package*'s первого уровня и т.д.. 
+
+После выполнения `go mod tidy`, каждый *module*, который предоставляет (*package*'s которого используются прямо или косвенно) один или несколько *package*'s:
+
+- (1, прямо) имеет соответствующую ему `require` директиву в `go.mod` файле для *main module*
+- (2, косвенно) имеет соответствующую ему `require` директиву внутри другого module более высокого уровня, который также включается через `require`. 
+
+ `go mod tidy` также указывает номер последней версии для каждого недостающего *module* (см [запросов Версия](https://golang.org/ref/mod#version-queries) для определения `latest` версии).
+
+ `go mod tidy` удаляет `require` *directive*'s для *module*'s, package's которых не используются прямо или косвенно.
+
+`go mod tidy `также добавляет или удаляет `// indirect `комментарии к `require` *directive*'s ([link](#indirect-комментарий)).
 
 
 

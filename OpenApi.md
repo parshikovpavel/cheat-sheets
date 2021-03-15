@@ -782,7 +782,7 @@ $ref: definitions.yaml#/Pet
 | `uniqueItems`          |                                       |                                                              |
 | `maxProperties`        |                                       |                                                              |
 | `minProperties`        |                                       |                                                              |
-| `required`             | `array`                               | (AV: ???) только для `type: object`. Элементы array-значения должны быть `string`. *Object instance* валидный, если содержит property's со всеми указанными названиями. |
+| `required`             | `array`                               | (AV: поддерживается с особенностями, [link](#required)) только для `type: object`. Элементы array-значения должны быть `string`. *Object instance* валидный, если содержит property's со всеми указанными названиями. |
 | `enum`                 | `array`                               | (AV: поддерживатся) Элементы в `array` могут быть любого типа, включая `null`.<br/>Успешно, если `instance` равен одному из элементов в массиве `enum`.<br/><u>Пример:</u><br/>`enum: [ processing, done, not_found, error ]`<br/>еще пример выше. |
 | `allOf`                |                                       |                                                              |
 | `oneOf`                |                                       |                                                              |
@@ -790,7 +790,7 @@ $ref: definitions.yaml#/Pet
 | `not`                  |                                       |                                                              |
 | `items`                | *Schema object* \| *Reference object* | [ниже](#items)                                               |
 | `properties`           | `object`                              | [ниже](#properties)                                          |
-| `additionalProperties` | `bool` | `object`                     | аналог `properties`, но не требует указывать ключи для properties, поэтому можно использовать со свободными значениями ключей (hashmap). AV: наверное не поддерживается |
+| `additionalProperties` | `bool` | `object`                     |
 | `description`          |                                       |                                                              |
 | `format`               |                                       | вроде можно проверять email                                  |
 | `default`              |                                       | наверно можно использовать вместе с `required`, когда поле не указано в `required` |
@@ -859,9 +859,54 @@ properties:
 
 
 
+#### `required`
+
+Обязательность присутствия какого-либо значения в parameters или dto.
+Задается параметром `required = true` для `parameters`:
+
+```yaml
+parameters:
+  - name: salt
+    in: path
+    required: true
+```
+
+`required = ['field1', 'field2']` для объектов:
+
+```yaml
+requestBody:
+     content:
+       application/json:
+         schema:
+           required: [ 'val2']
+           type: object
+           properties:
+             val1:
+               type: array
+               items:
+                 required: [ 'depVal1' ]
+                 type: object
+                 properties:
+                   depVal1:
+                     type: string
+                     nullable: true
+ 
+             val2:
+               type: string
+               nullable: false
+```
 
 
 
+#### `nullable`
+
+Пример:
+
+```yaml
+depVal1:
+    type: string
+    nullable: true
+```
 
 
-Опишите свой первый handler в поле paths. Задайте response описанному handler-y
+

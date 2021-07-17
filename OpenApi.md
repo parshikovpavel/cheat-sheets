@@ -86,7 +86,7 @@ paths:
 
 *Path templating* – описание шаблона с parameter'ом, заключенным в фигурные скобки `{...}`. *Path parameter* обозначает часть *URL path*, которая может изменяться.
 
-Каждый *path parameter* в URL должен соответствовать *path parameter*'у, описанному в [Path Item](#path-item) и/или в каждой [operation](#operation-object) внутри *path item*.
+Каждый *path parameter* в URL должен соответствовать *path parameter*'у, описанному в [Path Item](#path-item-object) и/или в каждой [operation](#operation-object) внутри *path item*.
 
 
 

@@ -1,5 +1,7 @@
 https://blog.zihengni.com/
 
+https://www.youtube.com/watch?v=aYuAd-IDigc
+
 # Порядок решения алгоритмических задач
 
 - написать тестовые примеры.

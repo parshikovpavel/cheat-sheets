@@ -1,3 +1,5 @@
+https://github.com/golang/go/wiki/Modules#daily-workflow
+
 # Glossary
 
 - *Main module* –  модуль, в котором `go` *command* вызывается. *Main module* определяется `go.mod` файлом в текущем или родительском каталоге.
@@ -69,6 +71,8 @@ module github.com/parshikovpavel/hello
 Программы размещаются внутри *package*. 
 
 *Package* – набор из *file*'s, размещенных в одном каталоге (и его подкаталогах?), которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом *file* некоторого *package* видны внутри всех других *file*'s этого же *package* (т.е. может быть несколько *file*'s в одном *package* !!!!).
+
+В одном каталоге может находиться только один *package*. Однако есть исключение для unit test'ов, которые должны находиться в файлах `XXX_test.go` и пакете `package XXX_test` 
 
 Подробно про `package` *clause* и `PackageName` ([1](#package-clause)).
 
@@ -344,6 +348,30 @@ require (
 
 ```bash
 go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
+```
+
+Флаги:
+
+- `-u `– сделать *upgrade* для *module*'s, импортируемых *directly* или *indirectly by packages*, указанными в команде. *Upgrade* будет сделан к последней версии.
+
+
+
+
+
+https://github.com/golang/go/wiki/Modules#daily-workflow
+
+### Как сделать *upgrade* и *downgrade* для *dependency*
+
+Чтобы сделать *upgrade* для *dependency* к ее *latest version*:
+
+```bash
+go get example.com/package
+```
+
+Чтобы сделать *upgrade* для *dependency* и всех ее *dependency*'s к *latest version*:
+
+```bash
+go get -u example.com/package
 ```
 
 

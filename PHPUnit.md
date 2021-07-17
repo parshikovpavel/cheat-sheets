@@ -180,7 +180,9 @@ Stub (заглушка)
 \*   }
  }
 
-Выбрасывание исключения. will($this->throwException(new Exception));
+- Выбрасывание исключения. Варианты:
+  -  `will($this->throwException(new Exception));`. 
+  - `willThrowException(new Exception())`.
 
 */\* Класс \*/
 \* **class** SomeClass

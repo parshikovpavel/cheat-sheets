@@ -9,6 +9,12 @@
 - https://bege13mot.github.io/grokking/#caching
 - https://github.com/donnemartin/system-design-primer
 
+
+
+![timing](img/timing.png)
+
+
+
 # Общее
 
 Проектирование системы состоит из шагов.

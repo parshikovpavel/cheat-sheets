@@ -456,3 +456,19 @@ sudo nano /private/etc/hosts
 ```
 
 - Сохранить изменения – `Ctrl+X` + `Y` + `Enter`
+
+# Скорость Magic Mouse
+
+Записать значение скорости:
+
+```
+defaults write -g com.apple.mouse.scaling  11.0
+
+```
+
+Прочитать значение скорости:
+
+```
+defaults read -g com.apple.mouse.scaling
+```
+

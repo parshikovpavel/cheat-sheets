@@ -1,18 +1,44 @@
 https://yourbasic.org/golang/time-reset-wait-stop-timeout-cancel-interval/
 
+https://medium.com/@cep21/preemptive-interface-anti-pattern-in-go-54c18ac0668a
 
+https://github.com/spy16/droplets/blob/master/docs/interfaces.md
+
+
+
+
+
+https://medium.com/@german.gorelkin
+
+Супер блог:
+
+- circuit breaker
+- retry (можно запилить проект на гитхаб)
+
+
+
+
+
+Правила написания кода на Go в репозитории Go
+
+https://github.com/golang/go/wiki/CodeReviewComments
 
 # Общие особенности
 
 * компилируемый язык
-
 * имеет сборщик мусора
-
 * CSP-style, асинхронная модель, возможность в процессе выделять потоки и писать параллельные программы (аналог OpenMP)
-
 * на выходе получаем готовый бинарник без зависимостей, которые надо было бы скачивать менеджером зависимостей
-
 * строгая статическая типизация, типы переменных не динамические, и поэтому нет оверхеда по памяти на хранение типа.
+
+Цель создания – быстрая разработка больших распределенных систем
+
+Команда разработки:
+
+- Кен Томпсон (Unix, C, UTF-8)
+- Роб Пайк (UTF-8)
+- Роберт Гризмер
+- Брэд Фицпатрик (livejournal, memcached)
 
 # Конфигурирование
 
@@ -159,7 +185,12 @@ Literal (литерал) является описанием *constant*'ы (ко
 
 ## Rune literal
 
-Rune literal (строковый литерал) – *integer value*, которое задает *Unicode code point*. Записывается в *single quote*'s, например, `'x'`или `'\n'`. 
+Rune literal (строковый литерал) – *integer value*, которое задает *Unicode code point*. Записывается в *single quote*'s. 
+
+Может состоять из:
+
+- одного символа (`'x'`). Может использоваться любой символ, кроме *newline* и неэкранированной *single quote*. Такой символ описывает *Unicode value* этого символа.
+- нескольких символов, начинающихся с *backslash* ( `'\n'`). Такие многосимвольные последовательности кодируют *Unicode value*, используя специально определенные форматы. TODO!!!
 
 По умолчанию, *rune literal* приводится к типу `rune` (псевдоним для `int32`).
 
@@ -179,7 +210,9 @@ a = 'ц'  // constant 1094 overflows byte
 
 ## String literal
 
-*String literal* является описанием *string constant*'ы. 
+[link](types/string.md#string-literal)
+
+
 
 # Constant
 
@@ -230,6 +263,25 @@ TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType 
 
 Каждый type имеет некоторое [zero value](#zero-value).
 
+## Виды type's
+
+### Reference type
+
+Есть ссылочные (reference) типы, которые содержат внутри себя *reference* на другую структуру:
+
+- *map*
+- *pointer* (???)
+- *slice*
+- *channels*
+
+Поэтому при присвоении – присваивается *value*, которое внутри содержит *reference*. Поэтому, как-бы, они присваиваются *by reference*. 
+
+Эти *type*'s аллоцируются с помощью `make()`, которая возвращает *value* (не *pointer*). Но т.к. они уже внутри содержать *reference*, их всегда и используются *by value* и получать отдельно *pointer* не нужно. 
+
+### Non-reference type
+
+Остальные *type*'s содержат *value* и при присвоении – копируется *value*.
+
 ## Method set
 
 *Type* имеет *method set*, связанный с ним. *Method set* для *type* определяет *interface*'s, которые этот *type* реализует. 
@@ -240,49 +292,13 @@ TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType 
 - *Method set* любого *pointer type*  `*T` – множество всех его *method*'s, объявленных с *receiver type* `*T` or `T`  (т.е. он также содержит в себе *method set* для *type* `T`)
 - К *struct type*, содержащим *embedded field*'s, применяются дополнительные правила по формированию *method set* (описано в разделе [struct type](#struct-type))
 
+Связано с [link](#приведение-value-и-pointerа-к-interfacу)
 
+TODO!!!! Почитать еще тут [link](https://stackoverflow.com/questions/23044855/what-is-the-reason-golang-discriminates-method-sets-on-t-and-t/23046811#23046811)
 
 ## `string`
 
-Строки – *immutable* (неизменяемы): после создания невозможно изменить содержимое строки.
-
-Строки хранятся в кодировке UTF-8 и символы строки могут быть представлены двумя и более байтами. 
-
-При обращении к определенной позиции в строке по индексу `str[1]` возвращается байт (тип `byte`), хранящийся в этой позиции. 
-
-### Итерирование `string`
-
-При итерировании циклом `for` по индексам массива, происходит итерирование по байтам строки, что в случае Unicode строк будет некорректным.
-
-```go
-name := "Вася Пупкин" // строка
-
-for i := 0; i < len(name); i++ {
-	fmt.Printf("%c", name[i]) // name[i] — байт
-} // ÐÐ°ÑÑ ÐÑÐ¿ÐºÐ¸Ð½
-```
-
-При итерировании через `for - range`, происходит корректное итерирование по *Unicode runes*.
-
-```go
-for _, rune := range name {
-	fmt.Printf("%c", rune) // rune — utf8-символ
-} // Вася Пупкин
-```
-
-### Конкатенация `string`
-
-TODO:
-
-https://www.calhoun.io/6-tips-for-using-strings-in-go/
-
-https://golangdocs.com/concatenate-strings-in-golang
-
-https://www.geeksforgeeks.org/different-ways-to-concatenate-two-strings-in-golang/
-
-https://stackoverflow.com/questions/1760757/how-to-efficiently-concatenate-strings-in-go
-
-fgsdgdf
+[link](types/string.md)
 
 ## Числовые типы
 
@@ -347,6 +363,8 @@ Tag           = string_lit .
   	F func()
   }
   ```
+
+
 
 ### *Embedded field*
 
@@ -450,16 +468,6 @@ a := A{b: 1}
 
 
 
-
-
-
-
-
-
-
-
-
-
  
 
 ## Коллекции
@@ -540,6 +548,86 @@ var bigDigits = [][]string{
 - *clone (copy)*:
 
   ...
+
+#### Реализация *stack* (стек)
+
+*stack* на Go реализуется через *slice*:
+
+- для push – используем функцию `append`
+- для pop – используем *slice expression* для исключения *top element*.
+
+```go
+type Stack []int
+
+// Push a new value onto the stack
+func (s *Stack) Push(v int) {
+	*s = append(*s, v) // Simply append the new value to the end of the stack
+}
+
+// Remove and return top element of stack. Return false if stack is empty.
+func (s *Stack) Pop() (int, bool) {
+	if s.IsEmpty() {
+		return 0, false
+	} else {
+		index := len(*s) - 1 // Get the index of the top most element.
+		element := (*s)[index] // Index into the slice and obtain the element.
+		*s = (*s)[:index] // Remove it from the stack by slicing it off.
+		return element, true
+	}
+}
+```
+
+Но эта реализация НЕ *thread safe*, т.к. мы можем попасть в race condition и попытаться сделать *pop* из пустого *stack* (если два потока попадут в функцию `Pop()`).
+
+Чтобы избежать race condition – необходимо обернуть *slice* структуру и добавить в нее *mutex*:
+
+```go
+type stack struct {
+     lock sync.Mutex // you don't have to do this if you don't want thread safety
+     s []int
+}
+
+func NewStack() *stack {
+    return &stack {make([]int,0),}
+}
+
+func (s *stack) Push(v int) {
+    s.lock.Lock()
+    defer s.lock.Unlock()
+
+    s.s = append(s.s, v)
+}
+
+func (s *stack) Pop() (int, error) {
+    s.lock.Lock()
+    defer s.lock.Unlock()
+
+
+    l := len(s.s)
+    if l == 0 {
+        return 0, errors.New("Empty Stack")
+    }
+
+    res := s.s[l-1]
+    s.s = s.s[:l-1]
+    return res, nil
+}
+
+
+func main(){
+    s := NewStack()
+    s.Push(1)
+    s.Push(2)
+    s.Push(3)
+    fmt.Println(s.Pop())
+    fmt.Println(s.Pop())
+    fmt.Println(s.Pop())
+}
+```
+
+ 
+
+
 
 ### Общее
 
@@ -622,6 +710,8 @@ func(prefix string, values ...int)
 ```
 
 ## *Interface* *type*
+
+TODO: Подумать, удовлетворяет ли `nil` типу `interface` (вроде уловлетворяет любому интерфейсу).
 
 `interface`  – описывает некоторый *method set*.
 
@@ -782,7 +872,7 @@ s := Stringer(b)
 
 
 
-![interface2](img/go/interface2.png)
+![interface2](../img/go/interface2.png)
 
 
 
@@ -952,7 +1042,9 @@ func main() {
 
   Т.е. *method* `func (c *Cat) Speek()` включен в *method set* для `*Cat`, но не включен в *method set* для `Cat`.
 
-- Для *struct type* с *promoted method* действует специальные правила при разных сочетания (*promoted by pointer* и *promoted by value*; *receiver by value* и *receiever by pointer*) ([link](#struct-type))
+- Для *struct type* с *promoted method* действует специальные правила при разных сочетаниях (*promoted by pointer* и *promoted by value*; *receiver by value* и *receiever by pointer*) ([link](#struct-type))
+
+TODO!!!! Почитать еще тут [link](https://stackoverflow.com/questions/23044855/what-is-the-reason-golang-discriminates-method-sets-on-t-and-t/23046811#23046811)
 
 #### *Pointer* на *interface*
 
@@ -1202,6 +1294,143 @@ TODO!!!! https://blog.golang.org/maps
 
 
 
+### Ошибка Cannot assign to (struct field in map)
+
+Например, такое выдает ошибку:
+
+```go
+package main
+
+import "fmt"
+
+type Animal struct {
+	count int
+}
+
+func main() {
+	m := map[string]Animal{"cat": Animal{2}, "dog": Animal{3}, "mouse": Animal{5}}
+        fmt.Println(m)
+	m["dog"].count = 4
+	
+	fmt.Println(m)
+
+}
+```
+
+<u>Причина:</u>
+
+Левая часть присвоения должна быть «*addressable*» ([1](https://golang.org/ref/spec#Assignments))
+
+> Каждый левый операнд должен быть *addressable*, *map index expression* или (только для = присвоения) *blank identifier*.
+
+и [2](https://golang.org/ref/spec#Address_operators) 
+
+> *Operand* должен быть *addressable*, то есть быть либо *variable*, либо косвенным указателем (*pointer indirection*), либо *slice indexing operation*; или *field selector of an addressable struct operand*; или array *indexing operation of an addressable array*.
+
+Решения:
+
+1. Взять структуру целиком, изменить и присвоить обратно:
+
+   ```go
+   package main
+   
+   import "fmt"
+   
+   type Animal struct {
+   	count int
+   }
+   
+   func main() {
+   	m := map[string]Animal{"cat": Animal{2}, "dog": Animal{3}, "mouse": Animal{5}}
+   
+   	fmt.Println(m)
+   
+   	var x = m["dog"]
+   	x.count = 4
+   	m["dog"] = x
+   
+   	fmt.Println(m)
+   
+   
+   }
+   ```
+
+2. Использовать в *map* *pointer*'ы на структуру:
+
+   ```go
+   package main
+   
+   import "fmt"
+   
+   type Animal struct {
+   	count int
+   }
+   
+   func main() {
+   	m := map[string]*Animal{"cat": &Animal{2}, "dog": &Animal{3}, "mouse": &Animal{5}}
+   	fmt.Printf("%#v\n",m["dog"])
+   	
+   	m["dog"].count = 4
+   
+   	fmt.Printf("%#v", m["dog"])
+   
+   }
+   ```
+
+### Присваивание map
+
+
+
+ 
+
+## *Channel type*
+
+Одна из основных проблем *concurrent programming* – корректный доступ к *shared variable*. При разработке на Go рекомендуется передавать *shared variable* по *channel*. В итоге, доступ к конкретной ячейке памяти имеет только одна *goroutine*. *Race condition* не может произойти *by design*.
+
+*Channel* предоставляет механизм для взаимодействия конкурентных *goroutine*'s с помощью отправки (через [send statement](#send-statement)) и получения (через [receive-operator](#receive-operator)) значений указанного *element type*. Значение *uninitialized channel*  равно `nil`.
+
+<pre>
+ChannelType = ( "chan" | "chan" "<-" | "<-" "chan" ) <a href="#array-type">ElementType</a> .  
+</pre>
+
+Опциональный оператор `<-`  указывает *channel direction*.
+
+Возможны такие *channel direction*:
+
+- *bidirectional channel* для *send* и *receive* значений
+
+  ```go
+  chan T
+  ```
+
+- *channel* для *send* значений:
+
+  ```go
+  chan<- float64
+  ```
+
+- *channel* для *receive* значений:
+
+  ```go
+  <-chan int 
+  ```
+
+*Bidirectional channel* может быть ограничен только на *send* или только на *receive* с помощью *assignment statement* ([link](#assignment)) или с помощью *explicit conversion* ([link](#conversion)).
+
+
+
+TODO
+
+https://habr.com/ru/post/490336/
+
+https://medium.com/rungo/anatomy-of-channels-in-go-concurrency-in-go-1ec336086adb
+
+https://www.velotio.com/engineering-blog/understanding-golang-channels
+
+https://go101.org/article/channel.html
+
+[link](types/channel.md)
+
 # Property of types and values
 
 ## Type identity 
@@ -1257,15 +1486,80 @@ TopLevelDecl  = Declaration | <a href="#function-declaration">FunctionDecl</a> |
 - *Scope* любой *constant* или *variable* внутри *function* начинается с точки *declaration* и до конца самого вложенного *block*'а ([1](#block))
 - *Scope* любого `type` внутри *function* начинается с точки *declaration* и до конца самого вложенного *block*'а ([1](#block)).
 
-*Identifier*, объявленный внутри *block*'а, может быть переобъявлен в любом внутреннем *block*'е. До тех пора пока внутренний *identifier* находится в *scope*, он перекрывает внешние *identifier*'s. Поэтому можно случайно объявить новый *identifier* во внутреннем *block*'е, думая что используется *identifier* из внешнего *block*'а:
+*Identifier*, объявленный внутри *block*'а, может быть переобъявлен в любом внутреннем *block*'е. До тех пора пока внутренний *identifier* находится в *scope*, он перекрывает (*shadow*) внешние *identifier*'s. Внешние *identifier*'s называются в этом случае – *shadowed*.
 
-```go
-err := f()
+## Примеры *variable shadowing*
 
-if ... {
-  resp, err := d() // Здесь объявляется новый identifier `err`, а не используется identifier из внешнего block'а
-}
-```
+Т.е. в разных *block*'ах можно объявлять переменные с одинаковым названием.
+
+- Можно случайно объявить новый *identifier* во внутреннем *block*'е, думая что используется *identifier* из внешнего *block*'а:
+
+  ```go
+  err := f()
+  
+  if ... {
+    resp, err := d() // Здесь объявляется новый identifier `err`, а не используется identifier из внешнего block'а
+  }
+  ```
+
+- *Shadowing* переменной в заголовке блоков `if` и `for`:
+
+  ```go
+  package main
+  import "fmt"
+  func main() {
+      i := 1 //scope: main
+      for i := 2; i < 3; i++ {
+          // i shadowed inside this block
+          fmt.Println(i) // 2
+      }
+  
+      if i := "test"; true {
+          // i shadowed inside this block
+          fmt.Println(i) // test
+      } else { // в случае условия false
+          // i shadowed inside this block
+          fmt.Println(i) //test
+      }
+  }
+  ```
+
+- использование явно объявленных блоков с помощью скобок `{` и `}`:
+
+  ```go
+  package main
+  import "fmt"
+  func main() {
+      i := 1
+      //new scope:
+      {
+          i := "hi" // new local var
+          fmt.Println(i) // hi
+      }
+  }
+  ```
+
+- можно даже инициализировать переменную во внутреннем *block*'е, значением переменной из внешнего *block*'а:
+
+  ```go
+  func main() {
+  	a := 1
+  
+  	{
+  		a := a // Переменную во внутреннем block'е инициализируем значением переменной из внешнего block'а
+  		a++
+  		println(a) // 2
+  	}
+  
+  	println(a) // 1
+  }
+  ```
+
+  
+
+
+
+
 
 
 
@@ -1306,12 +1600,132 @@ Zero value:
 
 Чтобы получить доступ к *identifier* из другого *package*, он должен быть объявлен как *exported*. 
 
+Когда *identifier* – *exported* в *package*, это означает, что к нему можно получить прямой доступ из любого другого *package*. Когда *identifier* – *non-exported* в *package*, к нему нельзя получить прямой (!!!) доступ из любого другого *package*. Но это также значит, что к *non-exported identifier* можно получить доступ НЕ напрямую.
+
 *Identifier* является *exported*, если выполняется два условия:
 
 1. первый символ *identifier*'а – это буква в *Unicode upper case*; И!!!!
-2. *identifier* объявлен в *package block* ([1](#block)) или является *field* ([1](#struct-type)) или *method* ([1](#method-declaration)) (т.е. *field* и *method* могут быть *exported*, и должны в этом случае начинаться с буквы в *Unicode upper case*)
+2. *identifier* объявлен в *package block* ([1](#block)) или является *field* ([1](#struct-type)) или *method* ([1](#method-declaration)) (т.е. *field* и *method* могут быть *exported*, и должны в этом случае начинаться с буквы в *Unicode upper case*!!!)
 
 Все остальные *identifier*'s – *non-exported*.
+
+#### *Exported field* и *method*
+
+*Field* и *method* могут быть *exported*.
+
+Варианты:
+
+- *struct* – *exported*, *field* и *method* – *non-exported*, мы не можем обратиться к *field* и *method* через *struct* из другого *package*.
+
+  ```go
+  package model
+  
+  type Person struct {
+  	age  int
+  }
+  
+  func (p *Person) getAge() string {
+      return p.Name
+  }
+  ```
+
+  ```go
+  package main
+  
+  import "fmt"
+  
+  func main() {
+      p := &Person{
+          age:  21,
+      }
+  
+      fmt.Println(p.age) // ошибка
+      fmt.Println(p.getName()) // ошибка
+  }
+  ```
+
+- *struct* – *non-exported*:
+
+  - *method* – *exported*. Имеет смысл, когда тип реализует *interface*. И из другого *package* мы получаем доступ к *method* через интерфейс. Но при этом сам *struct type* остается *non-exported*.
+
+    ```go
+    type Client interface {
+    	GetUrls()
+    }
+    
+    type client struct {}
+    
+    func New() Client {
+    	return &client{}
+    }
+    
+    func (c *client) GetUrls() {}
+    ```
+
+  - *field* – *exported*. Пример – кодирование в json через пакет `encoding/json`:
+
+    ```go
+    type response struct {
+        Success bool   `json:"success"`
+    }
+    
+    func main(w http.ResponseWriter, r *http.Request) {
+        resp := &response{
+            Success: true,
+        }
+        json.NewEncoder(w).Encode(resp); 
+    }
+    ```
+
+    Наверное, там как то используется *reflection* для доступа к *exported field*.
+
+#### *Non-exported type*
+
+Можно возвращать *non-exported type* из *exported function*:
+
+```go
+package params
+
+type validator struct {}
+
+func NewValidator() *validator {
+  return &validator{}
+```
+
+golint при этом выдает ошибку (может уже не выдает?) `exported func XXX returns unexported type *xxx, which can be annoying to use (golint)"` ([1](https://github.com/golang/lint/issues/210))
+
+Таким способом можно реализовать различные фабричные (factory, создающие) *design pattern*. Например, singleton ([1](http://blog.ralch.com/tutorial/design-patterns/golang-singleton/)). Это полезно в Go, если вы не хотите, чтобы сторонний разработчик напрямую создавал объекты `validator`. Таким образом, «конструктор» или «фабрика» `NewValidator()` - единственное место, где можно получить новые экземпляры.
+
+При этом код, который получает *non-exported type*, не может использовать его для различных «сигнатур» (например, типов, функций):
+
+```go
+type eff struct {
+    m *params.validator  // <-- cant do this
+}
+
+func main() {
+   var m params.validator // <-- cant do this
+   m2 := params.NewValidator() // can do this
+}
+```
+
+Лучшим вариантом, будет создание *exported interface* с возвращаемым в нем *non-exported type*:
+
+```go
+package params
+
+type Valid interface {}
+
+type validator struct {}
+
+func NewValid() *Valid {
+  return &validator{}
+}
+```
+
+
+
+
 
 ## *Constant declaration*
 
@@ -1448,9 +1862,13 @@ var (
 	i       int
 	u, v, s = 2.0, 3.0, "bar"
 )
-var re, im = complexSqrt(-1)
+
 var _, ok = entries[name]  // получение данных из map; нас интересует только есть элемент `ok`, или нет
 ```
+
+
+
+
 
 Если `ExpressionList` не указан, *variable* инициализируется *zero value* ([link](#zero-value)).
 
@@ -1522,6 +1940,8 @@ func min(x int, y int) int {
 
 
 
+### Передача параметров *by value* VS *by pointer*
+
 Существует два способа передачи *parameter*'ов (и *receiver*'а):
 
 - *by value* (`T`). Внутри *function* мы используем копию оригинального значения. Любые изменения переменной, произведенные внутри функции, никак не отразятся на оригинальном значении.
@@ -1534,7 +1954,7 @@ func min(x int, y int) int {
 - если необходимо в *function* измененить оригинальное значение фактического параметра. 
 - в Go не используется техника *copy-on-write* (????). Для маленьких по размеру *type* (например, для которых *underlying type* – `struct` из нескольких значений `int` или `string`) – можно использовать передачу *by value*. Для значений большого типа, намного дешевле передать в параметре *pointer* на это значение, чем копировать само значение. Потому что операция передачи указателя (обычно 32- или 64-битного значения) намного дешевле. И это имеет смысл даже для методов, не изменяющих значения *parameter*'ов (или *receiver*'а). 
 
-
+Связано с [link](#передача-by-value-vs-передача-by-pointer)
 
 В соответствии с соглашениями, принятыми в языке Go, значение ошибки (или успеха когда `error = nil`) типа `error` возвращается в последнем (или единственном) значении, возвращаемом функцией или методом.
 
@@ -1602,9 +2022,11 @@ func (m *MyType) SetVal() {}
 func (m MyType) GetVal() {}
 ```
 
-
+TODO??? Как работает вызов методов у reciever'а by value, влияет на исходный reciever или на копию?
 
 https://stackoverflow.com/questions/27775376/value-receiver-vs-pointer-receiver/27775558#27775558
+
+Best practices  тут (от создателей Go): https://github.com/golang/go/wiki/CodeReviewComments#receiver-type
 
 ### Конструктор
 
@@ -1810,9 +2232,7 @@ Element       = Expression | LiteralValue .
 
   
 
-
-
-*Struct literal* должен:
+Пусть объявлено:
 
 ```go
 type S struct {
@@ -1820,6 +2240,8 @@ type S struct {
   b int
 }
 ```
+
+Тогда *struct literal* должен:
 
 - Если `ElementList` не содержит `Key`'s, то должны быть указаны элементы для каждого *field* в *struct type* и в том порядке, в каком *field*'s перечислены при описании *struct type*. 
 
@@ -1873,7 +2295,14 @@ s := new(S)
 s := &S{}
 ```
 
-Однако использование *address operator* для пустого *composite literal* для *slice type* и *map type* – это не то же  самое, что и `new()`. ....TODO
+Однако использование *address operator* для пустого *composite literal* для *slice type* и *map type* – это не то же  самое, что и `new()`:
+
+```go
+p1 := &[]int{}    // p1 указывает на инициализированный, пустой slice со значением []int{} и длиной 0
+p2 := new([]int)  // p2 указывает на неинициализированный slice со значением nil и длиной 0
+```
+
+
 
 В composite literal для типов: *array type*, *slice type*, *map type* (типа `T`) –  у *element*'ов (для *array*, *slice*, *map*)  и *key*'s (для *map*), которые сами по себе являются *composite literal*, может опускать соответствующий *literal type*, если он идентичен *element type* или *key type* `T`. 
 
@@ -2150,7 +2579,12 @@ a[<low> : <high> : <max>]
 
 При этом будет создан *slice* как и для простого *slice expression* `a[<low> : <high>]`. Но для него устанавливается `capacity = <max> - <low>`.
 
-## Type assertions
+## Type assertion
+
+Есть два вида преобразований:
+
+- [conversion](#conversion) (приведение типа)
+- *type assertion*
 
 Позволяет проверить, что `x != nil` и что значение в `x`  имеет тип `T`.
 
@@ -2389,6 +2823,13 @@ func main() {
 
 ## Conversion
 
+Есть два вида преобразований:
+
+- conversion (приведение типа)
+- [type assertion](#type-assertion)
+
+(подробнее https://stackoverflow.com/a/19579058)
+
 *Conversion* (приведение типа) изменяет тип *expression* на тип, указанный в *conversion*. 
 
 *Conversion* может быть:
@@ -2396,13 +2837,31 @@ func main() {
 - *explicit conversion* – явное приведение типа
 - *implied conversion* – неявное приведение типа, определяемое контекстом для *expression*.
 
-Преобразование может появиться буквально в источнике или *подразумеваться* контекстом, в котором появляется выражение.
+Преобразование может появиться буквально в источнике или *подразумеваться* (???) контекстом, в котором появляется выражение.
 
 *Explicit conversion* записывается в виде:
 
 <pre>
 Conversion = Type "(" Expression [ "," ] ")" .  
 </pre>
+При этом `Expression` должно быть *converted* (!!!) в тип `Type`. Правила для *converted*:
+
+- [Constant](https://golang.org/ref/spec#Constants) value `x` может быть *converted* в тип `T` ...
+
+- *Non-constant value* `x` может быть *converted* в тип `T`, если:
+
+  - `x` – *assignable* к `T`.
+
+    Пример:
+
+    ```go
+    type MyInt int
+    var a int = 10
+    var b MyInt = MyInt(a)
+    ```
+
+    
+
 
 
 
@@ -2500,6 +2959,18 @@ a++
 
 Они могут применяться лишь в постфиксной форме. Это предотвращает появление проблем, связанных с неправильным порядком вычислений.
 
+
+
+## Assignment
+
+TODO
+
+
+
+
+
+
+
 ## `if`
 
 <pre>
@@ -2564,6 +3035,68 @@ SwitchStmt = <a href="#expression-switch">ExprSwitchStmt</a> | <a href="#type-sw
 *Expresson* внутри `switch` вычисляется только один раз
 
 ### *Expression switch*
+
+Алгоритм:
+
+- Вычисляется *expression* в *switch*
+- вычисляются *expression* в *case*. Они не обязательно должны быть константами. Первое *expression* равное *switch expression* запускает выполнение *statement*'s соответствующего блока; остальные *case*'s пропускаются. 
+- Если ни для одного *case* не выполняется равенство, выполняются *statement*'s из *default*. 
+
+Может быть не более одного *default case*, и он может появляться в любом месте *switch statement*. Отсутствующее *switch expression* эквивалентно логическому значению `true`.
+
+<pre>
+ExprSwitchStmt = "switch" [ SimpleStmt ";" ] [ Expression ] "{" { ExprCaseClause } "}" .
+ExprCaseClause = ExprSwitchCase ":" StatementList .
+ExprSwitchCase = "case" <a href="#constant-declaration">ExpressionList</a> | "default" .
+</pre>
+*Simple statement* может предшествовать *switch expression*, который выполняется перед тем как будет вычислено  *switch expression*.
+
+<u>Примеры:</u>
+
+```go
+switch tag {
+default: s3()
+case 0, 1, 2, 3: s1()
+case 4, 5, 6, 7: s2()
+}
+
+switch x := f(); {  // missing switch expression means "true"
+case x < 0: return -x
+default: return x
+}
+
+switch {
+case x < y: f1()
+case x < z: f2()
+case x == 4: f3()
+}
+```
+
+
+
+```go
+switch lookup {
+case
+    "900898296620",
+    "900898296636":
+    return true
+}
+```
+
+
+
+```go
+switch doc.Key.Type {
+		case internal.CountryDocumentType, internal.RegionDocumentType, internal.CityDocumentType:
+			locs.Set(doc.Key.AvitoId, *geo)
+		case internal.DistrictDocumentType:
+			distr.Set(doc.Key.AvitoId, *geo)
+		default:
+			return UnknownLocationType
+		}
+```
+
+
 
 
 
@@ -2795,13 +3328,7 @@ OuterLoop:
 
 
 
-## *Concurrency*
-
-### *Channel*
-
-Одна из основных проблем *concurrent programming* – корректный доступ к *shared variable*. При разработке на Go рекомендуется передавать *shared variable* по *channel*. В итоге, доступ к конкретной ячейке памяти имеет только одна *goroutine*. *Race condition* не может произойти *by design*.
-
-### *Goroutine*
+## *Goroutine*
 
 В Go было выбрано название *goroutine*, т.к. существующие термины (*thread*, *coroutine*, *process* и др.) – наполнены неточным смыслом. 
 
@@ -2833,6 +3360,16 @@ go func() {                 // использование function literal
 *Function literal* – *closure*, поэтому *variable*'s, которые используются внутри *function*, не будут удалены в вызывающей *goroutine* и будут существовать до завершения выполнения *function* (что это значит???)
 
 Для ожидания несколько goroutine's необходимо использовать `sync.WaitGroup ` ([1](#sync-waitgroup)).
+
+
+
+TODO:
+
+https://github.com/golang/go/wiki/CommonMistakes
+
+https://stackoverflow.com/questions/36121984/how-to-use-a-method-as-a-goroutine-function
+
+https://stackoverflow.com/questions/30183669/passing-parameters-to-function-closure
 
 
 
@@ -3036,8 +3573,6 @@ go build [-o output] [-i] [build flags] [packages]
 -  `-o` заставляет `build` писать результирующий исполняемый файл или объект в указанный *output file* или *directory* вместо поведения по умолчанию, описанного ранее. 
 
 
-
-`gofmt` (`go fmt`)
 
 
 
@@ -3295,6 +3830,20 @@ https://medium.com/a-journey-with-go/go-should-i-use-a-pointer-instead-of-a-copy
 
 https://stackoverflow.com/questions/51183003/arrays-in-go-are-by-value
 
+# Отладка
+
+Чтобы распечатать значение *pointer*'а и проверить на какой адрес указывает *pointer*, можно его просто распечатать через `println()`:
+
+```go
+valueA := "a"
+pointerA := &valueA
+println(pointerA)  // 0xc000044768
+```
+
+
+
+
+
 
 
 # Standard library
@@ -3318,8 +3867,6 @@ func Contains(b, subslice []byte) bool
 ```go
 bytes.Contains([]byte("seafood"), []byte("foo"))
 ```
-
-
 
 
 
@@ -3394,11 +3941,20 @@ func make(t Type, size ...IntegerType) Type
 
 Смысл введения этой функции в том, что эти три типа (`slice`, `map`, `chain`) представляют собой, под капотом, ссылки на структуры данных, которые должны быть инициализированы перед использованием. Это позволяет за одну операцию сразу получить инициализированную и готовую к использованию переменную, отличную от *zero value* (`nil`).  Например, для *slice* можно с помощью `make()` сразу инициализировать *length*, *capacity* и соответствующий *underlying array* (??? внутри этого *underlying array* данные будут очищены в *zero value*). Поэтому с этими типами `new()` используется очень редко.
 
+Также важно, что `make` возвращает *value* (не *pointer*). Но т.к. они уже внутри содержать *reference*, их всегда и используются *by value* и получать специально *pointer* не нужно. 
+
 TODO!!! https://golang.org/doc/effective_go#allocation_make
 
 Возвращаемое значение зависит от `Type`:
 
 - *slice*:
+
+  ```
+  Call             Type T     Result
+  
+  make(T, n)       slice      slice of type T with length n and capacity n
+  make(T, n, m)    slice      slice of type T with length n and capacity m
+  ```
 
   - Если указан только `size1`, то получаем *slice* с параметрам `len = cap = size1`.
   - Если указан также `size2`, то `cap = size2`.
@@ -3411,14 +3967,32 @@ TODO!!! https://golang.org/doc/effective_go#allocation_make
 
 - *map*:
 
-```
-Map:        Если size не указан - выделяется пустой map с небольшим capacity
-            Если size указан - выделяется пустой map с указанным начальным capacity
-            Первоначальная capacity не ограничивает его size
-            
-Channel:    Если size не указан - channel небуферизованный
-            Если size указан, то buffer capacity = size
-```
+  ```
+  Call             Type T     Result
+  
+  make(T)          map        map of type T
+  make(T, n)       map        map of type T with initial space for approximately n elements
+  ```
+
+  * Если *size* не указан - выделяется пустой *map* с небольшим *capacity*
+
+  * Если *size* указан - выделяется пустой *map* с указанным начальным *capacity*
+
+    Первоначальная capacity не ограничивает его size
+
+- *channel*:
+
+  ```
+  Call             Type T     Result
+  
+  make(T)          channel    unbuffered channel of type T
+  make(T, n)       channel    buffered channel of type T, buffer size n
+  ```
+
+  * Если *size* не указан - *unbuffered channel*
+  * Если *size* указан, то  *buffered channel*, `buffer capacity = size`
+
+
 
 Разница между `new()` и `make()`:
 
@@ -3499,6 +4073,14 @@ func println(args ...Type)
 ### `error` (builtin)
 
 Смотреть [1](#error)
+
+
+
+## `context`
+
+https://www.youtube.com/watch?v=U5Y_St7lESk
+
+
 
 
 
@@ -3694,12 +4276,12 @@ func (enc *Encoder) Encode(v interface{}) error
 
 Порядок кодирования (декодирования) может быть настроен с помощью *format string*, описанного в ключе `json` в *struct field's tag*.
 
-*Format string* указывает имя поля, за которым, возможно, следует список параметров, разделенных запятыми `,`. Это имя поля необходимо указывать, чтобы декодировать (кодировать) поля из (в) JSON, которые отличаются от названия в полей в *struct type*. В том числе для декодирования (кодирования) полей из (в) JSON, которые не начинаются с заглавных букв. Имя может быть пустым (можно пропустить имя поля), чтобы указать параметры без переопределения имени поля по умолчанию.
+*Format string* указывает имя поля, за которым, возможно, следует список параметров, разделенных запятыми `,`. Это имя поля необходимо указывать, чтобы декодировать (кодировать) поля из (в) JSON, которые отличаются от названия в полей в *struct type*. В том числе для декодирования (кодирования) полей из (в) JSON, которые не начинаются с заглавных букв. Имя может быть пустым (можно пропустить имя поля), чтобы указать параметры без переопределения исходного имени поля (3 пример ниже).
 
 Возможные параметры:
 
 - параметр `omitempty` указывает, что поле должно быть исключено из JSON-объекта, если поле – *empty* (имеет пустое значение): `false`, `0`, `nil`, пустой `array`, `slice`, `map` или `string`.
-- ...
+- если *tag* указан как  `json:"-"` , то поле всегда опускается. Чтобы указать поле с именем `-` нужно использовать *tag* – `-,`.
 
 Примеры *tag*'s и их значения:
 
@@ -3723,7 +4305,7 @@ Field int `json:",omitempty"`
 
 
 
-В следующем примере 
+Пример структуры для декодирования (кодирования) полей из (в) JSON, которые не начинаются с заглавных букв:
 
 ```go
 type Sample struct {
@@ -3731,6 +4313,8 @@ type Sample struct {
     Age  int    `json:"age"`
 }
 ```
+
+
 
 
 
@@ -4055,7 +4639,86 @@ fmt.Println(split)
 
 Значения, содержащие *type*'s, определенные в этом *package*, не должны копироваться.
 
-### `sync.WaitGroup{}`
+### `type Mutex`
+
+`Mutex` (*mutual exclusion*, взаимное исключение) – *lock* взаимного исключения. *Zero value* для `Mutex` - это *unlocked mutex*.
+
+`Mutex` нельзя копировать после первого использования.
+
+```go
+type Mutex struct {
+    // contains filtered or unexported fields
+}
+```
+
+#### `Lock()`
+
+```go
+func (m *Mutex) Lock()
+```
+
+Блокирует (lock, захватывает?) *mutex* `m`. Если *mutex* `m` уже заблокирован, то вызывающая *goroutine* блокируется до тех пор, пока *mutex* не станет доступным.
+
+#### `Unlock()`
+
+```
+func (m *Mutex) Unlock()
+```
+
+Разблокирует *mutex* `m`. Если `m` не заблокирован, то происходит *run-time error*.
+
+Заблокированный *mutex* не связан с конкретной *goroutine*. Разрешена ситуация, когда *mutex* блокируется одной *goroutine* и разблокируется другой *goroutine*.
+
+
+
+#### Пример
+
+ Пример *mutex*'а в *goroutine* для синхронизации:
+
+ ```go
+  result := make(map[int]int)
+  var wg sync.WaitGroup
+	var mutex sync.Mutex
+
+	for key, value := range values {
+		
+		wg.Add(1)
+    // обязательно нужно передавать значение через аргументы в goroutine
+		go func(val int) {
+			defer wg.Done()
+
+			mutex.Lock()
+			result[key] = val
+			mutex.Unlock()
+		}(value)
+	}
+
+	wg.Wait()
+ ```
+
+
+
+### `type RWMutex`
+
+`RWMutex`  (*mutual exclusion*, взаимное исключение) - это *lock* взаимного исключения *reader/writer*. *Lock* может удерживать произвольное количество *reader*'s ИЛИ (!!!) одиночный *writer*. *Zero value* для `RWMutex` - это *unlocked mutex*.
+
+`RWMutex` нельзя копировать после первого использования.
+
+Если *goroutine* удерживает `RWMutex` для *reading* и другая горутина может вызвать `Lock()` (для *writing*), ни какая *goroutine* не сможет взять *read lock* до тех пор пока не будет снята начальная *read lock*. В частности, это запрещает рекурсивную *read locking*. Это необходимо для того, чтобы *lock* в конечном итоге (*eventually*) стала доступной; вызов `Lock()` исключает захват блокировки новыми *reader*'s.
+
+```go
+type RWMutex struct {
+    // contains filtered or unexported fields
+}
+```
+
+
+
+TODO!!!
+
+
+
+### `type WaitGroup`
 
 Ожидает завершения набора *goroutine*'s. *Main goroutine* вызывает `Add()`, чтобы установить количество ожидаемых *gotoutine*'s. Затем каждая из *goroutine* запускается и по завершении вызывает `Done()`. `Wait()` можно использовать, чтобы заблокироваться дло тех пор пока все *goroutine*'s не будут завершены.
 
@@ -4113,7 +4776,7 @@ var wg sync.WaitGroup
 	wg.Wait()
  ```
 
-### `sync.Add()`
+#### `sync.Add()`
 
 ```go
 func (wg *WaitGroup) Add(delta int)
@@ -4123,7 +4786,7 @@ func (wg *WaitGroup) Add(delta int)
 
 Обычно `Add()` вызывается перед `go` *statement* или другим событием, которое должно ожидаться. 
 
-### `sync.Done()`
+#### `sync.Done()`
 
 ```go
 func (wg *WaitGroup) Done()
@@ -4133,7 +4796,7 @@ func (wg *WaitGroup) Done()
 
 
 
-### `sync.Wait()`
+#### `sync.Wait()`
 
 ```
 func (wg *WaitGroup) Wait()
@@ -4203,48 +4866,6 @@ fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
 
 
 
-
-
-
-## `errors`
-
-`errors` – это *package*
-
-### `error`
-
-`error` – это *type*, встроенный *interface* тип для представления состояния ошибки, значение `nil` – отсутствие ошибки.
-
-```go
-type error interface {
-    Error() string
-}
-```
-
-В соответствии с соглашениями, принятыми в языке Go, значение ошибки (или успеха когда `error = nil`) типа `error` возвращается в последнем (или единственном) значении, возвращаемом функцией или методом.
-
-```go
-item, err := haystack.Pop()
-```
-
-### `errors.New()`
-
-```go
-func New(text string) error
-```
-
-Возвращает ошибку с текстом `text`.
-
-Часто вместе `errors.New()` полезно использовать `fmt.Errorf()` ([1](#fmterrorf))
-
-```go
-func ... (int, error) {
-    if ... {
-        return nil, errors.New("...")
-    }
-    ...
-    return x, nil
-}
-```
 
 
 

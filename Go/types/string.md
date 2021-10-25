@@ -75,7 +75,7 @@ https://www.geeksforgeeks.org/different-ways-to-concatenate-two-strings-in-golan
 
 https://stackoverflow.com/questions/1760757/how-to-efficiently-concatenate-strings-in-go
 
-fgsdgdf
+
 
 ## Изменение элемента строки
 

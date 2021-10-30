@@ -251,14 +251,6 @@ len(ch)
 
 
 
-
-
-(???) Если *goroutine* перешла в *blocking state* в `select` *statement* и была помещена в *sending goroutine queue* или *receiving goroutine queue*, то она вернется в *running state* на 9 шаге исполнения `select` *statement*. Она может быть исключена из *sending* или *receiving goroutine queue*'s нескольких *channel*'s, которые указаны в `select` *statement*.
-
-(???) *Goroutine* может находится сразу в *sending* и *receiving goroutine queue* одного *channel* с помощью `select` *statement*.
-
-
-
 ### *Values* передаются по *channel* путем *copy by value*
 
 Когда *value* передается из одной *goroutine* в другую, оно будет скопировано как минимум один раз. Если *value* помещается в *value buffer queue*, то в процессе передачи будет сделано две копии:
@@ -374,51 +366,109 @@ RecvExpr   = Expression .
 
 
 
-Порядок:
+Примеры использования `select / case`:
 
-- Если есть одна или несколько *non-blocking case operation*'s, *Go runtime* случайным образом выберет одну из этих *non-blocking case operation*'s для выполнения, а затем продолжит выполнение соответствующей *case branch*.
-- Если все *case operation*'s являются *blocking operation*, будет выполнена `default` *branch*, если она присутствует. Если `default` *branch* отсутствует, текущая *goroutine* будет помещена в соответствующую *sending goroutine queue* или *receiving goroutine queue* каждого *channel*, участвующего в  *case operation*'s, а затем перейдет в *blocking state*.
-- `select` *statement* без каких-либо *case/default branch*'s (`select{}`) переводит текущую *goroutine* в *blocking state forever*.
+```go
+var a []int
+var c, c1, c2, c3, c4 chan int
+var i1, i2 int
+select {
+case i1 = <-c1:
+	print("received ", i1, " from c1\n")
+case c2 <- i2:
+	print("sent ", i2, " to c2\n")
+case i3, ok := (<-c3):  // то же самое что и: i3, ok := <-c3
+	if ok {
+		print("received ", i3, " from c3\n")
+	} else {
+		print("c3 is closed\n")
+	}
+case a[f()] = <-c4:
+	// то же самое что и:
+	// case t := <-c4
+	//	a[f()] = t
+default:
+	print("no communication\n")
+}
+
+for {  // send random sequence of bits to c
+	select {
+    case c <- 0:  // обратите внимание: нет statement, не происходит fallthrough, (???) no folding of cases
+	  case c <- 1:
+	}
+}
+
+select {}  // block forever
+
+```
+
+
 
 ### Порядок выполнения
 
 Выполнение `select` *statement* происходит в следующем порядке:
 
-- Для всех *case operation*'s необходимо вычислить:
+1. Для всех *case operation*'s необходимо вычислить:
 
-  - *channel* в *receive statement*
-  - *channel* в *send statement*
-  - правая часть *send statement* (*expression*, которое будет потом *send*)
+   - *channel* в *receive statement*
+   - *channel* в *send statement*
+   - правая часть *send statement* (*expression*, которое будет потом *send*)
 
-  Каждое значение вычисляется один раз, в том порядке как они записаны в *select statement*. 
+   Каждое значение вычисляется один раз, в том порядке как они записаны в *select statement*. 
 
-  Результатом вычислений соответственно будут:
+   Результатом вычислений соответственно будут:
 
-  - *channel*'s для *receive*
-  - *channel*'s для send
-  - результаты вычисления *expression* (некоторое *value*) для *send*. 
+   - *channel*'s для *receive*
+   - *channel*'s для send
+   - результаты вычисления *expression* (некоторое *value*) для *send*. 
 
-  Поэтому в процессе этих вычислений могут произойти *side effect*'s (например, изменения значений переменных) , и они не зависят от того какая из *case branch*'s будет выбрана для исполнения (т.к. эти вычисления происходят до ее выбора).
+   Поэтому в процессе этих вычислений могут произойти *side effect*'s (например, изменения значений переменных) , и они не зависят от того какая из *case branch*'s будет выбрана для исполнения (т.к. эти вычисления происходят до ее выбора).
 
-  *Expression*'s в левой части `RecvStmt`  (т.е. в *short variable declaration* и *assignment*) на этом шаге не вычисляются (мое! но и как они могут быть вычислены, если еще непонятно какой из *case operation* будет выполняться).
+   *Expression*'s в левой части `RecvStmt`  (т.е. в *short variable declaration* и *assignment*) на этом шаге не вычисляются (мое! но и как они могут быть вычислены, если еще непонятно какой из *case operation* будет выполняться).
 
-- TODO!!!
+2. Составить список из *case branch*'s в случайном порядке для выбора на (Шаг 5). *default branch* всегда помещается в конец списка. *Channel*'s могут повторяться в разных *case operation*'s.
+
+3. Отсортировать все *channel*'s, задействованных в *case operation*'s, чтобы на следующем шаге избежать *deadlock* (с другими *goroutine*'s!!!) (мое: т.е. учесть порядок других *goroutine*'s в *sending goroutine queue* и *receiving goroutine queue* этих *channel*). Пусть `N`- количество задействованных *channel*'s в *case operation*'s. В первых `N` *channel*'s отсортированного результата не должно быть повторяющихся *channel*'s, их порядок назовем *channel lock order*.
+
+4.  *acquire mutex* для всех задействованных *channel*'s в соответствии с *channel lock order*, полученном на предыдущем шаге
+
+5. выбирать *branch*'s в случайном порядке, полученном на (Шаг 2):
+
+   1. если это *case branch* и ее *case operation* – *send* в *closed channel*: *release mutex* для всех *channel*'s в соответствии с обратным *channel lock order* и бросить *panic*. Перейти к (Шаг 12).
+   2. если это *case branch* и ее *channel operation* – *non-blocking*, выполнить *channel operation* и *release mutex* для всех *channel*'s в соответствии с обратным *channel lock order*, затем выполните соответствующую *case branch*. *Channel operation* может перевести другую *goroutine* из *blocking state* в *running state*. Перейти к (Шаг 12).
+   3. если это *default branch*, то *release mutex* для всех *channel*'s в соответствии с обратным *channel lock order*, затем выполните *default branch*. Перейти к (Шаг 12).
+
+   (Если дошли до сюда, то значит *default branch* отсутствует, и все *case operation*'s являются *blocking*).
+
+6. поместить текущую *goroutine* (??? вместе с информацией соответствующей *case branch*) в *receiving* или *sending goroutine queue* каждого задействованного *channel* в каждой *case operation*. Текущая *goroutine* может быть помещена в *queue* одного и того же *channel* несколько раз, так как *channel* в *case operation*'s может повторяться.
+
+7. перевести текущую *goroutine* в *blocking state* и *release mutex* для всех *channel*'s в соответствии с обратным *channel lock order*.
+
+8. ждать в *blocking state*, пока другая *channel operation* в другой *goroutine* не разбудит текущую *goroutine*, ...
+
+9. текущая *goroutine* пробуждается другой *channel operation* в другой *goroutine*. Это может быть:
+
+   - *close operation* – всегда пробуждает текущую *goroutine*
+   - *send/receive operation* – должна существовать *case operation*, взаимодействующая с ней путем передачи *value*. 
+
+   В результате, текущая *goroutine* будет исключена из *receiving/sending goroutine queue* этого *channel*.
+
+10. *acquire mutex* для всех задействованных *channel*'s в соответствии с *channel lock order*
+
+11. исключить текущую *goroutine* из *receiving/sending goroutine queue* каждого задействованного *channel* в каждой *case operation*. Перейти к (Шаг 5).
+
+12. Done
+
+
+
+Общие выводы:
+
+- `select` *statement* без каких-либо *case/default branch*'s (`select{}`) переводит текущую *goroutine* в *blocking state forever*.
+- *goroutine* может находится сразу в *sending* и *receiving goroutine queue* нескольких *channel*'s одновременно. И даже *goroutine* может находится в *sending* и *receiving goroutine queue* одного *channel* одновременно (мое: при этом она не может получить *value* сама у себя, т.к. может выполнена только одна *channel operation*).
 
 
 
 
-
-
-
-
-
-
-
-- 
-- Если одно или несколько сообщений могут продолжаться, то одно из них, которое может продолжаться, выбирается посредством единообразного псевдослучайного выбора. В противном случае, если есть случай по умолчанию, будет выбран этот случай. Если нет случая по умолчанию, оператор «select» блокируется до тех пор, пока не будет продолжена хотя бы одна из коммуникаций.
-- Если выбранный случай не является случаем по умолчанию, выполняется соответствующая операция связи.
-- Если выбранный случай - это RecvStmt с кратким объявлением переменной или присвоением, выражения в левой части оцениваются, и присваивается полученное значение (или значения).
-- Выполняется список выписок выбранного дела.
 
 
 
@@ -491,7 +541,7 @@ func main() {
 
 #### Пример 3
 
-В программе обе *case operation*'s – *non-blocking*. Поэтому 50/50 будет выбрана или одна или другая *case branch*.
+В программе обе *case operation*'s – *non-blocking* (шаги 5.1. и 5.2. алгоритма). Поэтому 50/50 будет выбрана или одна или другая *case branch*.
 
 ```go
 package main
@@ -500,9 +550,9 @@ func main() {
 	c := make(chan struct{})
 	close(c)
 	select {
-	case c <- struct{}{}:  // send в closed channel, non-blocking operation
+	case c <- struct{}{}:  // send в closed channel, non-blocking operation, шаг 5.1. алгоритма
 		// будет брошена panic, если будет выбран этот case
-	case <-c: // receive из closed channel, non-blocking operation
+	case <-c: // receive из closed channel, non-blocking operation, шаг 5.2. алгоритма
 		// ничего не прозойдет, если будет выбран этот case
 	}
 }
@@ -514,7 +564,7 @@ func main() {
 
 # Примеры
 
-### Пример 1
+## Пример 1
 
 Одна *goroutine* отправляет другой значение 9 по *unbuffered channel* `c`. 
 
@@ -560,7 +610,7 @@ func main() {
 }
 ```
 
-### Пример 2
+## Пример 2
 
 Пример использования *buffered channel*.
 
@@ -610,7 +660,7 @@ func main() {
 
 
 
-### Пример 3
+## Пример 3
 
 Все *goroutine*'s ставятся в *receiving goroutine queue* и переходят в *blocking state*. Затем *main goroutine* делает `send "referee"` и одна из *goroutine* (первая в *queue*) переходит в *running state*, выводит строку `referee`, делает `send "<playerName>"` и разблокирует следующую *goroutine* в *receiving goroutine queue*, а сама становится в конец этой очереди.
 
@@ -651,6 +701,58 @@ func main() {
 
 
 
+## Future/Promises
+
+Конструкции *future*, *promise* и *delay* в некоторых языках программирования формируют стратегию вычисления, применяемую для параллельных вычислений. С их помощью описывается объект (*promise*), к которому можно обратиться за результатом (*future*), вычисление которого может быть не завершено на данный момент. *Promise* — это функция, которая присваивает значение (*future*). *Future* — возвращаемое значение асинхронной функции *promise*. 
+
+Это позволяет отделить значение (*future*) от процесса самого вычисления (*promise*), что позволяет запустить несколько процессов вычислений параллельно. 
+
+### Реализация через возврат *receive-only channel* из функции
+
+
+
+Значения двух аргументов функции `sum()` запрашиваются одновременно. Каждая из двух операций приема канала будет блокироваться до тех пор, пока операция отправки не будет выполнена на соответствующем канале. Для получения окончательного результата требуется около трех секунд вместо шести.
+
+```go
+package main
+
+import (
+	"time"
+	"math/rand"
+	"fmt"
+)
+
+// Promise -  функция выполняет долгую работу по генерации числа int32
+// При этом она возвращает channel, в который будет возвращено вычисленное значение (future)
+func longTimeRequest() <-chan int32 {
+	r := make(chan int32)
+
+	go func() {
+		// Некоторая долгая обработка
+		time.Sleep(time.Second * 3)
+		r <- rand.Int31n(100)
+	}()
+
+	return r
+}
+
+// функция, которая использует вычисленные значения (futures)
+func sum(a, b int32) int32 {
+	return a + b
+}
+
+func main() {
+  // Получение двух promises - channel's для получения значений
+  // Процесс вычислений будет запущен параллельно, но самих значений еще нет
+	a, b := longTimeRequest(), longTimeRequest()
+  
+  // Использование двух значений, которые будут вычислены в будущем (future)
+  // receive operations будут заблокированы до тех пор пока send operation не будет выполнена для 
+  // соответствующего channel (процесс вычислений идет параллельно)
+	fmt.Println(sum(<-a, <-b)) 
+}
+```
+
 
 
 
@@ -684,11 +786,6 @@ https://russianblogs.com/article/3267763547/
 
 
 
-
-Вань, преза - это по сути продуктовое описание ручек API. Все равно непонятны вопросы общего флоу и деталей по использованию этих ручек.
- Например:
- \* кто такой бенифициар и как онн связан со сделкой, депонентом, реципиентом
- \* что за реквизит 
 
 
 

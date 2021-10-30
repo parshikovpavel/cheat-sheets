@@ -1,13 +1,6 @@
 https://github.com/golang/go/wiki/Modules#daily-workflow
 
-# Glossary
 
-- *Main module* –  модуль, в котором `go` *command* вызывается. *Main module* определяется `go.mod` файлом в текущем или родительском каталоге.
-
-*Dependency* модуля может быть двух видов
-
-- *Direct* - это *dependency*, для которой *module* делает `import` напрямую.
-- *Indirect* – это *dependency*, для которой `import` выполняется другими, *direct dependency*'s. 
 
 # Go modules
 
@@ -41,7 +34,7 @@ https://github.com/golang/go/wiki/Modules#daily-workflow
 
 ## Module
 
-*Module* – набор связанных *package*'s, которые *released* (релизятся) вместе. *Module* – это единица обмена исходным кодом и единица версионирования. 
+*Module* – набор связанных *package*'s, которые *released* (релизятся) вместе. *Module* – это единица обмена исходным кодом и *unit of versioning* (единица версионирования) (т.е. все *package*'s имеют версию, указанную в *module*). При версионировании используется *semantic version*.
 
 *Module* содержит *package*'s в каталоге, содержащем файл `go.mod`, а также подкаталогах этого каталога, вплоть до следующего подкаталога, содержащего другой файл `go.mod` (если есть).
 
@@ -70,7 +63,7 @@ module github.com/parshikovpavel/hello
 
 Программы размещаются внутри *package*. 
 
-*Package* – набор из *file*'s, размещенных в одном каталоге (и его подкаталогах?), которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом *file* некоторого *package* видны внутри всех других *file*'s этого же *package* (т.е. может быть несколько *file*'s в одном *package* !!!!).
+*Package* – набор из *file*'s, размещенных в одном каталоге, которые компилируются вместе. `func`, `type`, `var` и `constant`, определенные в любом *file* некоторого *package* видны внутри всех других *file*'s этого же *package* (т.е. может быть несколько *file*'s в одном *package* !!!!).
 
 В одном каталоге может находиться только один *package*. Однако есть исключение для unit test'ов, которые должны находиться в файлах `XXX_test.go` и пакете `package XXX_test` 
 
@@ -298,7 +291,44 @@ ImportPath       = string_lit .
 
 
 
-<u>ТУТ!!! Закончил Importing packages from your module</u>
+## Pseudo-version
+
+*Pseudo-version* – специально отформатированная [pre-release version]() , который кодирует информацию о конкретной *revision* в *repository*. Например, *pseudo-version* `v0.0.0-20191109021931-daa7c04131f5`.
+
+*Pseudo-version* могут относиться к ревизиям, для которых не доступен *semantic version tag*. Их можно использовать для тестирования *commi*t'ов перед созданием *version tag*, например, в *development branch*.
+
+Каждая *pseudo-version* состоит из трех частей:
+
+- *base version prefix* (`vX.0.0` или `vX.Y.Z-0`) – либо является производным от *semantic version tag*, который стоит перед *revision*, либо `vX.0.0` – если такой *tag* отсутствует.
+- *timestamp* ( `yyyymmddhhmmss`) – *UTC time*, когда *revision* была создана, *commit time*.
+- *revision identifier* ( `abcdefabcdef`) – 12-символьный префикс *commit hash*
+
+Эти формы придают *pseudo-version* два полезных свойства:
+
+- *pseudo-version* с известными *base version* сортируются выше, чем эти *base version*, но ниже, чем другие *pre-release version* для более поздних *version*.
+- *pseudo-version*'s с одинаковым *base version prefix* сортируются в хронологическом порядке.
+
+### Релиз module'й (v2 или выше)
+
+https://github.com/golang/go/wiki/Modules
+
+Есть два альтернативных механизма для релиз *module*'й v2 или выше. 
+
+Например нам над зарелизить `v3.0.0`. Есть два варианта:
+
+1. **Major branch**: Изменить `go.mod` файл – записать `/v3` в конец *module path* в `module` *directive* (e.g., `module github.com/my/module/v3`). Изменить `import` *statement*'s внутри файлов этого module, дописать в конец `/v3` (e.g., `import "github.com/my/module/v3/mypkg"`). Пометить релиз tag'ом `v3.0.0`.
+
+   Можно разместить *commit*'ы `v3.*.*` в отдельной *branch* `v3`. В этом случае *branch*'s можно развивать независимо can then proceed independently.
+
+   Но создание новой *branch* *не* обязательно. Можно делать релиз и ставить *tag* `v3.0.0` прямо в *master*'е. 
+
+   ![img](../img/go/gitmod-1@2x.png)
+
+2. **Major subdirectory**: Создать новую поддиректорию `v3` (e.g., `my/module/v3`) и разместить новый `go.mod` файл в этой поддиректории. *Module path* должен заканчиваться на `/v3`. Скопировать или переместить код в поддиректорию `v3`. Изменить `import` *statement*'s внутри файлов этого module, дописать в конец `/v3` (e.g., `import "github.com/my/module/v3/mypkg"`). Пометить релиз tag'ом `v3.0.0`.
+
+   ![img](../img/go/gitmod-2@2x.png)
+
+ 
 
 
 
@@ -306,7 +336,7 @@ ImportPath       = string_lit .
 
 ## `require` *directive*
 
-`require` *directive* объявляет минимально необходимую версию для данного *module-dependency*. 
+`require` *directive* объявляет минимально (!!!) необходимую версию для данного *module-dependency* (подробней [link](#управление-версиями-versioning))
 
 ```
 RequireDirective = "require" ( RequireSpec | "(" newline { RequireSpec } ")" newline ) .
@@ -321,7 +351,7 @@ RequireSpec = ModulePath Version newline .
 
 - *Dependency*, для которой нет `import`  ни в одном из исходных файлов *main module*. И также для этих *dependency*'s нет `import` на нижележащих уровнях *dependency*'s.
 - *Dependency*, для которой нет `import`  ни в одном из исходных файлов *main module*. Но для этих *dependency* ЕСТЬ (!) `import` на нижележащих уровнях *dependency*'s. Такой `require` может появиться, если *module-dependency* первого уровня импортирует *module-dependency* второго уровня, но не указывает это  в своем  `go.mod` файле, или вообще не имеет своего `go.mod` файла, поэтому эта *dependency* должна быть поднята на уровень выше.
-- если указанная (в команде `go get`) версия *module* выше, чем та, которая требуется (транзитивно) другими *main module's dependencies* (зависимостями основного модуля). Т.е. (? точно indirect) *indirect dependency*  требуется в более высокой версии, чем подразумевается графом модулей. Обычно это происходит после явного *upgrade* для некоторых *direct* или *indirect dependency*'s через `go get -u ./...` .
+- если указанная (в команде `go get`) версия *module* выше, чем та, которая требуется (транзитивно) другими *main module's dependency*'s (зависимостями основного модуля). Т.е. *indirect dependency*  требуется в более высокой *version*, чем подразумевается [*module graph*'ом](#glossary). Обычно это происходит после явного *upgrade* для некоторых *direct* или *indirect dependency*'s через `go get -u ./...` . ([подробнее](#upgrade)).
 
 
 
@@ -338,13 +368,197 @@ require (
 
 
 
+# Управление версиями (versioning)
+
+https://research.swtch.com/vgo
+
+Задача *version management* – получать воспроизводимые *build*'ы. Т.е. если я скажу вам попробовать последнюю *version* моей программы, я знаю, что вы получите не только последнюю *version* моего кода, но и те же самые *version* всех его зависимостей. Поэтому мы с вами сделаем *build* полностью эквивалентных *binaries*.
+
+Важно!!! Если релизятся более новые версии *dependency*'s, `go` *command* не должна их использовать, пока ее не попросят.
+
+Управление версиями в Go опирается на следующие принципы:
+
+- *import compatibility rule*
+- алгоритм *Minimal version selection*
+
+## Import compatibility rule
+
+Почти все боли в PMS's (*package management system*'s) вызваны попытками устранить *incompatibility* (несовместимость). Например, большинство PMS позволяют, чтобы *package* `B` требовал *package* `D@6` и *package* `C` требовал *package* `D@2`. Если вы пишете *package* `A` и хотите использовать *package*'s `B` и `C`, то вам не повезло: не существует единой версии `D`, которую можно было бы выбрать, чтобы `A`  сбилдить из `B` и `C`. И вы ничего не можете поделать: эти PMS's говорят, что такая ситуация допустима и они поощряют это. Т.е. дизайн таких PMS's неизбежно приводит к тому, что большие программы не будут *build*.
+
+В Go используется следующее *правило совместимости импорта* (*import compatibility rule*) – если у старого *package* и нового *package* один и тот же *import path*, новый *package* должен быть *backwards compatible* со старым *package*. 
+
+Т.е. когда требуется релиз *incompatible version*, создайте новый *package* с новым *import path*.
+
+*Import compatibility rule* значительно упрощает использование *incompatible version*'s для *package*. Когда каждая *version* имеет свой *import path*, нет никакой двусмысленности в предполагаемой семантике данного `import` *statement*. Это упрощает понимание программ Go как для *developer*'s, так и *tool*'s.
+
+Это делает систему экспоненциально проще.
+
+## Использование *import compatibility rule* с *semantic versioning*
+
+Допустим мы разрабатываем `my/thing` *module*.
+
+Используем следующий подход:
+
+- Используем *module path* `my/thing` для v0 (период *incompatibility,* когда ожидаются ломающие совместимость изменения и мы не защищены от них) и для v1 (первая *stable major version*).
+- Когда пришло время выпустить новую *major version* v2, мы используем новый *module path* `my/thing/v2`, а старая *stable version* остается с именем  `my/thing`.
+
+
+
+![img](../img/go/impver.png)
+
+Объединение *import compatibility rule* с *semantic versioning* – мы называем *semantic import versioning* (семантическое версионирование импорта).
+
+Поскольку каждая *major version* имеет отличный *import path*, данный *executable* может содержать по одному экземпляру каждой *major version*. Это позволяет частям большой программы независимо обновляться с v1 до v2.
+
+## Minimal version selection (MVS)
+
+Сегодня почти все PMS's используют *latest allowed version* (последнюю разрешенную версию, в соответствии с разрешениями в composer.json) каждой *dependency* и ее собственных *dependency*'s. При этом *version*'s фиксируются в *lock file*.
+
+Недостатки такого подхода:
+
+- *latest allowed version* быстро изменяется из-за публикации новых *version*'s. В итоге кто-то сегодня вечером зарелизил новую *version* какой-то *dependency*, а завтра та же последовательность команд, которую вы выполнили сегодня, даст другой результат.
+- т.к. *dependency*'s обновляются автоматически на самую *latest version*, ошибки в *latest version* не затронут большого количества пользователей.
+
+Go использует алгоритм, называемый *Minimal version selection* (MVS, выбор минимальной версии), чтобы выбрать множество версий *module*'s для использования при *building package*'s. MVS подробно описан в статье [Minimal Version Selection](https://research.swtch.com/vgo-mvs).
+
+Алгоритм MVS предполагает, что *module*'s указывают только *minimal version* для своих *dependency*'s. 
+
+MVS создает *build list* ([link](#glossary)) на выходе – список *module version*'s, используемых для сборки. Алгоритм MVS обеспечивает стабильность *build list* без использования *lock file* при любых операциях с *build list*. И действительно, повторяемость важнее автоматической загрузки последней версии. Поэтому другие PMS (*package management system*) имеют *lock* файл.
+
+
+
+Всего возможно 4 операции над *build list*:
+
+1. *Construct* текущий *build list*.
+2. *Upgrade* все *module*'s до их *latest version*'s.
+3. *Upgrade* один *module* до конкретной более новой *version*.
+4. *Downgrade* один *module* до конкретной более старой *version*
+
+Последние две операции хотя указывают один конкретный *module* для *upgrade* или *downgrade*, но для этого могут потребоваться операции с другими зависимыми *module*'s.
+
+Преимущества MVS:
+
+- *build list* не изменится завтра или через несколько дней, потому что значение никакой из *minimal allowed version* не может измениться.
+- чтобы переопределить *minimal allowed version*, разработчики должны явно сказать – «теперь *minimal allowed version* – `Y`», и после этого PMS, используя MVS, решит, какую *version* использовать. 
+- очень прост, требует всего лишь рекурсивного обхода графа, полная реализация MVC в Go занимает всего несколько сотен строк кода.
+
+### *Construct* текущий *build list*
+
+MVS оперирует *module graph*'ом ([подробнее про него в glossary](#glossary)). 
+
+MVS начинается с [*main module*](#glossary) (специальной вершины в графе, не имеющей *version*) и проходит по графу, отслеживая самую высокую требуемую *version* каждого *module*. В конце обхода самые высокие требуемые *version*'s составляют *build list*: это *minimal version*'s, которые удовлетворяют всем требованиям (т.е. *minimal allowed version*, *oldest allowed version*, самые старые разрешенные версии).
+
+Другими словами: Начать составлять *build list* с *main module*, затем последовательно добавлять к нему *build list*'s каждой *dependency*. Если *module* появляется в *build list* несколько раз, оставить только самую новую версию.
+
+*Build list* можно просмотреть с помощью команды [`go list -m all`](#go-list-m). В отличие от других *dependency management system*'s, *build list* не сохраняется в `.lock` файле. MVS является детерминированным, и *build list* не изменяется при релизе новых версий зависимостей, поэтому MVS используется для вычисления *build list* в начале каждой команды *go modules*.
+
+**<u>Пример:</u>**
+
+- *main module*:
+
+  ```go
+  module XXX
+  
+  require A v1.2
+  require B v1.2
+  ```
+
+- `module A` (v1.2):
+
+  ```go
+  module A
+  
+  require C 1.3
+  ```
+
+- `module B` (v1.2)
+
+  ```go
+  module B
+  
+  require C 1.4
+  ```
+
+и т.д.
+
+![Module version graph with visited versions highlighted](../img/go/buildlist.svg)
+
+MVS проходит по каждой *vertex*, выделенной синим цветом, и загружает `go.mod` файл для соответствующих *module version*'s. В конце обхода *graph*'а MVS возвращает *build list*, содержащий *version*'s, выделенные жирным шрифтом. Обратите внимание, что доступны более поздние *version*'s для `B` и `D` *module*'s, но MVS не выбирает их, поскольку никакие другие *module*'s не указывают их в `require`.
+
+### Replacement (замена)
+
+Содержимое *module*, (включая его `go.mod` файл) может быть заменено с помощью [`replace` *directive*](#replace-directive) в *main module*’s `go.mod` файле. `replace` *directive* может применяться к конкретной *module version* или ко всем *module version*'s.
+
+`replace` *directive* изменяет [*module graph*](#glossary).
+
+В примере ниже `C 1.4` был заменен на `R`. `R` зависит от `D 1.3` вместо `D 1.2`, поэтому MVS возвращает *build list*, содержащий `A 1.2`, `B 1.2`, `R` и `D 1.3`.
+
+![График версий модуля с заменой](../img/go/replace.svg)
+
+### Exclusion (исключение)
+
+Конкретная *module version* может быть исключена с помощью  [`exclude` *directive*](#exclude-directive) в *main module*’s `go.mod` файле.
+
+`exclude` *directive* изменяет [*module graph*](#glossary). Когда к *module version* применяется `exclude` *directive*, она удаляется из *module graph*, а `require` к ней перенаправляются на следующую более высокую *version*.
+
+Рассмотрим пример ниже. К `C 1.3` была применена `exclude` *directive* (??? в *main module*’s `go.mod` файле). MVS будет действовать так, как если бы в `A 1.2` было указано `require C 1.4` (следующая более высокая *version*) вместо `require C 1.3`.
+
+![График версий модуля с заменой](../img/go/exclude.svg)
+
+### Upgrade
+
+1. *Upgrade* все *module*'s до их *latest version*'s.
+
+   Выполнять алгоритм 1 (для *construct* текущий *build list*), только игнорировать *version*'s, указанные в `require` *directive*. Считать, что во всех `require` *directive*'s указана последняя *version* для *dependency*.
+
+2. *Upgrade* один *module* до конкретной более новой *version*.
+
+   Выполнить алгоритм 1 (*construct* исходный *build list*), а затем присоединить *build list* для новой *version* этого *module*. Если *module* появляется в *build list* несколько раз, оставить только самую новую версию.
+
+Реализуется командой `go get`. Чтобы выполнить *upgrade*, `go` *command*'а изменяет *module graph* перед запуском MVS, добавляя *edge*'s из старых *version*'s к новым *version*'s.
+
+Рассмотрим пример с *upgrade* всех *module*'s до их *latest version*'s. В примере ниже `B` может быть *upgrade* `1.2` → `1.3`, `C` –  `1.3` → `1.4`, а `D` –  `1.2` → `1.3`.
+
+![График версий модуля с заменой](../img/go/upgrade.svg)
+
+Чтобы сохранить результат *upgrade*, `go` *command*'а изменяет `go.mod` файл:
+
+- повышает версии в `require` *statement*. В примере, изменится `require B 1.2` → `require B 1.3`
+
+- добавляет `require ... // indirect` *statement* в *main module*’s `go.mod` файл, т.к. мы не можем изменять `go.mod` файлы других *module*'s и без этого *statement* эти *version* не были бы выбраны. 
+
+  В примере, добавляет:
+
+  ```
+  require C 1.4 // indirect
+  require D 1.3 // indirect
+  ```
+
+### Downgrade
+
+- *Downgrade* один *module* до конкретной более старой *version*. Последовательно понижать *version* каждого *module* верхнего уровня (*top module*), которые ссылаются на эту *version* понижаемого (*downgraded*) *module*, пока *build list* для *top module* не перестанет ссылаться на новую *version* для *downgraded* *module*.
+
+Реализуется командой `go get`. Чтобы выполнить *downgrade*, `go` *command*'а изменяет *module graph*, исключая *version*'s выше новой *downgraded version*. Также могут быть исключены *version*'s других *module*'s, которые зависят от уже исключенных *module version*'s. При *downgrade* в *main module* – *version* в `require` изменяется на предыдущую *version*, которая не была исключена. Если никакой другой предыдущей *version* нет, `require` *statement* удаляется (????).
+
+В примере ниже, была обнаружена проблема в `C 1.4`, поэтому мы делаем *downgrade* на `C 1.3`. `C 1.4` исключен из *module graph*'а. `B 1.2` также исключается, так как для него требуется `C 1.4` или выше. В *main module*’s `go.mod` файле произошло изменение `B 1.2` → `B 1.1`.
+
+![График версий модуля с заменой](../img/go/downgrade.svg)
+
+
+
+
+
+
+
+
+
 
 
 # Module-aware commands
 
 ## `go get`
 
-*Update* *dependency*'s в `go.mod` *file* для *main module*, а затем *build* и *install* их (соответственно install executable module в папку `GOPATH/bin`, если `GOBIN` не установлена [link](#поддержка-go-modules))
+*Update* *dependency*'s в `go.mod` *file* для *main module*, а затем *build* и *install* их (соответственно *install executable module* в папку `GOPATH/bin`, если `GOBIN` не установлена [link](#поддержка-go-modules))
 
 ```bash
 go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
@@ -353,10 +567,26 @@ go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
 Флаги:
 
 - `-u `– сделать *upgrade* для *module*'s, импортируемых *directly* или *indirectly by packages*, указанными в команде. *Upgrade* будет сделан к последней версии.
+- `-d ` – делать *build* и *install* для *package*'s. Произойдет управление зависимостями только в `go.mod`. Использование `go get` без `-d` не рекомендуется (начиная с Go 1.17). В Go 1.18 `-d` всегда будет включен.
 
+Примеры:
 
+- получить нужную версию библиотеки:
 
+  ```bash
+  go get -d golang.org/x/text@v0.3.2
+  ```
 
+- обновить (update) все зависимости:
+
+  ```bash
+  go get -u -d ./...
+  go mod tidy
+  ```
+
+  
+
+Т.к. в директиве `require` в `go.mod` файле указывается минимально необходимая версия, то при выполнении команды `go get` версия может автоматически увеличиться из-за добавления новой зависимости.
 
 https://github.com/golang/go/wiki/Modules#daily-workflow
 
@@ -373,6 +603,59 @@ go get example.com/package
 ```bash
 go get -u example.com/package
 ```
+
+
+
+## `go list -m`
+
+```bash
+go list -m [-u] [-retracted] [-versions] [list flags] [modules]
+```
+
+Флаг `-m` задает вывод списка *module*'s вместо списка *package*'s. 
+
+В этом режиме аргументами `go list` могут быть:
+
+- названия *module*'s
+- паттерны *module*'s (содержащие `...` *wildcard*)
+- [version queries](https://golang.org/ref/mod#version-queries)
+- специальный шаблон `all`, который соответствует всем *module*'s в [build list](#glossary). 
+- Если `modules` не указан, отображается [main module](#main-module) .
+
+По умолчанию выводится *module path*, а затем информация о *version* и *replacement* (что это??? если есть). Например:
+
+```bash
+$ go list -m all
+gopkg.in/fsnotify.v1 v1.4.7
+gopkg.in/go-playground/assert.v1 v1.2.1
+gopkg.in/go-playground/validator.v8 v8.18.2
+```
+
+Флаги:
+
+- `-u` – добавляет информацию о доступных *upgrade*'s (обновлениях). Когда последняя версия данного модуля новее, чем текущая, устанавливает в поле `Module.Update ` информацию о более новом модуле. Метод  `Module.String()` указывает новой версии в скобках после текущей версии. 
+
+  Пример:
+
+  ```go
+  $ go list -m -u all
+  rsc.io/quote/v3 v3.1.0
+  rsc.io/sampler v1.3.0 [v1.99.99]
+  ```
+
+- `-versions` – инициализирует поле `Module.Versions ` поле списком всех известных *module version*'s, упорядоченых в соответствии с семантическим версионнирование. При выводе указывается *module path* + список *version*, разделенных пробелами. 
+
+  Пример:
+
+  ```bash
+  $ go list -m -mod=mod -versions ...
+  github.com/AlekSi/pointer v1.0.0 v1.1.0
+  github.com/BurntSushi/toml v0.1.0 v0.2.0 v0.3.0 v0.3.1 v0.4.0 v0.4.1
+  ```
+
+  
+
+
 
 
 
@@ -774,3 +1057,18 @@ src/
 
 - путь к каталогу с *repository* – `$GOPATH/src/github.com/user`
 - путь к каталогу с `hello` *package* – `$GOPATH/src/github.com/user/hello`.  *Package import path* – `github.com/user/hello`
+
+
+
+
+
+# Glossary
+
+- ***build list*** (список сборки) – Список *module version*'s, которые будут использоваться для команд сборки, таких как `go build`, `go list` или `go test`. *Build list* определяется из  *main module*’s `go.mod` файла и файлов в транзитивно требуемых *module*'s с использованием [minimal version selection](#minimal-version-selection-mvs). 
+- ***main module*** – *module*, в котором вызывается команда  `go`. *Main module* определяется `go.mod` файлом в текущем или родительском каталоге.
+- **module graph** – ориентированный *graph*, построенный на основе `go.mod` файлов, в корне которого находится *main module*. Каждая *vertex* в *graph* – *module version*, каждое *edge* – связывает *version*'s разных *module*'s в соответствии с  `require` *statement* в `go.mod` файле.  `replace` и `exclude` директивы в *main module’s* `go.mod` файле изменяют *module graph*. 
+
+*Dependency* модуля может быть двух видов
+
+- *Direct* - это *dependency*, для которой *module* делает `import` напрямую.
+- *Indirect* – это *dependency*, для которой `import` выполняется другими, *direct dependency*'s. 

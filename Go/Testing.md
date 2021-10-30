@@ -153,7 +153,11 @@ PASS
 ok      example.com/greetings   0.372s
 ```
 
+При этом будут запущены:
 
+  - из package `<import_path>` 
+  - из файлов вида `<name>_test.go`
+  - каждая функция с сигнатурой вида `Test<FuncName>` 
 
 
 
@@ -165,9 +169,13 @@ ok      example.com/greetings   0.372s
   go test
   ```
 
-  Команда компилирует исходные коды *package*'s и *test*'s, найденные в текущем каталоге, а затем запускает полученный получившийся бинарник. 
+  Команда компилирует исходные коды *package*'s и *test*'s, найденные в текущем каталоге, а затем запускает полученный бинарник. 
 
   В этом режиме кэширование отключено.
+
+  После завершения теста `go test` печатает итоговую строку вида:
+
+  >  Cтатус теста ('ok' или 'FAIL'), *package name* и затраченное время.
 
 - *package list mode* (режим списка пакетов). Включается, когда указан аргумент `[packages]`:
 
@@ -179,19 +187,11 @@ ok      example.com/greetings   0.372s
   go test .      # Текущий каталог
   ```
 
+  В этом режиме выполняется компиляция и тестирование всех перечисленных *package*'s. Если тест *package* прошел успешно, `go test` печатает только `ok`. Если тест неуспешен, `go test` печатает подробный отчет (??? только для этого *package*, т.е. каждый package тестируется изолированно). С флагами `-bench` и `-v`, `go test` всегда печатает полный отчет. После того как отчеты по результатам тестирования каждого *package* будут напечатаны, `go test` напечатает общий результат `FAIL` если какой-либо тест какого-либо *package* был неуспешен.
   
+  В этом режиме успешные результаты тестирования *package*'s кешируются, чтобы избежать ненужного повторного запуска тестов. Когда результат теста может быть восстановлен из кеша, `go test` просто выводит закешированный результат и повторно не запускает тест. При этом `go test` печатает `(cached)` вместо истекшего времени в итоговой строке.
 
-В этом режиме выполняется компиляция и тестирование всех перечисленных *package*'s. 
 
-В этом режиме успешные результаты тестирования *package*'s кешируются, чтобы избежать ненужного повторного запуска тестов. 
-
-При этом будут запущены:
-
-  - из package `<import_path>` 
-  - из файлов вида `<name>_test.go`
-  - каждая функция с сигнатурой вида `Test<FuncName>` 
-
-Необходимо размещать 
 
 
 
@@ -220,25 +220,11 @@ func TestFoo(t *testing.T) {
 }
 ```
 
-```go
-func TestParse_Success(t *testing.T) {
-	cases := []struct {
-		name       string
-		expected   int
-	}{
-		{"grid", 1},
-    {"list", 2},
-	}
 
-	for _, tc := range cases {
-		test := tc
-		t.Run(test.name, func(t *testing.T) {
-			// ...
-			require.Equal(t, test.expected, res)
-		})
-	}
-}
-```
+
+См. [Table driven test](#table-driven-test)
+
+
 
 Каждый *subtest* и *sub-benchmark* имеет уникальное *name*: оно получается как комбинация *name* теста самого верхнего уровня и последовательности *name*'s, переданных в `Run()`, разделенных *slash*'s (`/`), с необязательным завершающим порядковым номером (если несколько тестов с одним именем).
 
@@ -316,11 +302,71 @@ func (c *T) Logf(format string, args ...interface{})
 
 
 
+# Design
+
+## Table-driven test
+
+Часто используются *table-driven test*'s с использованием цикла `for`, в теле которого тесты запускаются в `t.Run()`.
+
+```go
+func TestParse_Success(t *testing.T) {
+	cases := []struct {
+    name          string 
+		displayType   string
+		expected      int
+	}{
+		{"test grid", "grid", 1},
+    {"test list", "list", 2},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+      res := func()
+			require.Equal(t, test.expected, res)
+		})
+	}
+}
+```
+
+
+
+# Моки
+
+## Местоположение mock'ов
+
+Встречал 3 стратегии:
+
+- файлы с моками размещаются в отдельном каталоге  `mocks` и в `package mocks`. Примеры [1](https://blog.codecentric.de/en/2017/08/gomock-tutorial/) и [2](https://medium.com/@benbjohnson/standard-package-layout-7cdbc8391fc1). 
+
+  Наиболее распространненый вариант, описывается во всех статьях. Позволяет переиспользовать mock'и из любых других *package*'s.
+
+- файл с моками размещается в том же *package*, что и исходный *interface*. В этом случае и тесты также размещаются в том же *package* ([стратегия 1](#местоположение-тестов)). Пример: service-search.
+
+  Наиболее простой вариант, все в одном *package*. стратегия белого ящика.
+
+- файл с моками размещается вместе с тестами в отдельном `package XXX_test`  ([стратегия 2](#местоположение-тестов)). В конце имени файлов с *mock*'ами нужно писать `_test` – `mocks_test.go` (т.к. именование файлов должно удовлетворять правилам из [стратегия 2](#местоположение-тестов)) Пример: service-search-filters, bx-api
+
+  При генерации черех `go generate` можно использовать для указания имени *package* конструкцию `${GOPACKAGE}_test`:
+  
+  ```go
+  //go:generate mockgen -source $GOFILE -destination mocks_test.go -package ${GOPACKAGE}_test
+  ```
+  
+  
+  
+  Стратегия черного ящика.
+
+
+
+## Описание контрактов для mock'ов
+
+[смотри](Design.md#Cтруктура-тестируемого-модуля-с-внешней-зависимостью)
 
 
 
 
-# `gomock`
+
+## `gomock`
 
 `gomock` – это:
 
@@ -334,7 +380,7 @@ func (c *T) Logf(format string, args ...interface{})
 - имеет официальный статус в составе `github.com/golang`
 - интегрирован со встроенным `testing` *package*,
 
-## Подключение
+### Подключение
 
 - подключить `gomock`:
 
@@ -365,21 +411,7 @@ func (c *T) Logf(format string, args ...interface{})
 
 Для генерации mock'а используется `mockgen`.
 
-### Местоположение mock'ов
 
-Встречал 3 стратегии:
-
-- файлы с моками размещаются в отдельном каталоге  `mocks` и в `package mocks`. Примеры [1](https://blog.codecentric.de/en/2017/08/gomock-tutorial/) и [2](https://medium.com/@benbjohnson/standard-package-layout-7cdbc8391fc1). 
-
-  Наиболее распространненый вариант, описывается во всех статьях. Позволяет переиспользовать mock'и из любых других *package*'s.
-
-- файл с моками размещается в том же *package*, что и исходный *interface*. В этом случае и тесты также размещаются в том же *package* ([стратегия 1](#местоположение-тестов)). Пример: service-search.
-
-  Наиболее простой вариант, все в одном *package*. стратегия белого ящика.
-
-- файл с моками размещается вместе с тестами в отдельном `package XXX_test`  ([стратегия 2](#местоположение-тестов)). В конце имени файлов с *mock*'ами нужно писать `_test` – `mock_XXX_test.go` (т.к. именование файлов должно удовлетворять правилам из [стратегия 2](#местоположение-тестов)) Пример: service-search-filters. 
-
-  Стратегия черного ящика.
 
 ### Режимы `mockgen`
 
@@ -596,7 +628,15 @@ func (mr *MockServiceMockRecorder) DoSomething(arg0 interface{}) *gomock.Call {
   //go:generate mockgen -destination mock_metrics_test.go -package $GOPACKAGE -mock_names Client=MockMetrics go.xxx.ru/gl/metrics Client
   ```
 
-Пример файл `service/service.go`:
+- если необходимо разместить *mock* в *package* `XXX_test`, можно использовать для указания имени *package* конструкцию `${GOPACKAGE}_test`:
+
+  ```go
+  //go:generate mockgen -source $GOFILE -destination mocks_test.go -package ${GOPACKAGE}_test
+  ```
+
+  
+
+Пример файла `service/service.go`:
 
 ```go
 //go:generate mockgen -package ${GOPACKAGE} -destination mock_service.go -source $GOFILE
@@ -1054,7 +1094,53 @@ mockDoer.EXPECT().
 
 https://github.com/stretchr/testify
 
+Установка:
+
+```bash
+go get github.com/stretchr/testify
+```
+
+
+
+## Пример
+
+*Assertion* отсутствуют в *standard library* в Go. Можно реализовать *assertion* вручную через условие `if`. Но это вылядит не "чисто" и сложно для понимания.
+
+Допустим надо протестировать функцию:
+
+```go
+func Calculate(x int) int {
+  return x + 2
+}
+```
+
+Тест без использования библиотеки *testify* выглядел бы так:
+
+```go
+func TestCalculate(t *testing.T) {
+    if Calculate(2) != 4 {
+        t.Error("Expected 2 + 2 to equal 4")
+    }
+}
+```
+
+Тест с использованием библиотеки *testify*:
+
+```go
+func TestCalculate(t *testing.T) {
+  assert.Equal(t, Calculate(2), 4)
+}
+```
+
+
+
+
+
+
+
 ## `assert` package
+
+https://pkg.go.dev/github.com/stretchr/testify/assert
 
 `assert` *package* предоставляет множество методов, которые позволяют:
 
@@ -1063,15 +1149,7 @@ https://github.com/stretchr/testify
 
 Особенности прототипов функций в `assert` *package*:
 
-- Каждая функция `assert.XXX` принимает `testing.T` *object* в качестве первого аргумента. 
-
-  ```go
-  func TestSomething(t *testing.T) {
-    assert.Equal(t, 123, 123)
-  }
-  ```
-
-- Каждая функция `assert.XXX` возвращает `bool`, указывающий, было ли *assertion* успешным или нет.
+- Каждая функция `assert.XXX()` возвращает `bool`, указывающий, было ли *assertion* успешным или нет.
 
   Это полезно, если необходимо продолжить выполнение дальнейших *assertion*'s при определенных условиях. Например:
 
@@ -1084,4 +1162,317 @@ https://github.com/stretchr/testify
   }
   ```
 
+- Каждая функция `assert.XXX()` имеет последний необязательный аргумент `msgAndArgs` – строка с описанием ошибки, которая будет добавлена к стандартной ошибке для этого метода.
+
+Есть два подхода к использованию функций `assert.XXX()`:
+
+- использовать *global function*'s из `assert` *package*.
+
+  Такие функции `assert.XXX()` принимают `t testing.T` в качестве первого аргумента. 
+
+  ```go
+  import (
+    "testing"
+    "github.com/stretchr/testify/assert"
+  )
   
+  func TestSomething(t *testing.T) {
+  
+  	/* ... */
+    assert.Equal(t, a, b, "The two words should be the same.")
+  }
+  ```
+
+  
+
+- Использовать методы типа `Assertions.XXX()`
+
+  Если нужно сделать много *assertion*, можно создать объект `Assertions` через `assert.New()` и вызывать его методы:
+
+  ```go
+  func TestSomething(t *testing.T) {
+    assert := assert.New(t)
+  
+    // assert equality
+    assert.Equal(123, 123, "they should be equal")
+  
+    // assert inequality
+    assert.NotEqual(123, 456, "they should not be equal")
+  }
+  ```
+
+
+
+TODO!!!
+
+https://pkg.go.dev/github.com/stretchr/testify/assert#InEpsilon
+
+https://github.com/stretchr/testify#installation
+
+https://jfrog.com/blog/top-go-modules-writing-unit-tests-with-testify/
+
+
+
+## `require` package
+
+В `require` *package* находятся те же самые *global function*'s что и в  `assert` *package* (??? и те же самые методы `require.XXX()` что и в объекте `assert.XXX()`). Однако отличается поведение: вместо возврата *bool* – функции завершают текущий *test*.
+
+Под капотом используется `t.FailNow()` ([link](#failnow)).
+
+
+
+## `assert` или `require`
+
+<u>Лучше `require`</u>
+
+Лучше всегда использовать пакет `require` (вместо пакета `assert`). Особенно если выполняется несколько проверок подряд и тогда вывода сообщения об ошибке часто недостаточно, последующие проверки могут привести вообще к падению тестов по *panic*. 
+
+Например, здесь:
+
+```go
+resp, err := client.Do(req)
+assert.NoError(t, err)
+assert.Equal(t, len(expectedBody), resp.ContentLength)
+```
+
+Если `client.Do()` вернёт ошибку (`resp == nil`), то при попытке обратиться к `resp.ContentLength` произойдет *panic*.
+
+<u>Когда нужен `assert`</u>
+
+Но если хорошо подумать, то можно избежать падения тестов и при этом прогнать тесты без остановки. Особенно это важно, когда последовательно выполняется много тестов и падение теста, в этом случае, прервет проверки. В данном случае, следует поступить так:
+
+```go
+resp, err := client.Do(req)
+if assert.NoError(t, err) {
+	assert.Equal(t, len(expectedBody), resp.ContentLength)
+}
+// другие утверждения будут проверены
+```
+
+<u>Когда несколько тестов в цикле</u>
+
+Когда запускаем несколько тестов в цикле (часто для *table-driven test*), лучше использовать *subtest* и `t.Run()`. Внутри *subtest* можно использовать `require`, не боясь завалить остальные тесты:
+
+```go
+for _, c := range cases {
+    t.Run("check "+c.str, func(t *testing.T) {
+        resp, err := fn(c.str)
+        require.Nil(t, err)
+        require.Equal(t, c.expected, resp.ContentLength)
+    })
+}
+```
+
+
+
+
+
+
+
+## Функции и методы
+
+Для всех методов есть аналогичный метод, который заканчивается на `f`, чтобы описать формат строки с `msg`.
+
+### `Equal()`
+
+```go
+func Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
+```
+
+`Equal()` утверждает, что два значения равны.
+
+Для *pointer*'s выполняется сравнение значений, на которые они ссылаются (а не сравнение адресов в памяти).
+
+<u>Пример:</u>
+
+```
+assert.Equal(t, 123, 123)
+```
+
+### `Error()`
+
+```go
+func Error(t TestingT, err error, msgAndArgs ...interface{})
+```
+
+`Error()` утверждает, что значение – *error* (т.е. не `nil`)
+
+
+
+### `ErrorIs()`
+
+```go
+func ErrorIs(t TestingT, err error, target error, msgAndArgs ...interface{})
+```
+
+`ErrorIs()` утверждает, что по крайней мере одна из ошибок в цепочке `err` соответствует `target`. Это обертка для `errors.Is()`.
+
+
+
+### `ElementsMatch()`
+
+```go
+func ElementsMatch(t TestingT, listA, listB interface{}, msgAndArgs ...interface{}) (ok bool)
+```
+
+`ElementsMatch()` утверждает, что указанный `listA` (array, slice...) равен указанному `listB` (array, slice...), игнорируя порядок элементов. Если есть повторяющиеся элементы, количество вхождений каждого из них в обоих списках должно совпадать.
+
+С этой функцией при сравнении *slice* не требуется предварительная сортировка.
+
+```go
+assert.ElementsMatch(t, [1, 3, 2, 3], [1, 3, 3, 2])
+```
+
+
+
+
+
+### `False()`
+
+```go
+func False(t TestingT, value bool, msgAndArgs ...interface{}) bool
+```
+
+`False()` утверждает, что `value == false`.
+
+Пример:
+
+```go
+assert.False(t, myBool)
+```
+
+
+
+
+
+
+
+
+
+### `Implements()`
+
+```go
+func Implements(t TestingT, interfaceObject interface{}, object interface{}, msgAndArgs ...interface{}) bool
+```
+
+`Implements()` утверждает, что `object` реализует указанный *interface* (`interfaceObject`).
+
+Используется в виде конструкции:
+
+```go
+assert.Implements(t, (*MyInterface)(nil), obj)
+assert.Implements(t, (*MyInterface)(nil), new(T))
+```
+
+где:
+
+- `(*MyInterface)(nil)` – *conversion* ([link](Lang.go#conversion)) `nil` в `*MyInterface` 
+
+  
+
+
+
+
+
+TODO!!!
+
+https://jfrog.com/blog/top-go-modules-writing-unit-tests-with-testify/
+
+
+
+
+
+### `Nil()`
+
+```go
+func Nil(t TestingT, object interface{}, msgAndArgs ...interface{}) bool
+```
+
+`Nil()` утверждает, что указанное значение `== nil`.
+
+<u>Пример:</u>
+
+```go
+assert.Nil(t, err)
+```
+
+
+
+### `NoError()`
+
+```go
+func NoError(t TestingT, err error, msgAndArgs ...interface{}) bool
+```
+
+`NoError()` утверждает, что функция не вернула `error` (т.е. вернула `nil`).
+
+```go
+  actualObj, err := SomeFunction()
+  if assert.NoError(t, err) {
+	   assert.Equal(t, expectedObj, actualObj)
+  }
+```
+
+Работает аналогично `assert.Nil()`, но выводит более подробную ошибку.
+
+
+
+### `NotEqual()`
+
+```go
+func NotEqual(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
+```
+
+`NotEqual()` утверждает, что два значения равны.
+
+Для pointer's выполняется сравнение значений, на которые они ссылаются (а не сравнение адресов в памяти).
+
+Пример:
+
+```
+assert.NotEqual(t, 123, 345)
+```
+
+### `NotNil()`
+
+```go
+func NotNil(t TestingT, object interface{}, msgAndArgs ...interface{}) bool
+```
+
+`NotNil()` утверждает, что указанное значение `!= nil`.
+
+<u>Пример:</u>
+
+```go
+assert.NotNil(t, err)
+```
+
+### `True()`
+
+```go
+func True(t TestingT, value bool, msgAndArgs ...interface{}) bool
+```
+
+`True()` утверждает, что `value == true`.
+
+Пример:
+
+```go
+assert.True(t, myBool)
+```
+
+
+
+
+
+## Типы
+
+### `type TestingT`
+
+```go
+type TestingT interface {
+	Errorf(format string, args ...interface{})
+}
+```
+
+`TestingT` - это *interface* для доступа к `*testing.T`

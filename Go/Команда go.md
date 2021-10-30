@@ -1,4 +1,4 @@
-# Packages
+# Параметр `packages`
 
 Многие *comman*d'ы `go`  применяются к `packages` – списку *import path*'s
 
@@ -6,14 +6,23 @@
 go <action> [packages]
 ```
 
-Правила интерпретации *import path*:
+Виды *import path*:
 
-- *Import path*, который является корневым путем (наверное, вроде `/Users/...`) или начинаются с `./` или `../` (*relative import path*, [link](#relative-import-path)) – интерпретируется как путь в файловой системе и обозначает *package* в этом каталоге.
+- *Relative import path* ([link](#relative-import-path)) – *Import path*, который является корневым путем (наверное, вроде `/Users/...`) или начинаются с `./` или `../` () – интерпретируется как путь в файловой системе и обозначает *package* в этом каталоге.
+- *Non-relative import path* – *import path* `path` обозначает *package*, найденный в каталоге `DIR/src/path`, где `DIR`–  одна из папок, перечисленных в `GOPATH` (это т.е. по сути когда )
+- если *import path* не указан, `go <action>` применяется к *package* в текущем каталоге. Т.е. по умолчанию значение параметра `packages` – `.`
 
-- иначе *import path* `path` обозначает *package*, найденный в каталоге `DIR/src/path`, где `DIR`–  одна из папок, перечисленных в `GOPATH`.
-- если *import path* не указан, `go <action>` применяется к *package* в текущем каталоге.
+## *Pattern*
 
-*Import path* называется *pattern*, если он включает один или несколько подстановочных знаков `...`, каждый из которых может соответствовать любой строке, включая пустую строку и строки, содержащие `/`. Такой *pattern* распространяется на все *package directories* внутри `GOPATH`, соответствующие *pattern*'у (??? точно внутри `GOPATH`, вроде и на *relative import path*)
+*Import path* называется *pattern*, если он включает один или несколько подстановочных знаков `...`, каждый из которых может соответствовать любой строке, включая пустую строку и строки, содержащие `/`. 
+
+В зависимости от видов *import path*:
+
+- Для *non-relative import path*. *Pattern* распространяется на все *package directories* внутри `GOPATH`, соответствующие *pattern*'у.
+
+  Например, *pattern* `...` – соответствует всем *package directories* внутри `GOPATH`
+
+- Для *relative import path*. *Pattern* распространяется на *package* в этом каталоге.
 
 Две особенности применения *wildcard* `...`:
 
@@ -128,7 +137,109 @@ Hello, Go Generate!
 `go generate` устанавливает несколько *variable*'s, когда запускает команду:
 
 - `$GOFILE` – имя файла
-- `$GOPACKAGE` – имя *package* для файла, содержащего директиву.
+
+- `$GOPACKAGE` – имя *package* для файла, содержащего директиву. Можно использовать как часть имени *package*:
+
+  ```go
+  //go:generate mockgen -package ${GOPACKAGE}_test ...
+  ```
+
+  
 
 Также в строку подставляются значения *environment variable*'s, определенных в ОС, – `$HOME`, `$NAME`, ...
+
+
+
+
+
+# Форматирование (`gofmt`)
+
+https://blog.golang.org/gofmt
+
+https://pkg.go.dev/cmd/gofmt
+
+https://pkg.go.dev/cmd/go#hdr-Gofmt__reformat__package_sources
+
+Можно для форматирования использовать две команды:
+
+-  `gofmt` – работает на *source file level*
+-  `go fmt` – работает на *package level*
+
+```
+gofmt [flags] [path ...]
+```
+
+По умолчанию `gofmt` выводит отформатированные исходные файлы на *standard output*. Без аргументов команду можно использовать, чтобы узнать, как правильно форматировать код (т.к. исходный код не перезаписывается). 
+
+- `path`:
+  - Если не указан, то обрабатывается *standard input*
+  - Если указан файл, то обрабрабатывает этот файл. 
+  - Если указан каталог, то рекурсивно обрабатывает все файлы `.go` в этом каталоге (файлы, начинающиеся с точки `.`, игнорируются.) 
+
+- `flags`:
+  - `-s` – попытаться упростить код
+  - `-w` – не выводить отформатированный код на *standard output*. Если найдены ошибки в форматировании, то файл перезаписывается с правильным форматом. 
+
+
+
+<u>Пример:</u>
+
+Отформатировать и упростить код, перезаписать файлы в правильном формате
+
+```
+gofmt -s -w [path]
+```
+
+
+
+
+
+## Правила форматирования
+
+- Для отступов используется *tab*. 
+- Для выравнивания используются пробелы.
+- Количество символов в строке не ограничено. При желании можно разбить строку на несколько строк. 
+
+
+
+# `go list`
+
+```bash
+go list [-f format] [-json] [-m] [list flags] [build flags] [packages]
+```
+
+`go list` выводит список *package*'s, которые перечислены в параметре `packages` (это не обязательно название *package*, [link](#параметр-packages)), один на строке. 
+
+Примеры использования:
+
+- вывести список *package*'s в нижележащих *import path*'s (поддиректориях):
+
+  ```bash
+  $ go list ./...
+  github.com/parshikovpa/service/internal/ab
+  github.com/parshikovpa/service/internal/api/handler/vertical_form
+  github.com/parshikovpa/service/internal/clients/autosearch
+  github.com/parshikovpa/service/internal/clients/breadcrumbs
+  ```
+
+  Используется relative import path ([link](#параметр-packages)).
+
+- вывести список используемых (мое???) *package*'s стандартной библиотеки + внешних *package*'s.
+
+  ```bash
+  $ go list ...
+  archive/tar
+  archive/zip
+  bufio
+  ```
+
+  
+
+
+
+
+
+# `go imports`
+
+TODO!!!
 

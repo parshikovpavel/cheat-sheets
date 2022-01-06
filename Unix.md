@@ -402,9 +402,9 @@ lrwxrwxrwx 1 root root 52 Nov  7 16:57 /sphinx.conf -> /www/sphinx_123.conf
 
 **mv** id_dsa .ssh/
 
-#### **ln**    
+#### `ln`    
 
-Смотреть Ссылки.
+[link](#символическая-мягкая-ссылка)
 
 #### `chmod`
 

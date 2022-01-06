@@ -85,11 +85,24 @@ if err != nil {
 
 
 
+### Slice
+
+- `%p` – адрес 0-го элемента в 16 СС
+
+
+
+### Pointer
+
+- `%p` – адрес в 16 С
+- `%b`, `%d`, `%o`, `%x` и `%X` *verb*'s – форматируют адрес аналогично, как они это делают для *integer*.
+
+
+
 # Структура
 
 
 
-## `fmt.Errorf()`
+## `Errorf()`
 
 ```go
 func Errorf(format string, a ...interface{}) error
@@ -118,7 +131,7 @@ func Fprintf(w io.Writer, format string, a ...interface{}) (n int, err error)
 
 
 
-## `fmt.Println()`
+## `Println()`
 
 ```go
 func Println(a ...interface{}) (n int, err error)
@@ -148,7 +161,7 @@ func main() {
 
 
 
-## `fmt.Printf()`
+## `Printf()`
 
 ```go
 func Printf(format string, a ...interface{}) (n int, err error)
@@ -162,4 +175,35 @@ func Printf(format string, a ...interface{}) (n int, err error)
 
 
 
+
+## `Stringer()`
+
+```go
+type Stringer interface {
+	String() string
+}
+```
+
+*Interface* `Stringer` необходимо реализовать для *type*, который хочет описать формат вывода значений в виде строки. 
+
+*Package* `fmt` (и многие другие) ожидают этот *interface* для вывода значений. *Method* `String()` используется для печати значений, переданных в качестве операнда, в любой *format*, который принимает `string`, или для неформатированной печати , например с помощью `Print()`.
+
+Пример:
+
+```go
+type Person struct {
+  Name string
+  Age  int
+}
+
+func (p Person) String() string {
+  return fmt.Sprintf("%v (%v года)", p.Name, p.Age)
+}
+
+func main() {
+  a := Person{"Иван Иванов", 54}
+  z := Person{"Петр Петров", 2004}
+  fmt.Println(a, z) 								// Иван Иванов (54 года) Петр Петров (2004 года)
+}
+```
 

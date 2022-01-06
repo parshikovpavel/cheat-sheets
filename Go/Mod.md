@@ -308,7 +308,7 @@ ImportPath       = string_lit .
 - *pseudo-version* с известными *base version* сортируются выше, чем эти *base version*, но ниже, чем другие *pre-release version* для более поздних *version*.
 - *pseudo-version*'s с одинаковым *base version prefix* сортируются в хронологическом порядке.
 
-### Релиз module'й (v2 или выше)
+## Релиз module'й (v2 или выше)
 
 https://github.com/golang/go/wiki/Modules
 
@@ -405,6 +405,8 @@ https://research.swtch.com/vgo
 
 
 ![img](../img/go/impver.png)
+
+Подробнее в [релиз module'й (v2 или выше)](#релиз-moduleй-v2-или-выше)
 
 Объединение *import compatibility rule* с *semantic versioning* – мы называем *semantic import versioning* (семантическое версионирование импорта).
 
@@ -564,6 +566,28 @@ MVS проходит по каждой *vertex*, выделенной синим
 go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
 ```
 
+```
+# Upgrade a specific module.
+$ go get -d golang.org/x/net
+
+# Upgrade modules that provide packages imported by packages in the main module.
+$ go get -d -u ./...
+
+# Upgrade or downgrade to a specific version of a module.
+$ go get -d golang.org/x/text@v0.3.2
+
+# Update to the commit on the module's master branch.
+$ go get -d golang.org/x/text@master
+
+# Remove a dependency on a module and downgrade modules that require it
+# to versions that don't require it.
+$ go get -d golang.org/x/text@none
+```
+
+
+
+
+
 Флаги:
 
 - `-u `– сделать *upgrade* для *module*'s, импортируемых *directly* или *indirectly by packages*, указанными в команде. *Upgrade* будет сделан к последней версии.
@@ -571,20 +595,33 @@ go get [-d] [-t] [-u] [-v] [-insecure] [build flags] [packages]
 
 Примеры:
 
-- получить нужную версию библиотеки:
+- *get* или *upgrade* конкретный *module*:
 
   ```bash
-  go get -d golang.org/x/text@v0.3.2
+  go get -d golang.org/x/net
   ```
 
-- обновить (update) все зависимости:
+- *upgrade* все зависимости (*modules*, которые предоставляют *package*'s, импортированные всеми *package*'s в *main module*). 
 
   ```bash
   go get -u -d ./...
   go mod tidy
   ```
 
-  
+
+- *get, upgrade* или *downgrade* к конкретной версию *module*:
+
+  ```bash
+  go get -d golang.org/x/text@v0.3.2
+  ```
+
+- *update* к *commit*'у' в *master branch*:
+
+  ```bash
+  go get -d golang.org/x/text@master
+  ```
+
+
 
 Т.к. в директиве `require` в `go.mod` файле указывается минимально необходимая версия, то при выполнении команды `go get` версия может автоматически увеличиться из-за добавления новой зависимости.
 

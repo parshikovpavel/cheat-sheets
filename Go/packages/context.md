@@ -1,5 +1,7 @@
 https://stackoverflow.com/questions/56224836/stop-child-goroutine-when-parent-returns
 
+https://www.youtube.com/watch?v=U5Y_St7lESk
+
 # `context`
 
 Когда Go используется для обработки *request*'ов на сервере, каждый *request* обрабатывается в собственной goroutine (для каждого создается своя новая goroutine? скорее всего да). 

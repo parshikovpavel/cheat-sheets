@@ -15,6 +15,8 @@ https://www.zhashkevych.com/clean-architecture
 
 По репозиторию https://github.com/golang-standards/project-layout
 
+Пишут, что тут хорошо расписано про основные паттерны https://threedots.tech/post/common-anti-patterns-in-go-web-applications/
+
 ## Директория `/cmd`
 
 Является точкой входа для приложения
@@ -470,7 +472,13 @@ https://mycodesmells.com/post/accept-interfaces-return-struct-in-go
 
 
 
+# Имена файлов из нескольких слов
 
+Имена файлов, package из нескольких слов разделяются подчеркиваниями и пишутся строчными буквами:
+
+```
+service-abc/internal/rpc/create_hello_world
+```
 
 
 

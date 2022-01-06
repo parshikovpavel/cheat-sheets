@@ -29,6 +29,40 @@ https://medium.com/german-gorelkin
 
 https://github.com/golang/go/wiki/CodeReviewComments
 
+
+
+«[Network programming with Go](https://click.sender.yandex.ru/l/626484/633447/6/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://www.amazon.com/Network-Programming-Go-Adam-Woodbeck/dp/1718500882?utm_source=email&utm_medium=email&utm_campaign=sendr-626484)», Adam Woodbeck — ещё одна книга по Go. Особенно советуем раздел № 3 про HTTP-сервер.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)«[Cloud Native Go: Building Web Applications and Microservices for the Cloud with Go and React](https://click.sender.yandex.ru/l/626484/633447/7/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://www.amazon.com/Cloud-Native-Applications-Microservices-Developers/dp/0672337797?utm_source=email&utm_medium=email&utm_campaign=sendr-626484)», Dan Nemeth, Kevin Hoffman — хорошее руководство, как создавать веб-приложения на Go с использованием микросервисной архитектуры и облачных технологий.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Унифицируй это: как Lamoda делает единообразными свои Go сервисы](https://click.sender.yandex.ru/l/626484/633447/8/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://habr.com/ru/company/lamoda/blog/495344/?utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — как в Lamoda справляются с разношерстностью около 40 микросервисов на Go.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Go Does Not Need a Java Style GC](https://click.sender.yandex.ru/l/626484/633447/9/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://itnext.io/go-does-not-need-a-java-style-gc-ac99b8d26c60?utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — автор статьи сравнивает Garbage Collector в Go и Java и объясняет, почему в Go лучше.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Language Mechanics On Escape Analysis](https://click.sender.yandex.ru/l/626484/633447/10/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://www.ardanlabs.com/blog/2017/05/language-mechanics-on-escape-analysis.html?utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — подробно про Escape-анализ в Go.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Под капотом Golang — как работают каналы](https://click.sender.yandex.ru/l/626484/633447/11/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://medium.com/@victor_nerd/под-капотом-golang-как-работают-каналы-часть-1-e1da9e3e104d?utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — статья Игоря Угольникова про устройство каналов в Go.
+
+
+
+
+
+[Just For Func](https://click.sender.yandex.ru/l/626484/633447/12/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://www.youtube.com/watch?v=H_4eRD8aegk&list=PL64wiCrrxh4Jisi7OcCJIUpguV_f5jGnZ&utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — познавательные лекции по программированию.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Эффективное использование структур данных в Go](https://click.sender.yandex.ru/l/626484/633447/13/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://www.youtube.com/watch?v=kClQ7rM5uBY&utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — доклад Александра Шарипова.
+
+
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Standard Go Project Layout](https://click.sender.yandex.ru/l/626484/633447/14/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://github.com/golang-standards/project-layout/blob/master/README_ru.md?utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — базовый макет организации проектов, разработанных на Golang.
+
+![img](https://resize.yandex.net/mailservice?url=https%3A%2F%2Fcdn.letteros.com%2Fuploads%2F4699%2Fmf51n_mf25g_mf86q_i1.png&proxy=yes&key=d790a50f855d3c7bde9b371b60f8efb8)[Codewars](https://click.sender.yandex.ru/l/626484/633447/15/L/UEFNVFNRQnlGRmcrRGlRclN4VWdmRUorZm0wTFdXSlpWVWRBWG5KTmRXUkhRVlZaV0g5cVoyVmxWM1I2Wm1KVkFITUlYRXRjYlhvRgpkWFpnVVZ3TGFsQm1kU0l1Sm14SUlUeFFVQ0pSVHdGVGNYSlhmRUliRnlJaFhneHFUaGNhTFNkTGZsOEtBWFk9OjIwNzU6MA%3D%3D/*https://www.codewars.com/?language=go&utm_source=email&utm_medium=email&utm_campaign=sendr-626484) — сайт, который поможет «набить руку» при решении задачек на Go.
+
+Graceful shutdown https://rudderstack.com/blog/implementing-graceful-shutdown-in-go/
+
+
+
+
+
 # Общие особенности
 
 * компилируемый язык
@@ -189,6 +223,60 @@ Literal (литерал) является описанием *constant*'ы (ко
 
 
 
+## Integer literal
+
+*Integer literal*  - это последовательность цифр, представляющая [integer constant](#constant). Опциональный префикс устанавливает *non-decimal base*: 
+
+- `0b` или `0B` для *binary*
+- `0`, `0o` или `0O` для *octal*
+- `0x`или `0X` для *hexadecimal*. 
+
+В *hexadecimal literal*, буквы `a` - `f` и `A` - `F` представляет значения от 10 до 15.
+
+Для удобства чтения символ подчеркивания `_` может стоять после префикса или между последовательными цифрами (любое количество и в любом месте); такие подчеркивания не изменяют значение *literal*'а.
+
+```
+int_lit        = decimal_lit | binary_lit | octal_lit | hex_lit .
+decimal_lit    = "0" | ( "1" … "9" ) [ [ "_" ] decimal_digits ] .
+binary_lit     = "0" ( "b" | "B" ) [ "_" ] binary_digits .
+octal_lit      = "0" [ "o" | "O" ] [ "_" ] octal_digits .
+hex_lit        = "0" ( "x" | "X" ) [ "_" ] hex_digits .
+
+decimal_digits = decimal_digit { [ "_" ] decimal_digit } .
+binary_digits  = binary_digit { [ "_" ] binary_digit } .
+octal_digits   = octal_digit { [ "_" ] octal_digit } .
+hex_digits     = hex_digit { [ "_" ] hex_digit } .
+```
+
+
+
+```go
+// это правильные literal'ы
+42
+4_2
+0600
+0_600
+0o600
+0O600       // второй символ - заглавная буква 'O'
+0xBadFace
+0xBad_Face
+0x_67_7a_2f_cc_40_c6
+170141183460469231731687303715884105727
+170_141183_460469_231731_687303_715884_105727
+
+// это неправильные literal'ы
+_42         // identifier, не integer literal
+42_         // invalid: _ должен разделять последовательные цифры
+4__2        // invalid: только один _ между двумя цифрами
+0_xBadFace  // invalid: _ должен разделять последовательные цифры
+```
+
+
+
+
+
+
+
 ## Rune literal
 
 Rune literal (строковый литерал) – *integer value*, которое задает *Unicode code point*. Записывается в *single quote*'s. 
@@ -257,7 +345,7 @@ a = 'ц'  // constant 1094 overflows byte
 
 - именем типа (`TypeName`). Возможны варианты:
   - Есть набор предопределенных *type name*'s (`int`, `bool`, ...). 
-  - Другие вводятся с помощью [объявления type](#объявление-type). В этом случае у этого типа `T` есть *underlying type* (базовый тип)
+  - Другие вводятся с помощью [type declaration](#type-declaration). В этом случае у этого типа `T` есть *underlying type* (базовый тип)
 - Литералом типа (`TypeLit`). Так задаются *composite types* (составные типы) – `array`, `struct`, *pointer*, `func`, `interface`, `slice`, `map` и `channel` .
 
 ```
@@ -289,6 +377,58 @@ https://go101.org/article/value-part.html
 ### Non-reference type
 
 Остальные *type*'s содержат *value* и при присвоении – копируется *value*.
+
+## Type width
+
+Мое: кажется, что это тоже самое что *size*.
+
+Термин *width*, как и большинство терминов, заимствован из компилятора `gc`.
+
+*Width* описывает количество байтов хранилища, которое занимает *type instance*. 
+
+*Width* – это свойство *type*. Поскольку каждое *value* в программе имеет *type*, *value width* определяется его *type* и всегда кратна 8 битам.
+
+Мы можем определить любое *value width* и, следовательно, его *type width* с помощью функции [`unsafe.Sizeof()`](packages/unsafe.md#sizeof).
+
+```go
+package main
+
+import (
+	"fmt"
+	"unsafe"
+)
+
+func main() {
+	var a int8
+	b := make([]int, 1)
+	fmt.Println (unsafe.Sizeof(a)) // выводит 1
+  fmt.Println (unsafe.Sizeof(b)) // выводит 24 (pointer+size+capacity)
+}
+```
+
+*Width* для *array type* – это сумма *width* всех его элементов:
+
+```go
+func main() {
+	var a [10]int64
+	fmt.Println (unsafe.Sizeof(a)) // выводит 80
+}
+```
+
+Для *struct type* – *width* является суммой *field type width*'s плюс [padding](Internal.md#alignment-padding).
+
+```go
+type S struct {
+        a uint16
+        b uint32
+}
+var s S
+fmt.Println(unsafe.Sizeof(s)) // prints 8, not 6
+```
+
+
+
+
 
 ## Method set
 
@@ -332,145 +472,14 @@ rune        alias for int32
 
 uint     either 32 or 64 bits
 int      same size as uint
-uintptr  an unsigned integer large enough to store the uninterpreted bits of a pointer value
+uintptr  unsigned integer достаточно большой, чтобы хранить неинтерпретированные bits для pointer value (любого адреса в памяти)
 ```
+
+- `rune` – псевдоним для `int32`
 
 ## *struct type*
 
-`struct` (структура) – *composite type* (составной тип), последовательность именованных элементов, называемых *field* (поле), у каждого из которых есть *name* и *type*.
-
-<pre>
-StructType    = "struct" "{" { FieldDecl ";" } "}" .
-FieldDecl     = (<a href="#объявление-constant">IdentifierList</a> <a href="#types">Type</a> | EmbeddedField) [ Tag ] .
-EmbeddedField = [ "*" ] <a href="#types">TypeName</a> .
-Tag           = string_lit .
-</pre>
-
-
-- Пример 1
-
-  ```go
-  // An empty struct.
-  struct {}
-  ```
-
-- Пример 2
-
-  ```
-  StructType    = "struct" "{" { FieldDecl ";" } "}" .
-  FieldDecl     = IdentifierList Type
-  ```
-
-  ```go
-  // A struct with 6 fields.
-  struct {
-  	x, y int
-  	u float32
-  	_ float32  // padding
-  	A *[]int
-  	F func()
-  }
-  ```
-
-
-
-### *Embedded field*
-
-*Field*, объявленное с указанием `TypeName`, но без указания `IdentifierList`, называется *embedded field* (встроенным полем). 
-
-*Embedded field* может быть:
-
-- [`TypeName`](#types) (e.g. `T`)
-- *pointer* тип (e.g. `*T`). При этом `T` – *non-interface* тип и *non-pointer* тип
-
-Для *еmbedded field* в качестве *field name* выступает *unqualified type name*:
-
-```go
-struct {
-	T1        // field name is T1
-	*T2       // field name is T2
-	P.T3      // field name is T3
-	*P.T4     // field name is T4
-}
-```
-
-### *Promoted field* и *method*
-
-Пусть имеем:
-
-```go
-type A struct {
-  B  // embedded field, field name is B
-}
-a := A{}
-```
-
-где `B` –  *еmbedded field*, имеет структуру:
-
-```go
-type B struct {
-  field int
-}
-
-func (b B) method() int {
-    return ...
-}
-```
-
-Тогда можно использовать сокращенную форму *selector*'а: 
-
-- вместо  `a.B.field` – `a.field`
-- вместо `a.b.method` – `a.method`
-
-(когда `a.field` и `a.method` – допустимые [*selector*]()'s) 
-
-Такие `field` и `method` (внутри *embedded field*) называются *promoted*.
-
-*Promoted fields* могут использоваться как обычные *fields* c одним ограничением:
-
-- *promoted fields* не могут использовать в *composite literal*. Нужно явно описать весь *embedded field*:
-
-  ```go
-  a := A{field: 1} // Error!!!
-  a: = A{B{field: 1}} // OK!
-  ```
-
-### *Tag*
-
-После *field declaration* ([`FieldDecl`](#struct-тип)) можно указать `Tag` в виде [*string literal*](#string-literal)'а.
-
-*Field tag* можно извлечь с помощью [reflection interface](). И они используются некоторыми пакетами, для описание полей данных, полученных по некоторому протоколу (*protobuf*, *json*).
-
-С точки зрения языка, tag игнорируется. 
-
-```go
-struct {
-	name string  "any string"
-  microsec  uint64 `protobuf:"1"`
-}
-```
-
-
-
-### Примеры
-
-*Declaration* для типа `struct` 
-
-```go
-type A struct {
-    b int
-}
-```
-
-*Variable declaration* типа `struct` с инициализацией:
-
-```go
-a := A{b: 1}
-```
-
-
-
-
+[смотреть](types/struct.md)
 
 
 
@@ -506,146 +515,7 @@ ElementType = Type .
 
 ### *Slice type*
 
-`slice` – наиболее часто используемая коллекция. 
-
-`slice` (срез) – это дескриптор для непрерывного сегмента *underlying* `array` (базового массива), обеспечивающий доступ к пронумерованной последовательности элементов из этого *array*. Т.е. *slice* – это такой тип, который может хранить все возможные срезы *array* с элементами указанного *type*. 
-
-Slice, *под капотом*, представляет собой контейнер, содержащий:
-
-- указатель на данные (внутри *underlying array*)
-- length (длину)
-- capacity (емкость)
-
-После инициализации срез всегда связан с *underlying* `array` (базовым массивом), который содержит его элементы. Таким образом, *slice* разделяет хранилище со своим `array` и с другими `slice`'s того же `array`.
-
-*Underlying* `array` может выходить за пределы конца `slice`. *Capacity* – это длина `slice` + длина `array` за пределами `slice`; `slice` длиной до этой *capacity* можно создать из исходного `slice`, применив [*slice expression*](#slice-expression). Значение *capacity* можно определить с помощью функции `cap()`.
-
-Определение одномерного *slice*:
-
-```
-SliceType = "[" "]" ElementType 
-```
-
-```go
-[]Тип        // без инициализации
-[]Тип{1,2,3} // с инициализацией
-```
-
-```go
-a := []string{"1", "2", "3"} // сокращенная форма
-var b = []int{2, 3, 5}       // полная форма
-```
-
-Размер *slice* указывать не нужно, компилятор сам может подсчитать количество элементов.
-
-Чтобы определить многомерный *slice*, необходимо в качестве `Тип` указать другой `slice`:
-
-```go
-[][]Тип
-```
-
-```go
-var bigDigits = [][]string{
-    {"1","2","3"},
-    {"4","5","6"},
-}
-```
-
-Основные операции со *slice*: (https://github.com/golang/go/wiki/SliceTricks)
-
-- *clone (copy)*:
-
-  ...
-
-#### Реализация *stack* (стек)
-
-*stack* на Go реализуется через *slice*:
-
-- для push – используем функцию `append`
-- для pop – используем *slice expression* для исключения *top element*.
-
-```go
-type Stack []int
-
-// Push a new value onto the stack
-func (s *Stack) Push(v int) {
-	*s = append(*s, v) // Simply append the new value to the end of the stack
-}
-
-// Remove and return top element of stack. Return false if stack is empty.
-func (s *Stack) Pop() (int, bool) {
-	if s.IsEmpty() {
-		return 0, false
-	} else {
-		index := len(*s) - 1 // Get the index of the top most element.
-		element := (*s)[index] // Index into the slice and obtain the element.
-		*s = (*s)[:index] // Remove it from the stack by slicing it off.
-		return element, true
-	}
-}
-```
-
-Но эта реализация НЕ *thread safe*, т.к. мы можем попасть в race condition и попытаться сделать *pop* из пустого *stack* (если два потока попадут в функцию `Pop()`).
-
-Чтобы избежать race condition – необходимо обернуть *slice* структуру и добавить в нее *mutex*:
-
-```go
-type stack struct {
-     lock sync.Mutex // you don't have to do this if you don't want thread safety
-     s []int
-}
-
-func NewStack() *stack {
-    return &stack {make([]int,0),}
-}
-
-func (s *stack) Push(v int) {
-    s.lock.Lock()
-    defer s.lock.Unlock()
-
-    s.s = append(s.s, v)
-}
-
-func (s *stack) Pop() (int, error) {
-    s.lock.Lock()
-    defer s.lock.Unlock()
-
-
-    l := len(s.s)
-    if l == 0 {
-        return 0, errors.New("Empty Stack")
-    }
-
-    res := s.s[l-1]
-    s.s = s.s[:l-1]
-    return res, nil
-}
-
-
-func main(){
-    s := NewStack()
-    s.Push(1)
-    s.Push(2)
-    s.Push(3)
-    fmt.Println(s.Pop())
-    fmt.Println(s.Pop())
-    fmt.Println(s.Pop())
-}
-```
-
- 
-
-
-
-### Общее
-
-#### Обращение к элементам
-
-Аналогично другим языкам, получение n-го элемента среза:
-
-```go
-slice[n]
-```
+[смотреть тут](types/slice.md)
 
 ## *Pointer type*
 
@@ -673,6 +543,8 @@ BaseType    = Type .
 
 Смотреть также [объявление function](#function-declaration)
 
+*Function type* описывает множество всех *function*'s с теми же самыми *parameter type*'s и *result type*'s. Значение неинициализированной *variable* с *function type* – `nil` (т.к. *function type* – *reference type*).
+
 Функции и методы в языке Go определяются с помощью ключевого слова `func`. 
 
 Тип `func`:
@@ -689,6 +561,12 @@ IdentifierList = identifier { "," identifier } .
 
 
 Функции и методы могут возвращать ноль или более значений. 
+
+`ParameterDecl` может включать список *identifier*'s (`IdentifierList`), для которых один раз указан *type*:
+
+```go
+func(a, b int)
+```
 
 В списке *parameter*'ов и *result*'ов (`ParameterList`) имена переменных (`IdentifierList`) должны быть:
 
@@ -711,11 +589,21 @@ func(a, _ int, z float32) bool // Type result'а записан без скоб�
 func(a, b int, z float32) (bool) // или можно Type result'а записать в скобках
 ```
 
-К последнему *parameter*'у можно добавить префикс  `...` и тогда функция может быть вызвана с нулем или более аргументов для этого параметра. Такая функция называется *variadic* (вариативной). 
+К *type* последнего *parameter*'а можно добавить префикс  `...` и тогда функция может быть вызвана с нулем или более аргументов для этого параметра. Такая функция называется *variadic* (вариативной). 
 
 ```go
 func(prefix string, values ...int)
 ```
+
+Если в *variadic function* требуются параметры разных *type*'s, можно использовать `interface{}`:
+
+```go
+func(a, b int, z float64, opt ...interface{}) (success bool)
+```
+
+Про передачу параметров в *variadic function* написано [здесь](#passing-arguments-to-parameters)
+
+
 
 В Go нет опциональный параметров, в отличии от PHP. Т.е. все формальным параметрам должны быть назначены фактические параметры при вызове.
 
@@ -1188,244 +1076,7 @@ https://gist.github.com/miguelmota/faca748b3c8598f2abf322b51b542d24
 
 ## `map` *type*
 
-https://habr.com/ru/post/457728/
-
-`map` – это неупорядоченная (!!!) группа *element*'ов (*value*'s) одного *type* (*element type*), проиндексированные уникальными *key*'s другого *type* (*key type*). Значение неинициализированного `map` – `nil`.
-
-<pre>
-MapType     = "map" "[" KeyType "]" ElementType .
-KeyType     = <a href="#type">Type</a> .
-ElementType = <a href="#type">Type</a> .
-</pre>
-
-
-```go
-map[string]int
-map[*T]struct{ x, y float64 }
-map[string]interface{}
-```
-
-Для *key type* должна быть полностью определены операторы `==` и `!=`. 
-
-Поэтому в качестве *key type* можно использовать:
-
-- *Numeric types*
-- *String types*
-- *Array types*
-- *Struct types* 
-- *Pointer types*
-- `interface`. При этом операторы `==`, `!=`  должны быть определены для динамических значений в ключе (*dynamic key values*)
-
-В качестве *key type* нельзя использовать:
-
-- *Slice types*
-- `function`
-- `map`
-- `slice`
-
-### Internal
-
-Если передать `map` *by value* в *function* и там изменять ее содержимое через формальный параметр, то изменения будут видны и через фактический параметр (как `object` в PHP).
-
-This variable `m` is a map of string keys to int values:
-
-```
-var m map[string]int
-```
-
-Map types are reference types, like pointers or slices, and so the value of `m` above is `nil`; it doesn't point to an initialized map. A nil map behaves like an empty map when reading, but attempts to write to a nil map will cause a runtime panic; don't do that. To initialize a map, use the built in `make` function:
-
-```
-m = make(map[string]int)
-```
-
-The `make` function allocates and initializes a hash map data structure and returns a map value that points to it. The specifics of that data structure are an implementation detail of the runtime and are not specified by the language itself. In this article we will focus on the *use* of maps, not their implementation.
-
-TODO!!!! https://blog.golang.org/maps
-
-### Частые операции:
-
-- создание (инициализация):
-
-  - создание через *composite literal*. При этом можно создать пустой `map` или сразу инициализировать его:
-
-    ```go
-    var timeZone = map[string]int{
-        "a": 1,
-        "b": 2,
-        "c": 3,
-    }
-    ```
-
-  - создание пустого `map` через `make`:
-
-    ```go
-    make(map[string]int)       // небольшого capacity
-    make(map[string]int, 100)  // с указанным начальным capacity
-    ```
-
-    Первоначальная *capacity* не ограничивает его *size*: `map` растет автоматически с добавлением *element*'ов, кроме случая когда `map = nil`. `map = nil` – то же самое что пустая `map` , но нельзя добавлять *element*'ы.
-
-- Длина:
-
-  [`len(a)`](#len()) 
-
-- Добавить *element* ([assignment](#assignment))
-
-  `a["b"] = 1` 
-
-- Получить *element* (*[index expression](#index-expression)*)
-
-  `c := a["b"]` 
-
-  Если `map` – `nil` или не содержит ключ `"b"`, то `a["b"]` – [*zero value*](#zero-value) для *element type*.
-
-- Получить *element* и получить флаг, что *element* существует в `map`. Используется *multiple assignment*. Конструкция называется *"comma ok" idiom*.
-
-  ```go
-  var c int
-  var ok bool
-  c, ok = a["b"]
-  ```
-
-  Получить *element* и сразу проверить, что *element* существует в `map`.
-
-  ```go
-  if c, ok = a["b"]; ok {
-    return c;
-  }
-  ```
-
-  Если нужно получить только флаг, что *element* существует в `map` и сам *element* не нужен, то используем [blank identifier (`_`)](#blank-identifier):
-
-  ```go
-  _, ok = a["b"]
-  ```
-
-  
-
-- Удалить *element*
-
-  [`delete(a, "b")`](#delete())
-
-  Если `a = nil` или `a[key]` не существует, `delete()` ничего не делает.
-
-### Реализация *set* (множества)
-
-*Set* (множество) можно реализовать как `map` с *element type* – `bool`. 
-
-Операции:
-
-- инициализировать *set*:
-
-  ```go
-  set := map[string]bool{
-      "Ann": true,
-      "Joe": true,
-      ...
-  }
-  ```
-
-- добавить элемент в *set*:
-
-  ```go
-  set["a"] = true
-  ```
-
-- проверить наличие элемента в *set*:
-
-  ```go
-  if set[person] { // будет false если person не в set
-      ...
-  }
-  ```
-
-
-
-### Ошибка Cannot assign to (struct field in map)
-
-Например, такое выдает ошибку:
-
-```go
-package main
-
-import "fmt"
-
-type Animal struct {
-	count int
-}
-
-func main() {
-	m := map[string]Animal{"cat": Animal{2}, "dog": Animal{3}, "mouse": Animal{5}}
-        fmt.Println(m)
-	m["dog"].count = 4
-	
-	fmt.Println(m)
-
-}
-```
-
-<u>Причина:</u>
-
-Левая часть присвоения должна быть «*addressable*» ([1](https://golang.org/ref/spec#Assignments))
-
-> Каждый левый операнд должен быть *addressable*, *map index expression* или (только для = присвоения) *blank identifier*.
-
-и [2](https://golang.org/ref/spec#Address_operators) 
-
-> *Operand* должен быть *addressable*, то есть быть либо *variable*, либо косвенным указателем (*pointer indirection*), либо *slice indexing operation*; или *field selector of an addressable struct operand*; или array *indexing operation of an addressable array*.
-
-Решения:
-
-1. Взять структуру целиком, изменить и присвоить обратно:
-
-   ```go
-   package main
-   
-   import "fmt"
-   
-   type Animal struct {
-   	count int
-   }
-   
-   func main() {
-   	m := map[string]Animal{"cat": Animal{2}, "dog": Animal{3}, "mouse": Animal{5}}
-   
-   	fmt.Println(m)
-   
-   	var x = m["dog"]
-   	x.count = 4
-   	m["dog"] = x
-   
-   	fmt.Println(m)
-   
-   
-   }
-   ```
-
-2. Использовать в *map* *pointer*'ы на структуру:
-
-   ```go
-   package main
-   
-   import "fmt"
-   
-   type Animal struct {
-   	count int
-   }
-   
-   func main() {
-   	m := map[string]*Animal{"cat": &Animal{2}, "dog": &Animal{3}, "mouse": &Animal{5}}
-   	fmt.Printf("%#v\n",m["dog"])
-   	
-   	m["dog"].count = 4
-   
-   	fmt.Printf("%#v", m["dog"])
-   
-   }
-   ```
-
-### Присваивание map
+[в отдельном файле](types/map.md)
 
 
 
@@ -2653,7 +2304,7 @@ func main() {
 
 ```
 
-Если последний параметр `p` –  *assignable* с типом `[]T` и после него указано троеточие `...`., то параметр передается без изменений. В этом случае новый *slice* не создается.
+Если последний параметр `p` –  *assignable* к *slice type* `[]T` и после него указано троеточие `...`., то параметр передается без изменений. В этом случае новый *slice* не создается.
 
 ```go
 func f (p ...int) {
@@ -2685,9 +2336,69 @@ add_op     = "+" | "-" | "|" | "^" .
 mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
 unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .  
 </pre>
+*Comparison operator* обсуждаются [в соответствующем разделе](#comparison-operator). Для других *binary operator*, *operand type*'s должны быть (!!!!) [identical](#type-identity), если *operation* не включает *shift operator* или [untyped constants](#constant). Для подробного описания *operation*, включающих только *constant*'s, смотрите раздел [constant expressions](#constant-expression).
 
+TODO!!!!
 
 ### Arithmetic operator
+
+*Arithmetic operator* применяются к *numeric value*'s и возвращают результат того же самого *type*, что и первый *operand*.
+
+Ниже таблица с указанием *type*'s, к которым они могут применяться:
+
+```go
++    sum                    integers, floats, complex values, strings
+-    difference             integers, floats, complex values
+*    product                integers, floats, complex values
+/    quotient               integers, floats, complex values
+%    remainder              integers
+
+&    bitwise AND            integers
+|    bitwise OR             integers
+^    bitwise XOR            integers
+&^   bit clear (AND NOT)    integers
+
+<<   left shift             integer << integer >= 0
+>>   right shift            integer >> integer >= 0
+```
+
+#### Integer operator
+
+Для двух *integer value*'s `x` и `y` целое частное `q = x / y` и остаток от деления `r = x % y` удовлетворяют следующим отношениям:
+
+```
+x = q*y + r  and  |r| < |y|
+```
+
+при этом для `x / y` выполняется *truncate*:
+
+```
+ x     y     x / y     x % y
+ 5     3       1         2
+-5     3      -1        -2
+ 5    -3      -1         2
+-5    -3       1        -2
+```
+
+Как сказано в [operator](#operator):
+
+> Для других *binary operator*, *operand type*'s должны быть (!!!!) [identical](#type-identity)
+
+Поэтому здесь будет выдана ошибка:
+
+```go
+package main
+ 
+func main() {
+    a := 3.14
+    b := 2
+    result := a / b  // invalid operation: a / b (mismatched types int and int64)
+}
+```
+
+
+
+
 
 #### String concatenation
 
@@ -2745,7 +2456,7 @@ func main() {
 &a[f(2)]
 ```
 
-Для *pointer*'а  `x` типа `*T `, разыменование (dereferencing, косвенное обращение, inderection) *pointer*'а `*x` обозначает переменную типа `T`, на которую указывает `x`. Разыменование выполняется добавлением символа звездочки `*` перед именем переменной.
+Для *pointer*'а  `x` типа `*T `, разыменование (*dereferencing*, косвенное обращение, *inderection*) *pointer*'а `*x` обозначает переменную типа `T`, на которую указывает `x`. Разыменование выполняется добавлением символа звездочки `*` перед именем переменной.
 
 ```go
 *p
@@ -2757,6 +2468,34 @@ func main() {
 ### Receive operator
 
 смотреть [Receive operator](types/channel.md#receive-operator)
+
+### Ternary operator `?:`
+
+В Go нет *ternary operator* `?:`. Для достижения того же результата необходимо использовать `if-else`:
+
+```go
+if expr {
+    n = trueVal
+} else {
+    n = falseVal
+}
+```
+
+Если нужно объявить переменную, то короче будет так:
+
+```go
+n := falseVal
+
+if expr {
+    n = trueVal
+} 
+```
+
+
+
+
+
+Причина отсутствия *ternary operator* `?:` в Go заключается в том, что разработчики языка слишком часто видели *ternary operator* `?:`, используемый для создания непостижимо сложных выражений. `if-else` *statement*, хотя длиннее по размеру, но бесспорно яснее. Для языка требуется только одна конструкция *conditional control flow*.
 
 
 
@@ -3012,7 +2751,9 @@ ExprSwitchStmt = "switch" [ SimpleStmt ";" ] [ Expression ] "{" { ExprCaseClause
 ExprCaseClause = ExprSwitchCase ":" StatementList .
 ExprSwitchCase = "case" <a href="#constant-declaration">ExpressionList</a> | "default" .
 </pre>
-*Simple statement* может предшествовать *switch expression*, который выполняется перед тем как будет вычислено  *switch expression*.
+*Simple statement* может предшествовать *switch expression*, который выполняется перед тем как будет вычислено *switch expression*.
+
+Компилятор запрещает использовать несколько *case expression*'s, которые содержат одну и ту же *integer, floating point* или *string constant*. 
 
 <u>Примеры:</u>
 
@@ -3173,7 +2914,18 @@ RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
 - `ExpressionList` – уже объявленные переменные
 - `IdentifierList` – новые переменные, идентификаторы
 
-Итерирует все элементы *array*, *slice*, *string* или *map* или значений, полученных по *channel*. Для каждого элемента присваивает переменным (может быть несколько переменных в `IdentifierList`) некоторые значения, зависящие от типа `Expression` (см. таблицу ниже), а затем выполняет блок.
+Итерирует *entry*'s для *array*, *slice*, *string* или *map* или значений, полученных по *channel*. 
+
+`Expression`  может быть:
+
+- array
+- pointer to array
+- slice
+- string
+- map
+- *bidirectional* или *receive-only channel*
+
+Для каждого элемента присваивает *iteration variable*'s (может быть несколько переменных в `IdentifierList`) некоторые *iteration value*'s, зависящие от типа `Expression` (см. таблицу ниже), а затем выполняет блок.
 
 
 ```go
@@ -3186,8 +2938,6 @@ for key, val = range <map> {
 }
 ```
 
-
-
 *Value*'s зависят от типа `Expression` следующим образом:
 
 ```
@@ -3198,6 +2948,84 @@ string          s  string type            index    i  int    see below  rune
 map             m  map[K]V                key      k  K      m[k]       V
 channel         c  chan E, <-chan E       element  e  E
 ```
+
+1. Для *array*, *pointer to array* и *slice*, выполняет итерации по индексам в порядке возрастания, начиная с индекса 0. Для `nil` *slice* количество итераций равно 0.
+2. Для *string*, выполняет итерации по *Unicode code point*'s в *string*, начиная с байта с индексом 0. При последующих итерациях *index value* будет равно индексу первого байта последовательных *UTF-8-encoded code point*'s в *string* и второе *value* с типом `rune` будет значением соответствующей *code point*. 
+3. Порядок итераций по *map* не определен и не гарантируется, что он будет одинаковым от одной итерации к другой. Если еще не достигнутая *map entry* будет удалена во время итерации, соответствующее *iteration value* не будет выдано. Если *map entry* создается во время итерации, эта запись может быть выдана во время итерации или может быть пропущена. Если *map* есть `nil`, количество итераций равно 0.
+4. Для *channel*, выдаваемые *iteration value*'s являются последовательными значениями, отправляемыми по *channel* до тех пор, пока *channel* не будет *close*. Если *channel* есть `nil`, *range expression* блокируется навсегда.
+
+*Iteration variable*'s могут быть объявлены с формы [short variable declaration](#short-variable-declarations) ( `:=`).  Их [scope](#declarations-and-scope) в этом случае - block для `for` *statement*; они используются повторно в каждой итерации. Если *iteration variable*'s объявлены вне `for` *statement*, после выполнения их значения будут такими же, как и на последней итерации.
+
+
+
+```go
+var testdata *struct {
+	a *[7]int
+}
+for i, _ := range testdata.a {
+	// testdata.a is never evaluated; len(testdata.a) is constant
+	// i ranges from 0 to 6
+	f(i)
+}
+
+var a [10]string
+for i, s := range a {
+	// type of i is int
+	// type of s is string
+	// s == a[i]
+	g(i, s)
+}
+
+var key string
+var val interface{}  // element type of m is assignable to val
+m := map[string]int{"mon":0, "tue":1, "wed":2, "thu":3, "fri":4, "sat":5, "sun":6}
+for key, val = range m {
+	h(key, val)
+}
+// key == last map key encountered in iteration
+// val == map[key]
+
+var ch chan Work = producer()
+for w := range ch {
+	doWork(w)
+}
+```
+
+Можно не указывать `ExpressionList` и `IdentifierList`:
+
+```go
+// очистить channel, receive все value's
+for range ch {}
+
+// tick каждую 1 секунду
+for range time.Tick(time.Second) {
+  // ..
+}
+```
+
+
+
+Т.к. выполняется присваивание значения для *iteration variable*, то (как и все присваивания в Go) происходит копирование значения, присваивание *by value*.
+
+Если необходимо изменить значение в исходном значении, то нужно обращаться к его элементам по индексам и изменять их:
+
+```go
+type MyType struct {
+    field string
+}
+
+func main() {
+    var array [10]MyType
+
+    for idx, _ := range array {
+        array[idx].field = "foo"
+    }
+}
+```
+
+
+
+
 
 ### С *for clause*
 
@@ -3219,14 +3047,14 @@ for i := 0; i < 10; i++ {
 }
 ```
 
-## `return`
+## `return` *statement*
 
 <pre>
 ReturnStmt = "return" [ <a href="#constant-declaration">ExpressionList</a> ] .  
 </pre>
 
 
-В функции без [*result parameters*](#result-parameters) используется пустой `return`:
+В функции без [*result parameters*](#function-type) используется пустой `return`:
 
 ```go
 func noResult() {
@@ -3234,7 +3062,7 @@ func noResult() {
 }
 ```
 
-Если у функции есть [*result parameters*](#result-parameters):
+Если у функции есть [*result parameters*](#function-type):
 
 1. явно указать *value* в `return`:
 
@@ -3252,7 +3080,7 @@ func noResult() {
    }
    ```
 
-3. Если для [*result parameters*](#result-parameters) указаны имена, то можно использовать пусlтой `return`. `return` просто возвращает значения этих переменных.
+3. Если для [*result parameters*](#function-type) указаны имена, то можно использовать пустой `return`. `return` просто возвращает значения этих переменных.
 
    ```go
    func complexF3() (re float64, im float64) {
@@ -3262,7 +3090,7 @@ func noResult() {
    }
    ```
 
-   
+*Result parameter*'ы инициализируются *zero value* при входе в функцию. `return` *statement* устанавливает значения *result parameter*'ов перед выполнением любых *deferred function*'s.
 
 
 
@@ -3299,7 +3127,254 @@ OuterLoop:
 
 ## `select` *statement*
 
+[смотреть тут](types/channel.md#selecr-statement)
 
+
+
+## `defer` *statement*
+
+`defer` *statement* вызывает *function*,  выполнение которой откладывается (*defer*) до момента, когда окружающая *function* завершится (*return*). 
+
+```
+DeferStmt = "defer" Expression .
+```
+
+`Expression` должен быть *function call* или *method call*; его нельзя заключать в круглые скобки `()`. Вызов *built-in function* не разрешен.
+
+Когда исполняется `defer` *statement*, *function value* (сама функция; *value* имеющее *function type*) и фактические *parameter*'ы вычисляют сразу (в порядке [order of evaluation](#order-of-evaluation)), и их значение сохраняется, но *function* сразу не вызывается. Вместо этого, *deferred function* вызывается перед тем моментом, когда окружающая *function* завершится (*return*).
+
+*Deferred function*'s вызываются в порядке, обратном тому, в котором был сделан `defer`. 
+
+```go
+func main() {
+	// печатает 3 2 1 0 перед тем как, окружающая function делает return
+	for i := 0; i <= 3; i++ {
+		defer fmt.Print(i)
+	}
+	
+	return
+}
+```
+
+
+
+Возможные варианты завершения:
+
+- окружающая *function* выполнила оператор [`return` *statement*](#return-statement). *Deferred function*'s выполняются *после того, как* `return` *statement* установил все *result parameter*'s, но *до того, как* *function* вернется к своей *caller* (вызывающей функции).
+- достигла конца своего *body*
+- соответствующая *goroutine* бросает *panic*.
+
+ Если *value* для *deferred function* равно `nil`, бросается *panic* во время вызова *function*, а не во время выполнения `defer` *statement*.
+
+```go
+func main() {
+
+	var f func() // f == nil
+
+	defer f()
+  
+  return // после  этого бросается panic
+}
+```
+
+Если *deferred function* является [*function literal*](#function-literal), а окружающая *function* имеет [именованные *result parameter*'s](#function-type) которые находятся в *scope* этого *function literal*, *deferred function* может получить доступ и изменить эти *result parameter*'s  до того, как они будут возвращены. 
+
+```go
+func f() (result int) {
+	defer func() {
+		// получаем доступ к переменной result после того, 
+		// как ей будет установлено значение 1 в return statement
+		result = 2
+	}()
+
+	return 1
+}
+
+func main() {
+	fmt.Println(f()) // 2
+}
+```
+
+Если *deferred function* имеет какие-либо *return value*'s, эти значения отбрасываются (не используются).
+
+# Built-in functions
+
+[смотреть тут](packages/builtin.md)
+
+## Handling panics
+
+Go не поддерживает *exception* и операции `throw` и `catch`. Вместо этого в Go предпочтительнее использовать явную обработку ошибок. 
+
+Но в Go есть механизм аналогичный `throw/catch`, который называется `panic/recover`.
+
+TODO!!!
+
+https://go101.org/article/control-flows-more.html#panic-recover
+
+
+
+### `panic()`
+
+```go
+func panic(v interface{})
+```
+
+- `v` – *error value*
+
+`panic()` переводит текущую *goroutine* в *panicking status*. `panic()` немедленно останавливает нормальное выполнение текущей функции `F()`, функция *return* и входит в *exiting phase* (фаза завершения). Любые *function*'s, которые были *defer* функцией `F()` и за'*push*'ены в *defer-call stack*, запускаются в обратном порядке, затем функция `F()` делает возврат в вызывающую *function*. В вызывающей функции `G()`, вызов `F()` ведет себя как вызов *panic*, завершая выполнение `G()` и выполняя любые *defer* функции. И так далее до функции самого верхнего уровня в *goroutine*. 
+
+```go
+panic(42)
+panic("unreachable")
+panic(Error("cannot parse"))
+```
+
+
+
+Пока *panicking goroutine* не завершит работу, она никак не влияет другие *goroutine*'s. 
+
+Последовательностью *panicking* можно управляться функцией [`recover()`](#recover).
+
+Если *panicking goroutine* завершится без *recover*, это приведет к заверению всей *program* с *non-zero exit code*. Сообщается об ошибке, включая значение аргумента функции `panic()`. Пример завершения всей *program*:
+
+```go
+func main() {
+	fmt.Println("hi!")
+
+	go func() {
+		time.Sleep(time.Second)
+		panic(123)
+	}()
+
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+// Вывод:
+// hi!
+// panic: 123
+
+// Process finished with exit code 2
+```
+
+
+
+
+
+### `recover()`
+
+```go
+func recover() interface{}
+```
+
+`recover()` позволяет программе управлять поведением *panicking goroutine*. 
+
+Возвращаемое значение:
+
+- *value* `v`, переданное при вызове `panic()`.
+- `nil`:
+  - если *value* `v`, переданное при вызове `panic()`, – `nil`. 
+  - когда *goroutine* не *panicking*. Это позволяет понять – *goroutine* выполняет *panicking* или нет.
+  - `recover()` не было вызван напрямую в *defer function* для *panicking function*.
+
+Предположим, что у нас объявлено:
+
+```go
+func G() {
+  defer func D()
+  
+  panic(/* ... */)
+  
+  // ...
+}
+
+func D() {
+  recover()
+}
+```
+
+В функции `G()` выбрасывается *panic*.  Любые *function*'s, которые были *defer* функцией `G()` и за'*push*'ены в *defer-call stack* (в том числе функция `D()`), запускаются в обратном порядке,. Вызов `recover()` внутри *defer function* `D()` (но не *function*, которую она вызывает) удаляет *panicking status*, останавливает последовательность *panicking*, восстанавливая нормальное состояние (за исключением случая, если в `D()` бросается новая *panic*). Это означает, что исполняются все *defer function*'s в `G()` и выполнение `G()` прерывается возвратом в вызвавшую функцию (здесь `main()`)
+
+```go
+func main() {
+	fmt.Println("start main()")
+	G()
+	fmt.Println("end main()")
+}
+
+
+func G() {
+	defer func() {
+		recover()
+	}()
+
+	fmt.Println("start G()")
+	D()
+	fmt.Println("end G()")
+}
+
+func D() {
+	fmt.Println("start D()")
+	panic(123)
+	fmt.Println("end D()")
+}
+
+// Вывод:
+// start main()
+// start G()
+// start D()
+// end main()
+```
+
+Если `recover()` вызывается вне *defer function*, это не остановит последовательность *panicking*.
+
+Пример функции `protect()`, которая принимает функцию-аргумент `g()` и при необходимости останавливает последовательность *panicking*, восстанавливая нормальное выполнение:
+
+```go
+func protect(g func()) {
+	defer func() {
+		log.Println("done")  // Println исполняется как обычно, даже если брошена panic
+		if x := recover(); x != nil {
+			log.Printf("run time panic: %v", x)
+		}
+	}()
+	log.Println("start")
+	g()
+}
+```
+
+### Run-time panic
+
+Ошибки выполнения, такие как попытка обратится в *array* по индексу за пределами границ, вызывают *run-time panic*, эквивалентную вызову функции [`panic`](#panic) со значением, которое реализует *interface type* `runtime.Error`. Этот тип удовлетворяет *interface type* [`error`](packages/errors.md). 
+
+```go
+package runtime
+
+type Error interface {
+	error
+	// and perhaps other methods
+}
+```
+
+Пример *run-time panic* при деления на 0:
+
+```go
+func main() {
+	a, b := 1, 0
+	_ = a/b
+}
+
+// panic: runtime error: integer divide by zero
+// Process finished with exit code 2
+```
+
+
+
+TODO!!!
+https://go101.org/article/panic-and-recover-use-cases.html
+
+https://go101.org/article/panic-and-recover-more.html
 
 
 
@@ -3451,7 +3526,7 @@ func main () {…}
 
  Garbage collector (сборщик мусора) съедает в момент работы 1мс.
 
-
+Mark & sweep. Зависимости помечаются серым, остается белый элемент, их удаляют
 
 # Мое
 
@@ -3829,238 +3904,6 @@ https://www.youtube.com/watch?v=U5Y_St7lESk
 
 
 
-## `encoding`
-
-### `json`
-
-#### Encoding
-
-Для выполнения *encoding* данных в JSON нужно использовать функцию `Marshal()`:
-
-```go
-func Marshal(v interface{}) ([]byte, error)
-```
-
-<u>Пример:</u>
-
-```go
-type Message struct {
-    Name string
-    Body string
-    Time int64
-}
-
-func main() {
-	m := Message{"Alice", "Hello", 1294706395881547000}
-	b, err := json.Marshal(m)
-}
-```
-
-В случае успеха:
-
-```go
-err == nil
-b == []byte(`{"Name":"Alice","Body":"Hello","Time":1294706395881547000}`)
-```
-
-Особенности использования `Marshal` с разными *type*'s:
-
-- `struct` type – выполняется *encode* только (!!!) для *exported field*'s ([1](#exported-identifier), которые начинаются с *Unicode upper case* )
-- `map` type – поддерживаются только `string` в качестве ключей; поэтому `map` должен быть типа `map[string]T` (где `T` – любой тип).
-
-Каждое *exported struct field* становится *JSON field*, при этом в качестве имени для *JSON field* используется имя *struct field* (за исключением случая использования tag's).
-
-
-
-#### Decoding
-
-Для выполнения *decoding* данных из JSON необходимо использовать функцию `Unmarshal()`:
-
-```go
-func Unmarshal(data []byte, v interface{}) error
-```
-
-Сначала нужно создать место, где будут храниться декодированные данные
-
-```go
-var m Message
-```
-
-и вызвать `json.Unmarshal()`, передав ему `[]byte` с JSON данными и *pointer* на `m`
-
-```go
-err := json.Unmarshal(b, &m)
-```
-
-Если `b` содержит допустимый JSON, который соответствует `m`, после вызова будет `err == nil` и данные из `b` будут сохранены в структуре `m`, так что:
-
-```go
-m = Message{
-    Name: "Alice",
-    Body: "Hello",
-    Time: 1294706395881547000,
-}
-```
-
-Чтобы найти, куда декодировать данные из поля `Foo` в структуру, `Unmarshal`  просматривает поля структуры назначения, чтобы найти *field* (в порядке предпочтения):
-
-- *Exported field* (!!!) с тегом `"Foo"` 
-- *Exported field* (!!!) с именем `"Foo"`
-- *Exported field* (!!!) с именем `"FOO"` или `"FoO"` или другое нечувствительное к регистру совпадение `"Foo"`
-
-Если JSON  данные не совсем соответствует типу Go, например:
-
-```go
-b := []byte(`{"Name":"Bob","Food":"Pickle"}`)
-var m Message
-err := json.Unmarshal(b, &m)
-```
-
-`Unmarshal()` будет декодировать только те *field*'s, которые он может найти в типе назначения. В этом случае будет заполнено только поле `Name` в `m`, а поле `Food` будет игнорироваться. Это можно использовать, чтобы декодировать только несколько определенных полей из большого JSON-объекта. Это также означает, что `Unmarshal()` не затронет любые *non-exported field*'s в структуре назначения.
-
-<u>Пример 1:</u>
-
-Декодирование JSON вида:
-
-```json
-{"fruits":["apple","banana","cherry","date"]}
-```
-
-```go
-json := []byte(`{"fruits":["apple","banana","cherry","date"]}`)
-var m map[string][]string
-err := json.Unmarshal(json, &m)
-```
-
-<u>Пример 2:</u>
-
-Декодирование JSON, который имеет нерегулярную структуру (разные структуры в ключах):
-
-```json
-{
-    "sendMsg":{"user":"ANisus","msg":"Trying to send a message"},
-    "say":"Hello"
-}
-```
-
-Для этого декодирование выполняется по частям. На каждом шаге вложенная структура декодируется в `json.RawMessage`. 
-
-```go
-var objmap map[string]json.RawMessage
-err := json.Unmarshal(data, &objmap)
-```
-
-Затем вложенную структуру можно декодировать дальше:
-
-```go
-var s sendMsg
-err = json.Unmarshal(objmap["sendMsg"], &s)
-```
-
-#### Потоковые *encoder* и *decoder*
-
-Для потокового чтения и записи JSON данных используются `Decoder` и `Encoder` *type*'s. 
-
-##### `json.Decoder`
-
-*Type*, предназначен для чтения и декодирования JSON данные из входного потока.
-
-```go
-type Decoder struct {
-    // contains filtered or unexported fields
-}
-```
-
-###### `json.NewDecoder()`
-
-```go
-func NewDecoder(r io.Reader) *Decoder
-```
-
-Функция, возвращает новый экземпляр типа `Decoder`, который читает из `r`.
-
-###### `Decoder.Decode()`
-
-```go
-func (dec *Decoder) Decode(v interface{}) error
-```
-
-*Method*, читает JSON значение со своего входа, декодирует и сохраняет его в `v`.
-
-(???) Преобразование JSON в Go value выполняется аналогично `Unmarshal()` ([link](#decoding)).
-
-##### `json.Encoder`
-
-*Type*, предназначен для кодирования и записи JSON данных в выходной поток.
-
-```go
-type Encoder struct {
-    // contains filtered or unexported fields
-}
-```
-
-###### `json.NewEncoder()`
-
-```go
-func NewEncoder(w io.Writer) *Encoder
-```
-
-Функция, возвращает новый экземпляр типа `Encoder`, который пишет в `w`.
-
-###### `Encoder.Encode()`
-
-```go
-func (enc *Encoder) Encode(v interface{}) error
-```
-
-*Method*, который кодирует значение из `v` в JSON и пишет его выходной поток + добавляет символ *newline*.
-
-(???) Преобразование Go value в JSON выполняется аналогично `Marshal()` ([link](#encoding)).
-
-##### *Tag*'s
-
-Порядок кодирования (декодирования) может быть настроен с помощью *format string*, описанного в ключе `json` в *struct field's tag*.
-
-*Format string* указывает имя поля, за которым, возможно, следует список параметров, разделенных запятыми `,`. Это имя поля необходимо указывать, чтобы декодировать (кодировать) поля из (в) JSON, которые отличаются от названия в полей в *struct type*. В том числе для декодирования (кодирования) полей из (в) JSON, которые не начинаются с заглавных букв. Имя может быть пустым (можно пропустить имя поля), чтобы указать параметры без переопределения исходного имени поля (3 пример ниже).
-
-Возможные параметры:
-
-- параметр `omitempty` указывает, что поле должно быть исключено из JSON-объекта, если поле – *empty* (имеет пустое значение): `false`, `0`, `nil`, пустой `array`, `slice`, `map` или `string`.
-- если *tag* указан как  `json:"-"` , то поле всегда опускается. Чтобы указать поле с именем `-` нужно использовать *tag* – `-,`.
-
-Примеры *tag*'s и их значения:
-
-```go
-// В JSON вместо имени `Field` будет использовано имя `myName`
-Field int `json:"myName"`
-
-// Поле Field в JSON преобразуется в поле с именем "myName" и
-// поле будет опущено, его значение - empty.
-Field int `json:"myName,omitempty"`
-
-// Поле Field в JSON преобразуется в поле с именем "Field" (по умолчанию) и
-// поле будет опущено, его значение - empty.
-// Note the leading comma.
-Field int `json:",omitempty"`
-```
-
-
-
-
-
-
-
-Пример структуры для декодирования (кодирования) полей из (в) JSON, которые не начинаются с заглавных букв:
-
-```go
-type Sample struct {
-    Name string `json:"name"`
-    Age  int    `json:"age"`
-}
-```
-
-
-
 
 
 
@@ -4118,36 +3961,6 @@ func main() {
 
 
 
-
-## `log`
-
-*Package* `log`  реализует функции логгирования. Функции пишут в *standart error* и печатают дату и время каждого сообщения. Каждое сообщение выводится в отдельной строке: если сообщение не заканчивается *newline*, функции ее добавят. 
-
-Функции *Fatal* вызывают `os.Exit (1)` после вывода сообщения.
-
-### `log.Fatal()`
-
-```go
-func Fatal (v ... interface {})
-```
-
-`log.Fatal()` эквивалентен `log.Print()` + вызов `os.Exit (1)`.
-
-### `log.Fatalf()`
-
-```go
-func Fatalf(format string, v ...interface{})
-```
-
-`log.Fatalf()` эквивалентен `log.Printf()` + вызов `os.Exit (1)`.
-
-### `log.Print()`
-
-```
-func Print(v ...interface{})
-```
-
-`log.Print()` вызывает `log.Output` для печати в стандартном *logger*'е (?). 
 
 ## `net`
 
@@ -4262,240 +4075,6 @@ str := "hi, this is, educative"
 split := strings.Split(str, ",")
 fmt.Println(split)
 ```
-
-
-
-## `sync`
-
-Предоставляет базовые примитивы синхронизации, такие как *mutex*. За исключением типов `Once` и `WaitGroup`, большинство из них предназначены для использования низкоуровневыми библиотечными подпрограммами. Синхронизацию более высокого уровня лучше выполнять через channel и communication (что это???).
-
-Значения, содержащие *type*'s, определенные в этом *package*, не должны копироваться.
-
-### `type Mutex`
-
-`Mutex` (*mutual exclusion*, взаимное исключение) – *lock* взаимного исключения. *Zero value* для `Mutex` - это *unlocked mutex*.
-
-`Mutex` нельзя копировать после первого использования.
-
-```go
-type Mutex struct {
-    // contains filtered or unexported fields
-}
-```
-
-#### `Lock()`
-
-```go
-func (m *Mutex) Lock()
-```
-
-Блокирует (lock, захватывает?) *mutex* `m`. Если *mutex* `m` уже заблокирован, то вызывающая *goroutine* блокируется до тех пор, пока *mutex* не станет доступным.
-
-#### `Unlock()`
-
-```
-func (m *Mutex) Unlock()
-```
-
-Разблокирует *mutex* `m`. Если `m` не заблокирован, то происходит *run-time error*.
-
-Заблокированный *mutex* не связан с конкретной *goroutine*. Разрешена ситуация, когда *mutex* блокируется одной *goroutine* и разблокируется другой *goroutine*.
-
-
-
-#### Пример
-
- Пример *mutex*'а в *goroutine* для синхронизации:
-
- ```go
-  result := make(map[int]int)
-  var wg sync.WaitGroup
-	var mutex sync.Mutex
-
-	for key, value := range values {
-		
-		wg.Add(1)
-    // обязательно нужно передавать значение через аргументы в goroutine
-		go func(val int) {
-			defer wg.Done()
-
-			mutex.Lock()
-			result[key] = val
-			mutex.Unlock()
-		}(value)
-	}
-
-	wg.Wait()
- ```
-
-
-
-### `type RWMutex`
-
-`RWMutex`  (*mutual exclusion*, взаимное исключение) - это *lock* взаимного исключения *reader/writer*. *Lock* может удерживать произвольное количество *reader*'s ИЛИ (!!!) одиночный *writer*. *Zero value* для `RWMutex` - это *unlocked mutex*.
-
-`RWMutex` нельзя копировать после первого использования.
-
-Если *goroutine* удерживает `RWMutex` для *reading* и другая горутина может вызвать `Lock()` (для *writing*), ни какая *goroutine* не сможет взять *read lock* до тех пор пока не будет снята начальная *read lock*. В частности, это запрещает рекурсивную *read locking*. Это необходимо для того, чтобы *lock* в конечном итоге (*eventually*) стала доступной; вызов `Lock()` исключает захват блокировки новыми *reader*'s.
-
-```go
-type RWMutex struct {
-    // contains filtered or unexported fields
-}
-```
-
-
-
-TODO!!!
-
-
-
-### `type WaitGroup`
-
-Ожидает завершения набора *goroutine*'s. *Main goroutine* вызывает `Add()`, чтобы установить количество ожидаемых *gotoutine*'s. Затем каждая из *goroutine* запускается и по завершении вызывает `Done()`. `Wait()` можно использовать, чтобы заблокироваться дло тех пор пока все *goroutine*'s не будут завершены.
-
-`WaitGroup` не должен копироваться после первого использования.
-
-```
-type WaitGroup struct {
-     // contains filtered or unexported fields (???)
-}
-```
-
-<u>Примеры:</u>
-
-
-```go
-wg := sync.WaitGroup{}
-
-
-wg.Add(1)
-go func() {
-   defer wg.Done()
-   // ...
-}()
-
-
-wg.Add(1)
-go func() {
-   defer wg.Done()
-
-   // ...
-}()
-
-wg.Wait()
-```
-
- ```go
-var wg sync.WaitGroup
-	var urls = []string{
-		"http://www.golang.org/",
-		"http://www.google.com/",
-		"http://www.somestupidname.com/",
-	}
-	for _, url := range urls {
-		// Increment the WaitGroup counter.
-		wg.Add(1)
-		// Launch a goroutine to fetch the URL.
-		go func(url string) {
-			// Decrement the counter when the goroutine completes.
-			defer wg.Done()
-			// Fetch the URL.
-			http.Get(url)
-		}(url)
-	}
-	// Wait for all HTTP fetches to complete.
-	wg.Wait()
- ```
-
-#### `sync.Add()`
-
-```go
-func (wg *WaitGroup) Add(delta int)
-```
-
-Добавляет значение `delta`, которое может быть отрицательным, к *counter*'у. Если *counter* становится равным 0, все *goroutine*'s, заблокированные на `Wait()`, освобождаются. Если *counter* станет отрицательным, `Add` вызывает *panic*.
-
-Обычно `Add()` вызывается перед `go` *statement* или другим событием, которое должно ожидаться. 
-
-#### `sync.Done()`
-
-```go
-func (wg *WaitGroup) Done()
-```
-
-Уменьшает *counter* на единицу.
-
-
-
-#### `sync.Wait()`
-
-```
-func (wg *WaitGroup) Wait()
-```
-
-Блокирует, до тех пор пока *counter* не станет равным 0.
-
-
-
-
-
-## `time`
-
-### Замер времени исполнения
-
-```go
-start := time.Now()
-// код, время исполнения которого замеряется
-log.Info(time.Since(start))
-```
-
-
-
-
-
-### `Now()`
-
-```go
-func Now() Time
-```
-
-Функция, возвращает текущее время.
-
-### `Since()`
-
-```go
-func Since(t Time) Duration
-```
-
-Возвращает время, прошедшее с момента `t`. Сокращение для `time.Now().Sub(t)`.
-
-
-
-
-
-### `Sleep()`
-
-```go
-func Sleep(d Duration)
-time.Sleep(100 * time.Millisecond)
-```
-
-Приостанавливает текущую *goroutine* как минимум на время `d`.
-
-Пример:
-
-```go
-fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
-time.Sleep(2 * time.Second)
-fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
-```
-
-### `Time`
-
-Тип, описывает момент времени с точностью до наносекунды.
-
-
 
 
 

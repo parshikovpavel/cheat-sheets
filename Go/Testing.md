@@ -1476,3 +1476,4 @@ type TestingT interface {
 ```
 
 `TestingT` - это *interface* для доступа к `*testing.T`
+

@@ -116,14 +116,15 @@ var name string
 
 err = db.QueryRow("select name from users where id = $1", 1).Scan(&name)
 if err != nil {
-	if err == sql.ErrNoRows {
-		fmt.Println("user not found")
-	} else {
-		// ...
+	switch {
+	case err == sql.ErrNoRows:
+		log.Printf("user not found", id)
+	case err != nil:
+		log.Fatalf("query error: %v", err)
+	default:
+		log.Printf("username is %q", name)
 	}
 }
-
-fmt.Println(name)
 ```
 
 ### Получение детального описания ошибки
@@ -334,6 +335,51 @@ func (db *DB) Exec(query string, args ...interface{}) (Result, error)
 
 - `args` используются для *prepared statement*. Это *parameter*'s для *placeholder*'s внутри текста *query*. (аналогично [`Query()`](#query))
 
+
+
+### `DB.ExecContext()`
+
+```go
+func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error)
+```
+
+Все аналогично [`DB.Exec()`](), только передается *context*:
+
+```go
+package main
+
+import (
+	"context"
+	"database/sql"
+	"log"
+)
+
+var (
+	ctx context.Context
+	db  *sql.DB
+)
+
+func main() {
+	id := 47
+	result, err := db.ExecContext(ctx, "UPDATE balances SET balance = balance + 10 WHERE user_id = ?", id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if rows != 1 {
+		log.Fatalf("expected to affect 1 row, affected %d", rows)
+	}
+}
+
+```
+
+
+
+
+
 ### `Ping()`
 
 ```go
@@ -369,7 +415,71 @@ func (db *DB) QueryRow(query string, args ...interface{}) *Row
 
 `QueryRow()` никогда не возвращает `nil`. Если произошла *error*, то она потом возвращается методом `Scan()`, который будет вызван для `*Row`. Например, если в результате *query* не были выбраны *row*'s, то вызов `Row.Scan()` вернет `ErrNoRows`.
 
+### `QueryRowContext()`
 
+```go
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *Row
+```
+
+Аналогично [`QueryRow()`](), только с контекстом.
+
+```go
+var (
+	ctx context.Context
+	db  *sql.DB
+)
+
+func main() {
+	id := 123
+	var username string
+	var created time.Time
+	err := db.QueryRowContext(ctx, "SELECT username, created_at FROM users WHERE id=?", id).Scan(&username, &created)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Printf("no user with id %d\n", id)
+	case err != nil:
+		log.Fatalf("query error: %v\n", err)
+	default:
+		log.Printf("username is %q, account created on %s\n", username, created)
+	}
+}
+```
+
+
+
+
+
+
+
+### `SetMaxIdleConns()`
+
+```go
+func (db *DB) SetMaxIdleConns(n int)
+```
+
+`SetMaxIdleConns` устанавливает максимальное количество *connection*'s в *idle connection pool*.
+
+Если `MaxOpenConns` больше 0, но меньше нового `MaxIdleConns`, то новое значение `MaxIdleConns` будет уменьшено, чтобы соответствовать лимиту `MaxOpenConns`.
+
+Если `n <= 0`, *idle connection*'s не сохраняются.
+
+Дефолтное *max idle connection*'s сейчас равно 2. Это может измениться в будущих версиях.
+
+
+
+
+
+### `SetMaxOpenConns()`
+
+```go
+func (db *DB) SetMaxOpenConns(n int)
+```
+
+`SetMaxOpenConns()` устанавливает максимальное количество открытых *connection*'s к базе данных.
+
+Если *MaxIdleConns* больше 0, а новое *MaxOpenConns* меньше *MaxIdleConns*, то *MaxIdleConns* будет уменьшено, чтобы соответствовать новому лимиту *MaxOpenConns*.
+
+Если `n <= 0`, то нет лимита на количество открытых *connection*'s. По умолчанию – 0 (*unlimited*).
 
 
 

@@ -4,7 +4,7 @@
 
 `errors` – это *package*
 
-### `error`
+### `type error`
 
 `error` – это *type*, встроенный *interface* тип для представления состояния ошибки, значение `nil` – отсутствие ошибки.
 
@@ -20,7 +20,7 @@ type error interface {
 item, err := haystack.Pop()
 ```
 
-### `errors.New()`
+### `New()`
 
 ```go
 func New(text string) error

@@ -1,5 +1,7 @@
 ## `builtin`
 
+https://pkg.go.dev/builtin
+
 Встроенные функции, которые являются частью языка.
 
 ### `len()`
@@ -168,9 +170,9 @@ s := new(S)
 s := &S{}
 ```
 
+### `panic()`
 
-
-
+[смотреть тут](../Lang.md#panic)
 
 ### `print()`
 
@@ -208,7 +210,15 @@ func println(args ...Type)
 
 Полезна для отладки (смотреть `print()` [1](#print))
 
-### `error` (builtin)
 
-Смотреть [1](#error)
+
+### `recover()`
+
+[смотреть тут](../Lang.md#recover)
+
+
+
+### `type error`
+
+Смотреть [1](errors.md#type-errors)
 

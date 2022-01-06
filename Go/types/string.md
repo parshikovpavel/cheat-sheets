@@ -65,6 +65,8 @@ for _, rune := range name {
 
 ## Конкатенация `string`
 
+смотреть [String concatenation](../Lang.md#string-concatenation)
+
 TODO:
 
 https://www.calhoun.io/6-tips-for-using-strings-in-go/

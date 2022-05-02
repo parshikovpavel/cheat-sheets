@@ -17,6 +17,16 @@ https://www.zhashkevych.com/clean-architecture
 
 Пишут, что тут хорошо расписано про основные паттерны https://threedots.tech/post/common-anti-patterns-in-go-web-applications/
 
+https://threedots.tech/post/introducing-clean-architecture/
+
+
+
+Чистая архитектура Р. Мартин
+
+
+
+
+
 ## Директория `/cmd`
 
 Является точкой входа для приложения
@@ -481,6 +491,33 @@ service-abc/internal/rpc/create_hello_world
 ```
 
 
+
+# Именование interface и struct, которая его реализует
+
+Правила:
+
+- Для *interface* используется имя с заглавной буквы (*exported*)
+- Для *struct* используется имя со строчной буквы (*non-exported*)
+
+Используется структура через *interface*
+
+Пример:
+
+```go
+type Service interface {
+	// ...
+}
+
+type service struct {
+	// ...
+}
+
+func New() *service) {
+	return &service{
+    //...
+  }
+}
+```
 
 
 

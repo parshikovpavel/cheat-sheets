@@ -1,12 +1,16 @@
+## Определение
+
 `slice` – наиболее часто используемая коллекция. 
 
 `slice` (срез) – это дескриптор для непрерывного сегмента *underlying* `array` (базового массива), обеспечивающий доступ к пронумерованной последовательности элементов из этого *array*. Т.е. *slice* – это такой тип, который может хранить все возможные срезы *array* с элементами указанного *type*. 
 
+*Zero value* для *slice* – `nil`.
+
 Slice, *под капотом*, представляет собой контейнер (*slice header*), содержащий:
 
 - указатель на данные (внутри *underlying array*)
-- length (длину)
-- capacity (емкость)
+- *length* (длину)
+- *capacity* (емкость)
 
 *Slice header* можно смоделировать с помощью типа [`reflect.SliceHeader`](https://golang.org/pkg/reflect/#SliceHeader):
 
@@ -59,7 +63,41 @@ var bigDigits = [][]string{
 
   ...
 
-#### Реализация *stack* (стек)
+## `nil` и пустой *slice*
+
+Если рассмотреть *slice header*:
+
+```golang
+[pointer] [length] [capacity]
+```
+
+тогда:
+
+```golang
+nil slice:   [nil][0][0]
+empty slice: [addr][0][0] // pointer указывает на address
+```
+
+```go
+func main() {
+
+    var nil_slice []int
+    var empty_slice = []int{}
+
+    fmt.Println(nil_slice == nil, len(nil_slice), cap(nil_slice))				// true 0 0
+    fmt.Println(empty_slice == nil, len(empty_slice), cap(empty_slice))	// false 0 0
+}
+```
+
+Таким образом, и для *nil slice* и для *empty slice*:
+
+- `len(slice) == 0`
+- `cap(slice) == 0`
+- *built-in function* `append` – обрабатывает их одинаково
+
+
+
+## Реализация *stack* (стек)
 
 *stack* на Go реализуется через *slice*:
 
@@ -139,7 +177,7 @@ func main(){
 
 
 
-### Общее
+## Общее
 
 #### Обращение к элементам
 
@@ -158,9 +196,9 @@ slice[n]
 
 
 
-# Задачи
+## Задачи
 
-## Задача 1
+### Задача 1
 
 Эта программа выводит `[]`, т.к. в функции `main()` не происходит изменение заголовка, который состоит из *pointer*, *len*, *capacity*. Поэтому в функции `main()` как был, так и остается *slice* с `len = 0` и `cap = 0`.
 

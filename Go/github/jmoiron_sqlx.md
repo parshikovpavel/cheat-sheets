@@ -166,6 +166,103 @@ if user.LastName.Valid {
 
 
 
+# JOIN таблиц
+
+Если необходимо сделать `JOIN` двух таблиц и результат `SELECT`'а сканировать сразу в две модели-*struct*, то используем композитную модель, которые включает эти две модели как *embedded field*:
+
+ ```go
+type Parent struct {
+	Id     int
+	Name   string
+}
+
+type Child struct {
+	Id 			int
+	Desc 		string
+	ParentId 	int `db:"parent_id"`
+}
+
+type Composite struct {
+	Parent `db:"parent"`
+	Child `db:"child"`
+}
+ ```
+
+Если у нас есть дублирующиеся названия полей (здесь `Parent.Id` и `Child.Id`), то необходимо обязательно использовать   `db` *struct tag* для этих *embedded field* (``db:"parent"`` и ``db:"child"``). Они позволяют различать их поля во время `StructScan`:
+
+```go
+p := Composite{}
+
+	err = db.Get(&p,
+		`SELECT parent.id AS "parent.id", parent.name AS "parent.name",  
+       		child.id AS "child.id", child.desc AS "child.desc", child.parent_id AS "child.parent_id"
+		FROM parent JOIN child ON parent.id = child.parent_id`)
+```
+
+**Что будет если не сделать так:**\
+
+(1 вариант)
+
+Если не указать эти  `db` *struct tag* (``db:"parent"`` и ``db:"child"``):
+
+```go
+type Composite struct {
+	Parent
+	Child
+}
+```
+
+ и использовать запрос в обычном виде:
+
+```go
+p := Composite{}
+
+err = db.Get(&p, "SELECT * FROM parent JOIN child ON parent.id = child.parent_id")
+```
+
+То из-за конфликта имен полей с именем `Id` во время обхода структуры `p` будет заполнено первое попавшееся поле `Id` причем последним значением из запроса. В данном случае `Parent.Id = 2` (а должно быть 1), а `Child.Id = 0` (а должно быть 2):
+
+```go
+fmt.Printf("%#v\n", p)
+// main.Composite{Parent:main.Parent{Id:2, Name:"parent_name"}, Child:main.Child{Id:0, Desc:"child_desc", ParentId:1}}
+```
+
+При этом напрямую обращаться так `p.Id` нельзя из-за конфликта имен между `p.Parent.Id` и `p.Child.Id`.
+
+
+
+(2 вариант)
+
+А если указать  `db` *struct tag* (``db:"parent"`` и ``db:"child"``):
+
+```go
+type Composite struct {
+	Parent `db:"parent"`
+	Child `db:"child"`
+}
+```
+
+но использовать запрос в обычном виде:
+
+```go
+p := Composite{}
+
+err = db.Get(&p, "SELECT * FROM parent JOIN child ON parent.id = child.parent_id")
+```
+
+ то вообще не будут найдены соответствующие поля, результат - пустая структура:
+
+```go
+fmt.Printf("%#v\n", p)
+// main.Composite{Parent:main.Parent{Id:0, Name:""}, Child:main.Child{Id:0, Desc:"", ParentId:0}}
+```
+
+
+
+
+
+
+
 
 
 # Обработка значений `NULL`
@@ -238,6 +335,8 @@ type DB struct {
 
 `DB` - это обертка вокруг `sql.DB`.
 
+
+
 ### `Get()`
 
 ```go
@@ -272,11 +371,55 @@ err = db.Get(&p, "SELECT * FROM place LIMIT 1")
 if err != nil { // ... }
  
 // Пример scannable type
-// Сканирует количество строк (тип int) в переменнуюwell
+// Сканирует количество строк (тип int) в переменную
 var id int
 err = db.Get(&id, "SELECT count(*) FROM place")
 if err != nil { // ... }
 ```
+
+
+
+### `NamedExec()`
+
+```go
+func (db *DB) NamedExec(query string, arg interface{}) (sql.Result, error)
+```
+
+`NamedExec` использует `db`. Любые *named placeholder parameter*'s заменяются полями из `arg`.
+
+Можно использовать для `INSERT` сразу *slice* элементов ([link](https://github.com/jmoiron/sqlx)):
+
+- `INSERT` для *slice* из *struct*:
+
+  ```go
+  personStructs := []Person{
+          {FirstName: "Ardie", LastName: "Savea", Email: "asavea@ab.co.nz"},
+          {FirstName: "Sonny Bill", LastName: "Williams", Email: "sbw@ab.co.nz"},
+          {FirstName: "Ngani", LastName: "Laumape", Email: "nlaumape@ab.co.nz"},
+      }
+  
+      _, err = db.NamedExec(`INSERT INTO person (first_name, last_name, email)
+          VALUES (:first_name, :last_name, :email)`, personStructs)
+  ```
+
+- `INSERT` для *slice* из *map*:
+
+  ```go
+  personMaps := []map[string]interface{}{
+          {"first_name": "Ardie", "last_name": "Savea", "email": "asavea@ab.co.nz"},
+          {"first_name": "Sonny Bill", "last_name": "Williams", "email": "sbw@ab.co.nz"},
+          {"first_name": "Ngani", "last_name": "Laumape", "email": "nlaumape@ab.co.nz"},
+      }
+  
+      _, err = db.NamedExec(`INSERT INTO person (first_name, last_name, email)
+          VALUES (:first_name, :last_name, :email)`, personMaps)
+  ```
+
+  
+
+### 
+
+
 
 ### `QueryRowx()`
 

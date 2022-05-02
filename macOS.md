@@ -455,6 +455,7 @@ launchctl stop
 sudo nano /private/etc/hosts
 ```
 
+- Удалить строку `Ctrl+K`
 - Сохранить изменения – `Ctrl+X` + `Y` + `Enter`
 
 # Скорость Magic Mouse

@@ -83,7 +83,7 @@ resp, err := http.PostForm("http://example.com/form",
 	url.Values{"key": {"Value"}, "id": {"123"}})
 ```
 
-Фактически, это функции являются псевдонимом для методов переменной `DefaultClient` ([link](#defaultclient))
+Фактически, это функции являются псевдонимом для методов *variable* `DefaultClient` ([link](#defaultclient))
 
 Поэтому эти методы нельзя использовать в *production* коде, т.к. у них не установлен *timeout*.
 
@@ -174,6 +174,62 @@ func NewClient(url string, timeout time.Duration) *Client {
 
 
 дальше [link](../../Design.md#functional-options)
+
+
+
+## HTTP server
+
+Функция [`ListenAndServe()`]() стартует HTTP-server с заданным `addr` (*address*) и `handler`. Обычно `handler == nil`, что означает использование [`DefaultServeMux`](). Функции [`Handle()`]() и [`HandleFunc()`]() добавляют *handler*'ы в `DefaultServeMux`:
+
+```go
+// Добавление handler'ов
+http.Handle("/foo", fooHandler)
+
+http.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+})
+
+// Старт HTTP-сервера
+log.Fatal(http.ListenAndServe(":8080", nil))
+```
+
+Можно создать кастомный `http.Server` для бОльших возможностей по его конфигурированию:
+
+```
+s := &http.Server{
+	Addr:           ":8080",
+	Handler:        myHandler,
+	ReadTimeout:    10 * time.Second,
+	WriteTimeout:   10 * time.Second,
+	MaxHeaderBytes: 1 << 20,
+}
+log.Fatal(s.ListenAndServe())
+```
+
+
+
+## Разбор GET параметров
+
+Можно использовать такие варианты:
+
+- `Request.FormValue()`:
+
+  ```go
+  func handleSearch(w http.ResponseWriter, req *http.Request) {
+    ... := req.FormValue("timeout")
+  }
+  ```
+
+- `Request.Form` ([link](net_url.md))
+
+  ```go
+  	v := Request.Form
+  	fmt.Println(v.Get("name"))		// Ava
+  	fmt.Println(v.Get("friend"))	// Jess
+  	fmt.Println(v["friend"])			// [Jess Sarah Zoe]
+  ```
+
+  
 
 # Структура
 
@@ -284,6 +340,155 @@ var DefaultClient = &Client{}
 ```
 
 `DefaultClient` – `http.Client` по умолчанию, который используется функциями `Get()`, `Head()` и `Post()`.
+
+### `DefaultServeMux`
+
+```go
+var defaultServeMux ServeMux // смотреть `type ServeMux`
+
+var DefaultServeMux = &defaultServeMux
+```
+
+`DefaultServeMux` – это `ServeMux` по умолчанию, используемый функцией `Serve()`.
+
+## Function
+
+### `Error()`
+
+```go
+func Error(w ResponseWriter, error string, code int)
+```
+
+`Error()` отвечает на *request* указанным *message* `error` (это будет *body*) и *HTTP code*. *Reason phrase* (описание кода ответа, например, `Not found`) будет подставлено автоматически по *HTTP code*. При этом `Error()` самостоятельно не завершает *request*; *caller* должен гарантировать, что в `w` больше не выполняется *write*. *Error message* должен быть *plain text*. 
+
+
+
+### `Handle()`
+
+```go
+func Handle(pattern string, handler Handler)
+```
+
+`Handle()` регистрирует *handler* для данного *pattern*'а в `DefaultServeMux`. [Подробней про *match*'инг *pattern*'ов](#type-servemux).
+
+<u>Пример</u>
+
+При каждом обращении к `/count` инкрементирует значение и выводит его. Необходимо использовать синхронизацию через `sync.Mutex`, т.к. каждый *connection* обрабатывается в отдельной *goroutine* ([как написано здесь](#serve)):
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+)
+
+type countHandler struct {
+	mu sync.Mutex // синхронизация доступа к `n`
+	n  int
+}
+
+func (h *countHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.n++
+	fmt.Fprintf(w, "count is %d\n", h.n)
+}
+
+func main() {
+	http.Handle("/count", new(countHandler))
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+```
+
+### `HandleFunc()`
+
+```go
+func HandleFunc(pattern string, handler func(ResponseWriter, *Request))
+```
+
+`HandleFunc()` регистрирует *handler function* для данного *pattern*'а в `DefaultServeMux`. [Подробней про *match*'инг *pattern*'ов](#type-servemux)
+
+Пример:
+
+```go
+func main() {
+	h1 := func(w http.ResponseWriter, _ *http.Request) {
+		io.WriteString(w, "Hello from a HandleFunc #1!\n")
+	}
+	h2 := func(w http.ResponseWriter, _ *http.Request) {
+		io.WriteString(w, "Hello from a HandleFunc #2!\n")
+	}
+
+	http.HandleFunc("/", h1)
+	http.HandleFunc("/endpoint", h2)
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+```
+
+
+
+
+
+
+
+### `ListenAndServe()`
+
+```go
+func ListenAndServe(addr string, handler Handler) error
+```
+
+`ListenAndServe()` прослушивает *TCP network address* `addr`, а затем вызывает `Serve()` с указанным `handler` для обработки *request*'ов на входящих *connection*'ах. Принимающие *connection*'ы сконфигурированы для использования *TCP keep-alive*.
+
+Обычно `handler = nil`, и в этом случае используется [`DefaultServeMux`]().
+
+`ListenAndServe()` всегда возвращает *non-nil error*.
+
+```go
+package main
+
+import (
+	"io"
+	"log"
+	"net/http"
+)
+
+func main() {
+	helloHandler := func(w http.ResponseWriter, req *http.Request) {
+		io.WriteString(w, "Hello, world!\n")
+	}
+
+	http.HandleFunc("/hello", helloHandler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+```
+
+
+
+### `Serve()`
+
+```go
+func Serve(l net.Listener, handler Handler) error
+```
+
+`Serve()` принимает входящие HTTP *connection*'ы на *listener* `l`, (!!!!) создавая новую обслуживающую (*serve*) *goroutine* (!!!) для каждого из них. Обслуживающие (serve) *goroutin*'ы читают *request*'ы, а затем вызывают *handler*, чтобы ответить на них.
+
+Обычно `handler = nil`, и в этом случае используется `DefaultServeMux`.
+
+(не важно) HTTP/2 support is only enabled if the Listener returns *tls.Conn connections and they were configured with "h2" in the TLS Config.NextProtos.
+
+`Serve()` всегда возвращает *non-nil error*.
+
+
+
+
+
+
+
+
 
 
 
@@ -722,7 +927,7 @@ type Request struct {
 }
 ```
 
-`Request` описывает *HTTP request*, полученный server'ом или отправленный *client*'ом.
+`Request` описывает *HTTP request*, полученный *server*'ом или отправленный *client*'ом.
 
 Смысл полей немного отличается при использовании *client*'а и *server*'а. 
 
@@ -744,7 +949,15 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 
 `NewRequestWithContext()` возвращает новый `Request` с указанным методом (`method`), URL-адресом (`url`) и опциональным *body* (`body`).
 
-Если `body` также является `io.Closer`, возвращенный `Request.Body` устанавливается для *body* (??? *body request*'а ???) и будет *close* (??? автоматически)  методами `Client.Do()`, `Client.Post()` и `Client.PostForm()` и `Transport.RoundTrip()`.
+Опциональность `body` обеспечивается передачей `nil`:
+
+```go
+req, err := http.NewRequest("GET", "http://example.com", nil)
+```
+
+
+
+Если `body` также является `io.Closer`,  `Request.Body` устанавливается для *body request*'а и будет *close* автоматически  методами `Client.Do()`, `Client.Post()` и `Client.PostForm()` и `Transport.RoundTrip()`.
 
 `NewRequestWithContext()` возвращает `Request()`, подходящий для использования с методами `Client.Do()` или `Transport.RoundTrip()`. 
 
@@ -757,6 +970,34 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 Для исходящего *client request*, *context* контролирует все время существования *request*'а и его *response*: установку *connection*, отправку *request*'а и чтение *response*.
 
 Если *body* имеет тип `*bytes.Buffer`, `bytes.Reader` или `strings.Reader`, `ContentLength` возвращенного *request*'а устанавливается в его точное значение (вместо `-1`), `GetBody()` заполняется (поэтому 307 и 308 *redirect*'ы могут воспроизводить *body*). `Body` устанавливается в `NoBody`, если `ContentLength` равно 0.
+
+
+
+### `FormValue()`
+
+```go
+func (r *Request) FormValue(key string) string
+```
+
+`FormValue()` возвращает первое *value* для именованного компонента из *query* (??? и из *body* получается тоже). *Body parameter*'ы для POST и PUT имеют приоритет над *URL query string value*'s. `FormValue()` вызывает `ParseMultipartForm()` и `ParseForm()` при необходимости и игнорирует любые *error*'ы, возвращаемые этими функциями. Если `key` не существует в *request*'е, `FormValue()` возвращает пустую *string*. Чтобы получить доступ к нескольким *value*'s с одним и тем же *key*, вызовите `ParseForm()`, а затем работайте с `Request.Form` (у него `type url.Values`).
+
+### `WithContext()`
+
+```go
+func (r *Request) WithContext(ctx context.Context) *Request
+```
+
+`WithContext()` возвращает поверхностную (*shallow*) копию `r` с *context*'ом, измененным на `ctx`. Необходимо, чтобы `ctx != nil`.
+
+Для исходящего *client request*, *context* контролирует все время существования *request*'а и его *response*: установку *connection*, отправку *request*'а и чтение *response*.
+
+Способы привязывания *request*'а к *context*'у:
+
+- чтобы создать новый *request* c *context*'ом, используйте `NewRequestWithContext()`. 
+- чтобы изменить *context* для *request*'а, например, вы хотите изменить *context* для входящего *request*'а перед обратной отправкой этого *request*'а, используйте `Request.Clone()`. 
+- помимо этих двух случаев, иногда используется `WithContext()`.
+
+
 
 
 
@@ -877,6 +1118,38 @@ type ResponseWriter interface {
 
 ### `Header()`
 
+✔
+
+`Header` возвращает *header map* (`type Header map[string][]string`), который будет отправлен при вызове `WriteHeader()`. *Header map* также является механизмом, с помощью которого *handler* может установить *HTTP trailer*'ы. 
+
+Изменение *header map* после вызова `WriteHeader()` (или `Write()`) не имеет никакого эффекта, если изменяемые *header*'ы не являются *trailer*'ами. 
+
+Есть два способа установить *trailer*'ы. 
+
+- Предпочтительный способ — предварительно указать в `Trailer` *header* имена *trailer key*'s, которые будут отправлены позже. В этом случае эти *key*'s из *header map* обрабатываются так, как если бы они были *trailer*'ами (ниже пример этого способа). 
+- Второй способ, для *trailer key*'s, которые неизвестны *handler*'у до тех пор, пока не будет сделан первый раз `Write()`, – добавить *prefix* к *header map key* со значением [`TrailerPrefix`]() *constant*'ы.
+
+Чтобы подавить автоматические *response header*'ы (такие как `Date`), установите их значение в `nil`. 
+	
+
+### `Write()`
+
+✔
+
+```go
+Write([]byte) (int, error)
+```
+
+`Write()` записывает данные в *connection* как часть *HTTP reply*. 
+
+Если `WriteHeader()` еще не был вызван, `Write()` вызывает `WriteHeader(http.StatusOK)` перед записью данных. Если заголовок `Header` не содержит строку `Content-Type`, `Write()` добавляет `Content-Type` к результату передачи начальных 512 байтов записанных данных в `DetectContentType()`. Кроме того, если общий размер всех записываемых данных меньше нескольких КБ и нет вызовов `Flush()` – заголовок `Content-Length` добавляется автоматически. 
+
+В зависимости от версии протокола HTTP и клиента, вызов `Write()` или `WriteHeader()` может препятствовать чтению `Request.Body` в будущем. Для *HTTP/1.x request*'ов, *handler*'ы должны читать любые необходимые данные *request body* перед записью *response* . После того как *header*'s были *flush*'ed (из-за явного вызова `Flusher.Flush()` или записи достаточного количества данных для запуска *flush*'а) *request body* может быть недоступно. Для HTTP/2 *request*'ов, HTTP server разрешает *handler*'ам продолжать читать *request body*, конкурентно делая *write* для *response*. Однако такое поведение может не поддерживаться всеми HTTP/2 *client*'ами. *Handler*'ы должны делать *read* перед *write*, если это возможно, чтобы максимизировать совместимость. 
+
+​	
+
+### Примеры
+
 Пример добавления *header*'а в *response*:
 
 ```go
@@ -899,30 +1172,46 @@ func main() {
 
 ```
 
-
-
-
-
-
-
-### `Write()`
+HTTP Trailers are a set of key/value pairs like headers that come after the HTTP response, instead of before.
 
 ```go
-Write([]byte) (int, error)
+package main
+
+import (
+	"io"
+	"net/http"
+)
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/sendstrailers", func(w http.ResponseWriter, req *http.Request) {
+		// Before any call to WriteHeader or Write, declare
+		// the trailers you will set during the HTTP
+		// response. These three headers are actually sent in
+		// the trailer.
+		w.Header().Set("Trailer", "AtEnd1, AtEnd2")
+		w.Header().Add("Trailer", "AtEnd3")
+
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8") // normal header
+		w.WriteHeader(http.StatusOK)
+
+		w.Header().Set("AtEnd1", "value 1")
+		io.WriteString(w, "This HTTP response has both headers before this text and trailers at the end.\n")
+		w.Header().Set("AtEnd2", "value 2")
+		w.Header().Set("AtEnd3", "value 3") // These will appear as trailers.
+	})
+}
+
 ```
 
-`Write()` записывает данные в *connection* как часть *HTTP reply*. Если `WriteHeader()` еще не был вызван, `Write()` вызывает `WriteHeader(http.StatusOK)` перед записью данных. Если заголовок `Header` не содержит строку `Content-Type`, `Write()` добавляет `Content-Type` к результату передачи начальных 512 байтов записанных данных в `DetectContentType()`. Кроме того, если общий размер всех записываемых данных меньше нескольких КБ и нет вызовов `Flush()` – заголовок `Content-Length` добавляется автоматически. 
-В зависимости от версии протокола HTTP и клиента, вызов `Write()` или `WriteHeader()` может предотвратить чтение `Request.Body` в будущем. Для *HTTP/1.x request*'ов, *handler*'ы должны читать любые необходимы данные *request body* перед записью *response* . После того как *header*'s были *flush*'d (из-за явного вызова `Flusher.Flush()` или записи достаточного количества данных для запуска *flush*'а) *request body* может быть недоступно. 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+​	
+
+​	
+​	
+​	
+​	
+​	
+​	
 
 ## `type RoundTripper`
 
@@ -1004,4 +1293,111 @@ func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Re
 `HandleFunc()` регистрирует функцию-*handler* для данного *pattern*'а.
 
 
+
+## `type Server`
+
+```go
+type Server struct {
+	// `Addr` – опционально указывает TCP address для server'а, который он будет listen
+  // в форме "host:port". Если пусто, используется ":http" (порт 80). 
+  // Имена сервисов определены в RFC 6335 и распределяются IANA. 
+  // Подробнее о формате address'а см. `net.Dial`. 
+	Addr string
+
+  // вызываемый handler, если nil – http.DefaultServeMux
+	Handler Handler 
+
+	// TLSConfig optionally provides a TLS configuration for use
+	// by ServeTLS and ListenAndServeTLS. Note that this value is
+	// cloned by ServeTLS and ListenAndServeTLS, so it's not
+	// possible to modify the configuration with methods like
+	// tls.Config.SetSessionTicketKeys. To use
+	// SetSessionTicketKeys, use Server.Serve with a TLS Listener
+	// instead.
+	TLSConfig *tls.Config
+
+	// ReadTimeout is the maximum duration for reading the entire
+	// request, including the body. A zero or negative value means
+	// there will be no timeout.
+	//
+	// Because ReadTimeout does not let Handlers make per-request
+	// decisions on each request body's acceptable deadline or
+	// upload rate, most users will prefer to use
+	// ReadHeaderTimeout. It is valid to use them both.
+	ReadTimeout time.Duration
+
+	// ReadHeaderTimeout is the amount of time allowed to read
+	// request headers. The connection's read deadline is reset
+	// after reading the headers and the Handler can decide what
+	// is considered too slow for the body. If ReadHeaderTimeout
+	// is zero, the value of ReadTimeout is used. If both are
+	// zero, there is no timeout.
+	ReadHeaderTimeout time.Duration
+
+	// WriteTimeout is the maximum duration before timing out
+	// writes of the response. It is reset whenever a new
+	// request's header is read. Like ReadTimeout, it does not
+	// let Handlers make decisions on a per-request basis.
+	// A zero or negative value means there will be no timeout.
+	WriteTimeout time.Duration
+
+	// IdleTimeout is the maximum amount of time to wait for the
+	// next request when keep-alives are enabled. If IdleTimeout
+	// is zero, the value of ReadTimeout is used. If both are
+	// zero, there is no timeout.
+	IdleTimeout time.Duration
+
+	// MaxHeaderBytes controls the maximum number of bytes the
+	// server will read parsing the request header's keys and
+	// values, including the request line. It does not limit the
+	// size of the request body.
+	// If zero, DefaultMaxHeaderBytes is used.
+	MaxHeaderBytes int
+
+	// TLSNextProto optionally specifies a function to take over
+	// ownership of the provided TLS connection when an ALPN
+	// protocol upgrade has occurred. The map key is the protocol
+	// name negotiated. The Handler argument should be used to
+	// handle HTTP requests and will initialize the Request's TLS
+	// and RemoteAddr if not already set. The connection is
+	// automatically closed when the function returns.
+	// If TLSNextProto is not nil, HTTP/2 support is not enabled
+	// automatically.
+	TLSNextProto map[string]func(*Server, *tls.Conn, Handler)
+
+	// ConnState specifies an optional callback function that is
+	// called when a client connection changes state. See the
+	// ConnState type and associated constants for details.
+	ConnState func(net.Conn, ConnState)
+
+	// ErrorLog specifies an optional logger for errors accepting
+	// connections, unexpected behavior from handlers, and
+	// underlying FileSystem errors.
+	// If nil, logging is done via the log package's standard logger.
+	ErrorLog *log.Logger
+
+	// BaseContext optionally specifies a function that returns
+	// the base context for incoming requests on this server.
+	// The provided Listener is the specific Listener that's
+	// about to start accepting requests.
+	// If BaseContext is nil, the default is context.Background().
+	// If non-nil, it must return a non-nil context.
+	BaseContext func(net.Listener) context.Context
+
+	// ConnContext optionally specifies a function that modifies
+	// the context used for a new connection c. The provided ctx
+	// is derived from the base context and has a ServerContextKey
+	// value.
+	ConnContext func(ctx context.Context, c net.Conn) context.Context
+	// contains filtered or unexported fields
+}
+```
+
+`Server` определяет параметры для работы *HTTP server*. *Zero value* для `Server` является валидной конфигурацией.
+
+
+
+
+
+https://pkg.go.dev/net/http#Server
 

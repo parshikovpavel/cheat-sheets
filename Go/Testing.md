@@ -193,6 +193,12 @@ ok      example.com/greetings   0.372s
 
 
 
+### Запуск тестов с флагом `-race`
+
+TODO!!!!
+
+Спрашивают, важно
+
 
 
 # `package testing`
@@ -945,7 +951,7 @@ func (c *Call) AnyTimes() *Call
 func (c *Call) Do(f interface{}) *Call
 ```
 
-Функция `f`  вызывает каждый раз, когда происходит вызов метода *mock*'а. Возвращать из функции ничего не нужно, возвращаемое значение игнорируется. Чтобы задать возвращаемое значение, необходимо использовать `DoAndReturn()`.
+Функция `f`  вызывается каждый раз, когда происходит вызов метода *mock*'а. Возвращать из функции ничего не нужно, возвращаемое значение игнорируется. Чтобы задать возвращаемое значение, необходимо использовать `DoAndReturn()`.
 
 [link](#matcher-на-несколько-аргументов)
 
@@ -1215,9 +1221,13 @@ https://jfrog.com/blog/top-go-modules-writing-unit-tests-with-testify/
 
 ## `require` package
 
-В `require` *package* находятся те же самые *global function*'s что и в  `assert` *package* (??? и те же самые методы `require.XXX()` что и в объекте `assert.XXX()`). Однако отличается поведение: вместо возврата *bool* – функции завершают текущий *test*.
+В `require` *package* находятся те же самые *function*'s что и в  `assert` *package*. Однако отличается поведение: вместо возврата *bool* – функции завершают текущий *test*. Под капотом используется `t.FailNow()` ([link](#failnow)).
 
-Под капотом используется `t.FailNow()` ([link](#failnow)).
+## `suite` *package*
+
+
+
+https://pkg.go.dev/github.com/stretchr/testify/suite
 
 
 

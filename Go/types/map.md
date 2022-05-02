@@ -54,7 +54,7 @@ The `make` function allocates and initializes a hash map data structure and retu
 
 TODO!!!! https://blog.golang.org/maps
 
-### Частые операции:
+### Частые операции
 
 - создание (инициализация):
 

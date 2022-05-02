@@ -88,6 +88,29 @@ func ParseRequestURI(rawURL string) (*URL, error)
 
 
 
+#### `Query()`
+
+```go
+func (u *URL) Query() Values
+```
+
+`Query()` парсит `URL.RawQuery` и возвращает соответствующие *value*'s. Он молча отбрасывает неправильные *value pair*'s. Для проверки ошибок используйте `ParseQuery()`.
+
+```go
+func main() {
+	u, err := url.Parse("https://example.org/?a=1&a=2&b=&=3&&&&")
+	if err != nil {
+		log.Fatal(err)
+	}
+	q := u.Query()
+	fmt.Println(q["a"])   		// [1 2]
+	fmt.Println(q.Get("b"))		// <пусто>
+	fmt.Println(q.Get(""))		// 3
+}
+```
+
+
+
 
 
 #### `String()`
@@ -134,4 +157,77 @@ u := &url.URL{
 	u.Opaque = "opaque"
 	fmt.Println(u.String()) // https:opaque?x=1&y=2#anchor
 ```
+
+
+
+### `type Values`
+
+```go
+type Values map[string][]string
+```
+
+`Values` мапит *string key* на *slice* из *value*'s. Обычно `Value` используется для *query parameter* и *form value*. В отличие от `http.Header` *map*'ы, *key*'s в `Values` *map*'е чувствительны к регистру (*case-sensitive*).
+
+Примеры:
+
+```go
+func main() {
+	v := url.Values{}
+	v.Set("name", "Ava")
+	v.Add("friend", "Jess")
+	v.Add("friend", "Sarah")
+	v.Add("friend", "Zoe")
+  fmt.Println(v.Encode()) 			// name=Ava&friend=Jess&friend=Sarah&friend=Zoe
+	fmt.Println(v.Get("name"))		// Ava
+	fmt.Println(v.Get("friend"))	// Jess
+	fmt.Println(v["friend"])			// [Jess Sarah Zoe]
+}
+```
+
+```go
+func main() {
+	u, err := url.Parse("http://bing.com/search?q=dotnet")
+	if err != nil {
+		log.Fatal(err)
+	}
+	u.Scheme = "https"
+	u.Host = "google.com"
+	q := u.Query()
+	q.Set("q", "golang")
+	u.RawQuery = q.Encode()
+	fmt.Println(u)				// https://google.com/search?q=golang
+}
+```
+
+
+
+#### `Add()`
+
+```go
+func (v Values) Add(key, value string)
+```
+
+`Add()` добавляет `value` к `key`. `value` присоединяется (append) к уже существующим *value*'s, ассоциированным с `key`.
+
+
+
+
+
+#### `Encode()`
+
+```go
+func (v Values) Encode() string
+```
+
+`Encode()` кодирует *value*'s в форму «*URL encoded*» (`bar=baz&foo=quux`), отсортированные по *key*.
+
+
+
+#### `Set()`
+
+```go
+func (v Values) Set(key, value string)
+```
+
+`Set()` устанавливает `key` в `value`. Он заменяет все существующие *value*'s (может быть привязано к `key` несколько *value*'s).
 

@@ -1,0 +1,3 @@
+*Package* `html/template` реализует управляемые данными *template* для генерации HTML, защищенного от *code injection*. Он предоставляет тот же *interface*, что и *package* `text/template`, и его следует использовать вместо `text/template` всякий раз, когда *output* – это HTML.
+
+Документация этого *package* сфокусирована на *security feature*'s. Информацию о том, как описывать сами *template*, см. в документации по `text/template`.

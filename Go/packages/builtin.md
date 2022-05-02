@@ -15,11 +15,13 @@ func len(v Type) int
 Результат:
 
 ```
-String    string type      длина string в байтах
-Array     [n]T, *[n]T      длина массива (== n)
-Slice     []T              число элементов
-Map       map[K]T          число элементов
-Channel   chan T           количество элементов, стоящих в очереди в chain
+String    			string type      	длина string в байтах
+Array     			[n]T,       			количество элементов в массиве `v` (== n)
+Pointer to array *[n]T						количество элементов в массиве `*v` (даже если v == nil)
+Slice     			[]T              	число элементов. Если v == nil, len(v) == 0.
+Map       			map[K]T          	число элементов. Если v == nil, len(v) == 0.
+Channel   			chan T           	количество элементов, стоящих в очереди (непрочитанных) в channel buffer;
+																	Если v == nil, len(v) == 0.
 ```
 
 ### `cap()`
@@ -43,6 +45,18 @@ Channel   chan T           емкость буфера channel, в штуках 
 ```
 0 <= len(s) <= cap(s)
 ```
+
+### `copy()`
+
+```go
+func copy(dst, src []Type) int
+```
+
+`copy()` копирует элементы из *source slice* в *destination slice*. (Как частный случай, `copy()` также копирует байты из *string* в *slice of byte*). *Source* и *destination slice* могут перекрываться. `copy()` возвращает количество скопированных элементов, которое будет минимумом из `len(src)` и `len(dst)`.
+
+
+
+
 
 ### `close()`
 

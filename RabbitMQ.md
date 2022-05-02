@@ -11,6 +11,10 @@ https://www.rabbitmq.com/tutorials/tutorial-one-php.html
 
 
 
+Читать подробнее в [Микросервисы.Обмен сообщения](Microservice.md#обмен-сообщениями)
+
+
+
 # Гарантии доставки в очередях
 
 Читать, где-то на конференции было, TODO!!! Спрашивают one to once. exactly once, at least once

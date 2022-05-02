@@ -332,7 +332,7 @@ components:
 | `tags`         | [`string`]                                                   | (swagger, выводится на закладке группы, tag может быть не описан или описан в виде [Tag object](#tag-object)) Список *tag*'s для группировки *operation*'s. Скорее всего может содержать любые символы, включая русские и пробелы. |
 | `summary`      | `string`                                                     | (в swagger выводится на закладке) Короткое описание для *operation* |
 | `description`  | `string`                                                     | (в swagger выводится внутри закладки, как описание *operation*) Длинное описание для *operation*. Можно использовать *CommonMark*. |
-| `externalDocs` | [External Documentation Object](#external-documentation-object) | (в swagger ???) Дополнительная внешняя документация          |
+| `externalDocs` | [External Documentation Object](#external-documentation-object) | (выводится в swagger, под надписью Find more details) Дополнительная внешняя документация |
 | `operationId`  | `string`                                                     | [ниже](#operationId)                                         |
 | `parameters`   | [[Parameter Object](#parameter-object) \| [Reference Object](#reference-object)] [] | Список *parameter*'s, которые применяются для этой *operation*. Если *parameter* уже определен на уровне [Path Item Object](#path-item-object), то определение здесь будет перезаписывать его, но не можеть быть удалено здесь. Ключом для *parameter* (по которому проверяется что они уникальны и что их надо перезаписывать) является комбинация `name` + `in`. |
 | `requestBody`  | [Request Body Object](#request-body-object) \| [Reference Object](#reference-object) | Тело запроса, которое применяется для этой *operation*. Имеет смысл только для тех *HTTP method*'s, которые поддерживют *request body*.<br/>Является опциональным и может быть не задан. |
@@ -618,8 +618,8 @@ zip-example:
 
 | Field name     | Type                                                         | Description                                                  |
 | -------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `name`         | `string`                                                     | **REQUIRED**. Имя тега. Скорее всего может содержать любые символы, включая русские и пробелы. |
-| `description`  | `string`                                                     | Описание тега. Можно использовать CommonMark.                |
+| `name`         | `string`                                                     | **REQUIRED**. Имя тега. Скорее всего может содержать любые символы, включая русские и пробелы (Выводится на закладке жирными буквами) |
+| `description`  | `string`                                                     | Описание тега. Можно использовать CommonMark. (выводится рядом с названием, нежирными буквами) |
 | `externalDocs` | [External Documentation Object](#external-documentation-object) | Дополнительная *external documentation* для *tag*.           |
 
  Пример:
@@ -769,6 +769,7 @@ $ref: definitions.yaml#/Pet
 | `type`                 | `string`                              | Тип ([типы данных](#типы-данных))                            |
 | `nullable`             | `boolean`                             | При значении `true` – для типа можно использовать также значение `null`. Значение по умолчанию `false` |
 | `title`                | `string`                              | (swagger, не выводится) написано, что предназначен для описания *instance* в UI, по факту не выводится в swagger. <br/>AV: используется для названия *type* для *request* и *response* при генерации кода |
+| `description` | `string` | (swagger, выводится на закладке Model) Описание |
 | `multipleOf`           |                                       |                                                              |
 | `maximum`              |                                       | (AV: поддерживается)                                         |
 | `exclusiveMaximum`     |                                       |                                                              |

@@ -20,9 +20,30 @@ func ReadAll(r Reader) ([]byte, error)
 
 `ReadAll()` читает от `r` до *error* или `EOF` и возвращает прочитанные данные. Успешный вызов возвращает `err == nil`, а не `err == EOF`. Поскольку `ReadAll()` предназначен для чтения из `src` до `EOF`, он не считает `EOF` из `Read()` ошибкой, о которой нужно сообщить.
 
+### `WriteString()`
 
+```go
+func WriteString(w Writer, s string) (n int, err error)
+```
 
+`WriteString()` пишет содержимое `s` в `w`, который принимает *slice of byte*'s. Если `w` реализует `type StringWriter`, его метод `WriteString()` вызывается напрямую. Иначе `w.Write()` вызывается ровно один раз.
 
+```go
+package main
+
+import (
+	"io"
+	"log"
+	"os"
+)
+
+func main() {
+	if _, err := io.WriteString(os.Stdout, "Hello World"); err != nil {
+		log.Fatal(err)
+	}
+
+}
+```
 
 
 
@@ -77,4 +98,26 @@ type Reader interface {
 
 Реализациям `Read()` не рекомендуется возвращать нулевое количество *byte* с `err = nil`, кроме случаев, когда `len(p) == 0`. *Caller* должен рассматривать возврат `0, nil` как указание на то, что ничего не произошло; в частности, это не указывает на `EOF`.
 
-Реализации не должны удерживать (??? сохранять к себе) `p`.
+Реализации не должны сохранять (??? куда-то к себе) `p`.
+
+`Discard` — это `Writer`, такой что все вызовы `Discard.Write()` завершаются успешно, ничего не делая.
+
+```go
+var Discard Writer = discard{}
+```
+
+
+
+### `type Writer`
+
+```go
+type Writer interface {
+	Write(p []byte) (n int, err error)
+}
+```
+
+`Writer` — это *interface*, который оборачивает базовый метод `Write()`.
+
+`Write()` записывает `len(p)` байтов из `p` в *underlying data stream*. Он возвращает *number of bytes*, записанных из `p` (`0 <= n <= len(p)`) и любую возникшую `error`, из-за которой *write* была остановлена досрочно. `Write()` должен вернуть *non-nil error*, если он возвращает `n < len(p)`. `Write()` не должен модифицировать *slice data*, даже временно.
+
+Реализации не должны сохранять (????наверно, куда-то к себе) `p`.

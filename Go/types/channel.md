@@ -188,7 +188,7 @@ ch <- 3 // отправляем значение 3 в канал ch
 v1 := <-ch
 v2 = <-ch
 f(<-ch)
-<-ch  // ждать, пока не будет получено value (???) и отбросить его
+<-ch  // ждать, пока не будет получено value и отбросить его
 ```
 
 *Receive operator* может использоваться в *tuple assignment* и *declaration*:
@@ -1247,28 +1247,40 @@ func main() {
 
 
 
-## Пул *goroutine*, которые выбирают значения из *channel*
+## Паттерн goroutine pool
 
-*10 worker*'ов обрабатывает *50 request*'ов из пула с помощью `for/range` и обрабатывает их.
+
+
+ *Num CPU worker*'ов обрабатывает *50 request*'ов из пула с помощью `for/range` и обрабатывает их.
+
+Как правило, следует выделять по 1 *goroutine* на каждый CPU. При нагрузочном тестировании или по метрикам в prod'е можно скорректировать количество *goroutine*'s в *pool*. 
 
 ```go
-func worker(requests <-chan int, id int) {  // worker, который обрабатывается requests
-	for c := range requests {               // выбирает очередной request
-		log.Print("++ worker #", id, " starts the request #", c)
-		time.Sleep(time.Second * time.Duration(1 + rand.Intn(3)))
-		log.Print("-- worker #", id, " finishes the request #", c)
-	}
-}
-
 func main() {
+  g := runtime.NumCPU()
+  var wg sync.WaitGroup
+  wg.Add(g)
+  
 	requests := make(chan int)
-	for i := 0; i < 10; i++ {  // стартует 10 воркеров
-		go worker(requests, i)
+	for i := 0; i < g; i++ {  // стартует 10 goroutine's
+    go func(id int) {       // goroutine, который обрабатывается requests 
+      defer wg.Done()
+      
+    	for c := range requests {               // выбирает очередной request
+				log.Print("++ worker #", id, " starts the request #", c)
+				time.Sleep(time.Second * time.Duration(1 + rand.Intn(3)))
+				log.Print("-- worker #", id, " finishes the request #", c)
+			}
+    }(i)  
 	}
 
-	for i := 0; i < 50; i++ {  // заполняет channel - 50 requests
+	for i := 0; i < 50; i++ {  // send в channel request'ы на обработку
 		requests <- i
 	}
+  
+  close(request)
+  
+  wg.Wait()
 }
 ```
 

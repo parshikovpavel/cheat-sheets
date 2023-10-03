@@ -39,3 +39,11 @@ func Println(v ...interface{})
 ```
 
 `Println()` вызывает `log.Output` для вывода в *standard logger*'е. Аргументы обрабатываются аналогично `fmt.Println()`.
+
+## `SetOutput()`
+
+```go
+func SetOutput(w io.Writer)
+```
+
+`SetOutput()` назначает *output* для *standard logger*.

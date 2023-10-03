@@ -58,6 +58,50 @@ func main() {
 }
 ```
 
+Пример с контекстом:
+
+```go
+type walletInfo struct {
+	isOnlyBankTransfer bool
+	balance            string
+}
+
+func getWalletInfo(ctx context.Context) error {
+	eg, egCtx := errgroup.WithContext(ctx)
+
+  info := &walletInfo{}
+  
+	eg.Go(func() error {
+		isOnlyBankTransfer, err := h.contractor.UserUseOnlyBankTransferring(egCtx)
+		if err != nil {
+			return err
+		}
+		info.isOnlyBankTransfer = isOnlyBankTransfer
+		return nil
+	})
+
+	eg.Go(func() error {
+		walletInfo, err := h.billingAvitoGateway.GetWalletBalance(egCtx)
+		if err != nil {
+			return err
+		}
+
+		info.balance = walletInfo.Rub
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+```
+
+
+
+
+
 ### Создание через `new()`
 
 ```go
@@ -78,7 +122,7 @@ func WithContext(ctx context.Context) (*Group, context.Context)
 
 Производный *Context* отменяется по одному из событий, которое произойдет раньше:
 
-- когда какая-либо (?) функция `f`, переданная в `Go()` в первый раз возвращает *error*, отличный от нуля
+- когда какая-либо функция `f`, переданная в `Go()` в первый раз возвращает *error*, отличный от нуля
 - или когда функция `Wait()` возвращается в первый раз
 
 ### `Go()`

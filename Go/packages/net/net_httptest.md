@@ -20,7 +20,7 @@ https://deliveroo.engineering/2018/09/11/testing-with-third-parties-in-go.html
 
 Сценарии, в которых будет полезен:
 
-- тестирование *handler*'ов для *http server*'ов – позволяет *mock*'ать response writer, что передать его в *server handler*.
+- тестирование *handler*'ов для *http server*'ов – позволяет *mock*'ать *response writer*, что передать его в *server handler*.
 - тестирование *http client*'ов – позволяет *mock*'ать *HTTP server*
 
 
@@ -124,7 +124,7 @@ import (
 
 func TestClientUpperCase(t *testing.T) {
     expected := "dummy data"
-    /* Создание mock'а сервера, который на любые ручки всегда возвращает строку expected */
+    /* Создание mock'а сервера, который на любые ручки всегда возвращает строку `expected` */
     svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintf(w, expected)
     }))

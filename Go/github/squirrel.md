@@ -146,7 +146,7 @@ func (b InsertBuilder) SetMap(clauses map[string]interface{}) InsertBuilder
 func (b InsertBuilder) Values(values ...interface{}) InsertBuilder
 ```
 
-`Values()` добавляет в *query* – value's для одной *row*. Т.е. можно добавить несколько *row*'s, как в [примере](#примеры)
+`Values()` добавляет в *query* – value's для одной *row*. Т.е. можно добавить несколько *row*'s, как в [примере](#typeinsertbuilder)
 
 
 
@@ -363,6 +363,32 @@ func (b SelectBuilder) Where(pred interface{}, args ...interface{}) SelectBuilde
 `Where()` бросает *panic*, если `pred` не является ни одним из вышеперечисленных типов.
 
 Примеры:
+
+- простое условие со скалярным значением:
+
+  ```go
+  Where("company = ?", companyId)
+  ```
+  
+  или
+  
+  ```go
+  Where(sq.Eq{
+  		"company": companyId,
+  })
+  ```
+  
+- условие с массивом значений (будем преобразовано в `IN`):
+
+  ```go
+  var companyIds []int
+  
+  // ...
+  
+  Where(sq.Eq{
+  		"company": companyIds,
+  })
+  ```
 
 - использование разных типов условий и логических операторов:
 

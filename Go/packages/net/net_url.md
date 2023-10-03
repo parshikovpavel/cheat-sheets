@@ -2,6 +2,30 @@
 
 *Package* `url` парсит URL'ы и реализует *query escaping*.
 
+## Function
+
+### `func QueryEscape()`
+
+```go
+func QueryEscape(s string) string
+```
+
+`QueryEscape()` *escap*'ит *string*, поэтому ее можно безопасно разместить внутри *URL query*.
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/url"
+)
+
+func main() {
+	query := url.QueryEscape("my/cool+blog&about,stuff") // my%2Fcool%2Bblog%26about%2Cstuff
+	fmt.Println(query)
+}
+```
+
 
 
 ## Type

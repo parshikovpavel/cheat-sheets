@@ -2,9 +2,33 @@
 
 В *package* `rand` реализованы *pseudo-random number generator*'s, неподходящие для *security-sensitive* работы.
 
-*Random number*'s генерируются *Source*. Функции верхнего уровня, такие как `Float64()` и `Int()`, используют общий *default Source*, который создает детерминированную последовательность значений при каждом запуске программы. Используйте функцию `Seed()` для инициализации *default Source*, если для каждого запуска требуется различное поведение. *Default Source* безопасен для конкурентного использования несколькими *goroutine*'s, а *Source*, созданный через `NewSource()` – нет.
+*Random number*'s генерируются  [Source](https://pkg.go.dev/math/rand#Source), обычно обернутым в [Rand](https://pkg.go.dev/math/rand#Rand). Оба типа должны использоваться одной *goroutine* одновременно: совместное использование нескольких *goroutine*'s требует некоторой синхронизации.
+
+Функции верхнего уровня, такие как [`Float64()`](https://pkg.go.dev/math/rand#Float64) и [`Int()`](https://pkg.go.dev/math/rand#Int) , безопасны для одновременного использования несколькими *goroutine*'s.
 
 Сгенерированные этим *package* значения можно легко предсказать, независимо от того, как был сделан `Seed()`. *Random number*'s, подходящие для *security-sensitive* работы, см. `crypto/rand` *package*.
+
+Пример:
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+)
+
+func main() {
+	answers := []string{
+		"It is certain",
+    ....
+	}
+	fmt.Println("Magic 8-Ball says:", answers[rand.Intn(len(answers))])
+}
+
+```
+
+
 
 # Структура
 

@@ -349,7 +349,7 @@ var defaultServeMux ServeMux // смотреть `type ServeMux`
 var DefaultServeMux = &defaultServeMux
 ```
 
-`DefaultServeMux` – это `ServeMux` по умолчанию, используемый функцией `Serve()`.
+`DefaultServeMux` – это `ServeMux` по умолчанию, используемый функцией `Serve()`. Т.е. его не нужно создавать через `NewServeMux()`, он уже создан и используется по умолчанию.
 
 ## Function
 
@@ -360,6 +360,15 @@ func Error(w ResponseWriter, error string, code int)
 ```
 
 `Error()` отвечает на *request* указанным *message* `error` (это будет *body*) и *HTTP code*. *Reason phrase* (описание кода ответа, например, `Not found`) будет подставлено автоматически по *HTTP code*. При этом `Error()` самостоятельно не завершает *request*; *caller* должен гарантировать, что в `w` больше не выполняется *write*. *Error message* должен быть *plain text*. 
+
+Пример:
+
+```go
+if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+}
+```
 
 
 
@@ -708,6 +717,14 @@ func (h Header) Add(key, value string)
 
 
 
+### `Set()`
+
+```go
+func (h Header) Set(key, value string)
+```
+
+`Set()` устанавливает *header entry*'s, ассоциированные с `key`, (т.к. их может быть несколько) в один элемент `value`. Он заменяет любые существующие *value*'s, ассоциированные с `key`. *Key* нечувствителен к регистру (*case insensitive*); он приводится к каноническому виду с помощью `textproto.CanonicalMIMEHeaderKey()`. Чтобы использовать *key*, неприведенный к каноническому виду, присвойте его в *map* напрямую.
+
 
 
 ## `type Request`
@@ -965,7 +982,7 @@ req, err := http.NewRequest("GET", "http://example.com", nil)
 
 - функцию `NewRequest()` из `net/http/httptest` *package*
 - использовать `ReadRequest`
-- или вручную обновить поля `Request`. 
+- или вручную обновить поля `Request` (задать?)
 
 Для исходящего *client request*, *context* контролирует все время существования *request*'а и его *response*: установку *connection*, отправку *request*'а и чтение *response*.
 

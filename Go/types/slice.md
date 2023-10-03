@@ -196,6 +196,109 @@ slice[n]
 
 
 
+*Slice expression* (выражения для *slice*) позволяют получить *substring* из `string` или *slice* из `array`, `*array` или `slice`. 
+
+Существует два варианты *slice expression*:
+
+- простой
+- полный
+
+# *Slice expression*
+
+## Простой *slice expression*
+
+**✔**
+
+В простой форме *slice expression* указывается нижняя и верхняя граница:
+
+```
+a[<low> : <high>]
+```
+
+В результате получается *substring* или *slice*, который:
+
+- содержит элементы с индексами, начиная с `<low>` и заканчивая `<high>-1`, т.е. из диапазона `[<low>;<high>)` (открытый справа). 
+- `len(res) = <high>-<low>`.
+- `cap(res) = len(a) - <low>`
+
+Например:
+
+```go
+a := [5]int{1, 2, 3, 4, 5}
+s := a[1:4]                // тип `s` – []int            
+fmt.Println(s)             // {2, 3, 4}
+fmt.Println(len(s))        // 3
+fmt.Println(cap(s))        // 4
+```
+
+Если `a` имеет тип  `*array`, то `a[<low> : <high>]` это сокращение для `(*a)[<low> : <high>]`.
+
+`<low>` или `<high>` можно не указывать, в этом случае *by default*:
+
+- `<low> = 0`
+- `<high> = len(a)`
+
+```go
+a[2:]  // same as a[2 : len(a)]
+a[:3]  // same as a[0 : 3]
+a[:]   // same as a[0 : len(a)]
+```
+
+```go
+func main() {
+  a := []int{1, 2}
+
+  fmt.Println(a[2:])  // == fmt.Println(a[2:2]), выводит []
+  fmt.Println(a[:0])  // == fmt.Println(a[0:0]), выводит []
+}
+```
+
+
+
+Для *array* и *string*, индексы должны находиться в диапазоне `0 <= low <= high <= len(a)`, в противном случае они находятся *out of range*. Для *slice*, верхней границей индекса является *slice capacity* `cap(a)`, а не его длина. [Константный](#constant) индекс должен быть неотрицательным и [representable](https://go.dev/ref/spec#Representability) значением типа `int`; для *array* и константных *string* – константные индексы также должны находиться в диапазоне (каком???). Если оба индекса являются [константами](#constant), они должны удовлетворять условию `low <= high`. Если индексы оказываются *out of range* во время выполнения, бросается  [run-time panic](#run-time-panic).
+
+Результаты *slice expression*:
+
+- для *string* и *slice* (за исключением [untyped string](#constant)) – результатом является *non-constant value* того же типа, что и операнд. 
+- для *untyped string* – результатом является *non-constant value* типа `string`. 
+- для *array*, он должен быть [addressable](https://go.dev/ref/spec#Address_operators), – результатом операции является *slice* с тем же типом элементов, что и *array*.
+
+Если операнд для корректного *slice expression* – `nil` *slice* (корректным, наверное, будет только *slice expression* с верхним и нижним индексом – 0) , то результатом будет также `nil` *slice*. 
+
+```go
+func main() {
+  var a []int
+
+  fmt.Println(a[:] == nil) // true
+  _ = a[1:]                // выбрасывает panic: runtime error: slice bounds out of range [1:0]
+}
+```
+
+Если результат *expression* – *slice*, то он разделяет свой *underlying array* с операндом. Например:
+
+```go
+var a [10]int
+s1 := a[3:7]   // underlying array of s1 is array a; &s1[2] == &a[5]
+s2 := s1[1:4]  // underlying array of s2 is underlying array of s1 which is array a; &s2[1] == &a[5]
+s2[1] = 42     // s2[1] == s1[2] == a[5] == 42; все элементы массива - это один и тот же underlying array element
+```
+
+## Полный *slice expression*
+
+Полный *slice expression* позволяет указать *capacity*.
+
+Может использоваться для `array`, `*array` или `slice` (но не для `string`):
+
+```
+a[<low> : <high> : <max>]
+```
+
+При этом будет создан *slice* как и для простого *slice expression* `a[<low> : <high>]`. Но для него устанавливается `capacity = <max> - <low>`.
+
+TODO!!!
+
+
+
 ## Задачи
 
 ### Задача 1
@@ -236,3 +339,46 @@ func add(s []int) {
 }
 ```
 
+## Удаление элемента из *slice*
+
+1. Если порядок имеет значение, то нужно сделать *append* всех элементов слева и справа от удаляемого элемента:  
+
+   ```go
+   func remove(slice []int, s int) []int {
+       return append(slice[:s], slice[s+1:]...)
+   }
+   ```
+
+   Такой прием называется *re-slicing* и слишком дорог и неэффективен, т.к. в итоге приходится сдвинуть (скопировать) все весь хвост *slice*. Хотя этот прием является идеоматическим для Go.
+
+2. Если порядок не важен, то можно сделать *swap* с последним элементов в *slice* и затем обрезать *slice* на 1 элемент:
+
+   ```go
+   func remove(s []int, i int) []int {
+       s[i] = s[len(s)-1]
+       return s[:len(s)-1]
+   }
+   ```
+
+Удаление всех элементов поочереди из *slice* в 1 000 000 элементов в 1 случае – занимает 224 с, во втором — всего 0,06 нс.
+
+Однако, нужно быть осторожными с этими простыми примерами, потому что они изменяют *underying array*, а значит влияют и на исходный *slice*:
+
+```go
+func remove(slice []int, s int) []int {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+func main() {
+	original := []int{1, 2, 3}
+
+	result := remove(original, 1)
+
+	fmt.Println(result)   // [1 3]
+	fmt.Println(original) // [1 3 3]
+}
+```
+
+  
+
+3. Еще один вариант – использовать функцию `slices.Delete()`.[]()

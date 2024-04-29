@@ -4,25 +4,37 @@ https://pkg.go.dev/builtin
 
 Встроенные функции, которые являются частью языка.
 
-### `len()`
-
-Возвращает длину `v`:
+### `append()`
 
 ```go
-func len(v Type) int
+func append(slice []Type, elems ...Type) []Type
 ```
 
-Результат:
+`append()` добавляет *element*'ы в конец *slice*. Если он имеет достаточную *capacity*, место назначения *resliced* (?) для размещения новых *element*'ов. Если нет – будет выделен новый *underlying array*. 
 
+`append()` возвращает обновленный *slice*. Т.к. необходимо сохранить результат `append`, это часто делают в исходную *variable* со *slice*:
+
+```go
+slice = append(slice, elem1, elem2)
+slice = append(slice, anotherSlice...)
 ```
-String    			string type      	длина string в байтах
-Array     			[n]T,       			количество элементов в массиве `v` (== n)
-Pointer to array *[n]T						количество элементов в массиве `*v` (даже если v == nil)
-Slice     			[]T              	число элементов. Если v == nil, len(v) == 0.
-Map       			map[K]T          	число элементов. Если v == nil, len(v) == 0.
-Channel   			chan T           	количество элементов, стоящих в очереди (непрочитанных) в channel buffer;
-																	Если v == nil, len(v) == 0.
+
+Как частный случай, допустимо делать *append* *string*  к *byte slice*, например:
+
+```go
+slice = append([]byte("hello "), "world"...)
 ```
+
+Можно не инициализировать *slice*, а прямо делать *append* к *nil*:
+
+```go
+	var a []int
+	a = append(a, 1) // [1]
+```
+
+
+
+
 
 ### `cap()`
 
@@ -54,7 +66,7 @@ func copy(dst, src []Type) int
 
 `copy()` копирует элементы из *source slice* в *destination slice*. (Как частный случай, `copy()` также копирует байты из *string* в *slice of byte*). *Source* и *destination slice* могут перекрываться. `copy()` возвращает количество скопированных элементов, которое будет минимумом из `len(src)` и `len(dst)`.
 
-
+Т.е. `copy()` копирует количество элементов, равное минимуму из `len(src)` и `len(dst)`!!!
 
 
 
@@ -75,6 +87,30 @@ func delete(m map[Type]Type1, key Type)
 ```
 
 Удаляет *element* с указанным *key* (`m[key]`) из `map`. Если `m = nil` или `m[key]` не существует, `delete()` ничего не делает.
+
+
+
+### `len()`
+
+Возвращает длину `v`:
+
+```go
+func len(v Type) int
+```
+
+Результат:
+
+```
+String    			string type      	длина string в байтах
+Array     			[n]T,       			количество элементов в массиве `v` (== n)
+Pointer to array *[n]T						количество элементов в массиве `*v` (даже если v == nil)
+Slice     			[]T              	число элементов. Если v == nil, len(v) == 0.
+Map       			map[K]T          	число элементов. Если v == nil, len(v) == 0.
+Channel   			chan T           	количество элементов, стоящих в очереди (непрочитанных) в channel buffer;
+																	Если v == nil, len(v) == 0.
+```
+
+
 
 ### `make()`
 

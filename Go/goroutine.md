@@ -1,16 +1,22 @@
-## 
-
 В Go было выбрано название *goroutine*, т.к. существующие термины (*thread*, *coroutine*, *process* и др.) – наполнены неточным смыслом. 
 
 *Goroutine* – это *function*, которая выполняется в независимом *concurent thread of control*, в том же самом *address space* (вместе с другими *goroutine*'s). 
 
 *Goroutine* –  *lightweight* (легковесная), и стоит немного больше, чем *allocation* в *stack space* (??? почему *stack*). *Stack* изначально маленький по размеру, поэтому он дешевый, и растет путем *allocating* (и *freeing*) в *heap storage* (почему *heap*???) по мере необходимости.
 
+*Goroutine* — это, по сути, [*Coroutine*](../OS.md#coroutine), но в Go буква «*C*» заменена на «*G*». Вы можете думать о *Goroutine*'s как о *application-level thread*'ах, и они во многом похожи на *OS Thread*'ы. 
+
+*Application-level thread*'ы (*goroutin*'ы):
+
+- полностью управляются *Go runtime* (*user-level library*)
+- быстрые – *switching goroutine* не намного дороже, чем *function call*
+- *Kernel* ничего не знает о *goroutin*'ах и управляет ими как *single-thread process*'ами.
+
 *Goroutine*'s мультиплексируются в множество *OS thread*'s, поэтому если одна из них блокируется (например, по I/O), другие продолжают выполняться. *Goroutine design* скрывает многие сложности создания и управления *thread*'ами.
 
-Выполнение программы не дожидается завершения вызванной *function* (*goroutine*). Вызванная *function* начинает выполняться независимо в новой горутине. Когда функция завершается, ее горутина также тихо (???) завершается. Если функция имеет какие-либо возвращаемые значения, они отбрасываются по завершении функции.
-
 У *goroutine* нет *parent* или *child*'s. Когда вы запускаете *goroutine*, она просто выполняется вместе со всеми другими запущенными *goroutine*. Каждая горутина завершается только тогда, когда происходит `return` в ее функции. Единственное исключение – все *goroutine*'s завершаются, когда завершается *goroutine*'s, которая исполняет функцию `main()`). Чтобы реализовать *cancel* для *goroutine* – необходимо использовать `Context`.
+
+
 
 # `go` *statement*
 
@@ -19,6 +25,7 @@
 <pre>
 GoStmt = "go" <a href="#operator">Expression</a> .   
 </pre>
+
 
 *Expression* должно быть *function call* или *method call*, оно не может быть заключено в круглые скобки `(...)`. Использовать *built-in function* нельзя. 
 

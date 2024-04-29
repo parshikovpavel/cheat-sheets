@@ -1,3 +1,5 @@
+
+
 https://guides.github.com/introduction/git-handbook/
 
 https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F
@@ -494,8 +496,7 @@ $ git rebase master
 # Подмержить мастер
 
 ```
-git checkout BX-12345
-git pull origin master
+git pull origin master --no-ff
 ```
 
 Если открывается vim, то нужно:
@@ -505,6 +506,20 @@ git pull origin master
 3. Нажать `esc` (*escape*)
 4. Напечатать `:wq` (*write & quit*)
 5. Нажать `Enter`
+
+Если выскакивает ошибка:
+
+```bash
+$ git pull origin master
+ * branch                master     -> FETCH_HEAD
+fatal: Not possible to fast-forward, aborting.
+```
+
+то необходимо отключить *fast-forwarding* для это `git pull`:
+
+```bash
+git pull origin master --no-ff
+```
 
 
 
@@ -583,4 +598,8 @@ $ git hist master --all
 Разобраться как:
 
 перенести коммит из одной ветки в другую?
+
+
+
+
 

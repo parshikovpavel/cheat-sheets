@@ -586,470 +586,7 @@ func(a, b int, z float64, opt ...interface{}) (success bool)
 
 ## *Interface* *type*
 
-TODO: Подумать, удовлетворяет ли `nil` типу `interface` (вроде удовлетворяет любому интерфейсу).
-
-`interface`  – описывает некоторый *method set*. Значение *uninitialized variable* с типом *interface* – `nil`.
-
-`interface` является абстрактными типом и не позволяет создавать его экземпляры.
-
-`interface` лежит в основе *duck typing*, поддерживаемой в Go (аналогично реализовано в Python). Для того чтобы конкретный `type` удовлетворял *interface*'у, достаточно (!!!) чтобы он имел реализацию *method*'ов, определяемых *interfacе*'ом. Т.е. не требуется формально определять связь между `interface` и конкретным `type`. `type` будет автоматически удовлетворять всем `interface`'s, методы которых он реализует.
-
-Как правило, компилятор Go на этапе компиляции (статически) проверяет, реализует ли *type* указанный *interface*. Однако если один *interface type* преобразуется в другой *interface type*, то Go делает проверку во время выполнения (динамически). Если преобразование недопустимо, т.к. *value type*, храняющий в *interface value*, не соответствует *interface type*, в который оно преобразуется, - программа завершится c *runtime error*.
-
-Если некоторый *type* реализует *interface*, то и *pointer* на этот *type* также реализует *interface* (есть проблемка с *reciever*'ами [1](#приведение-value-и-pointerа-к-interfaceу)). Поэтому нет никакого смысла создавать pointer на *interface*. 
-
-Удовлетворяющий `interface` конкретный `type` может быть приведен к нему и подставляться в те места кода, где требуется этот `interface`. 
-
-```
-InterfaceType      = "interface" "{" { ( MethodSpec | InterfaceTypeName ) ";" } "}" .
-MethodSpec         = MethodName Signature .
-MethodName         = identifier .
-InterfaceTypeName  = TypeName .
-```
-
- В определении *interface*'а могут:
-
-- явно указываться спецификации *method*'ов (`MethodSpec`). Слово `func` перед `MethodName` не пишется!!!
-
-  ```go
-  interface {
-  	Read([]byte) (int, error)
-  }
-  ```
-
-- или указываться имена других *interface*'ов, методы которых будут встроены в этот *interface* (`InterfaceTypeName`). `A` называется *embedded* (встроенным) *interface*'ом в `B` ([link](#embedded-interface))
-
-
-*Method set interface*'а – это объединение явно указанных *method*'ов и *method*'ов *embedding interface*'s.
-
-Если в коде указана переменная с *interface type*, это значит, что исходное значение было приведено к этому *interface type*, т.е. теперь к переменной нужно обращаться так, что она является именно этим *interface* (подробнее как хранится *interface* [1](#internal)).
-
-```go
-func Do(i interface{B()}) {
-	// Здесь переменная i является interface type
-}
-```
-
-*Interface type* может быть реализован *struct type* с привлечением его *promoted field*:
-
-```go
-type I interface {
-	F()
-}
-
-type S1 struct {}
-
-func (m S1) F() {}
-
-type S2 struct {
-	S1
-}
-
-func main() {
-	s2 := S2{S1{}}
-
-	var s I
-	s = s2 // OK
-}
-```
-
-В *interface type* как правило не указывают названия аргументов для *method*'ов, т.к. в соответствии с *type identity* ([link](#type-identity)) названия аргументов *method*'ов не учитываются для проверки идентичности типов.
-
-### Embedded interface
-
-```go
-type A interface {}
-type B interface {
-	A
-}
-```
-
-`B`'s method set – *union* из:
-
-- `B`’s явно объявленных *method*'ов 
-- `B`’s *embedded interface*'s.
-
-```go
-type Reader interface {
-	Read(p []byte) (n int, err error)
-	Close() error
-}
-
-type Writer interface {
-	Write(p []byte) (n int, err error)
-	Close() error
-}
-
-// ReadWriter's methods – Read(), Write() и Close().
-type ReadWriter interface {
-	Reader  // включает Reader's methods в ReadWriter's method set
-	Writer  // включает Writer's methods в ReadWriter's method set
-}
-```
-
- [TODO!!!](https://golang.org/ref/spec#Interface_types) 
-
-### Empty interface `interface{}`
-
-Все *type*'s удовлетворяют и могут быть приведены к *empty interface* (пустой интерфейс), т.к. он не требует от `type` реализации ни каких методов:
-
-```go
-interface{}
-```
-
-Например, *function*, которая в качестве аргумента может принимать значения любого *type* (т.к. значения любого *type* удовлетворяют и могут быть приведены к `interface{}`)
-
-```go
-func do(v interface{}) {
-   // ...
-}
-```
-
-Это аналогично:
-
-```go
-var v interface{} = a
-```
-
-Часто ошибочно говорят, что переменная `v`  может быть любого типа, что неправильно. Все значения в Go имеют только один *static type*. *Static type* для переменной `v` – `interface{}`, т.е. при присвоении значения будет выполнено преобразование типа в `interface{}` (подробнее как хранится *interface* [1](#internal)). А *type* переменной `a`, который вложена в *interface*, называется *dynamic type* (или *underlying type*???).
-
-
-
-*Empty interface* может использоваться для ссылки на значение любого `type` (подобно `void*` в C++)
-
-Таким образом, объявление *slice*, к элементам которого могут быть приведены значения любых `type`:
-
-```go
-type Stack []interface{}
-```
-
-
-
-
-
-### Internal
-
-#### Interface value
-
-Рассмотрим тип:
-
-```go
-type Binary uint64
-
-func (i Binary) String() string {
-    return strconv.Uitob64(i.Get(), 2)
-}
-
-func (i Binary) Get() uint64 {
-    return uint64(i)
-}
-```
-
-Пусть рассматривается 32-*bit* машина. Т.е. в результате присвоения для переменной `uint64`  выделяется два 32-*bit word*:
-
-```go
-b := Binary(200)
-```
-
-
-
-![interface1](../img/go/interface1.png)
-
-Если объявить интерфейс:
-
-```go
-type Stringer interface {
-    String() string
-}
-```
-
-и привести переменную к типу этого интерфейса:
-
-```go
-s := Stringer(b)
-```
-
-При таком приведении `Binary` *type* становится *underlying type* для `Stringer` *interface* (??? правильный термин *underlying*). 
-
-
-
-![interface2](../img/go/interface2.png)
-
-
-
-то значение будет представлено в виде структуры, состоящей из двух *word*:
-
-- *pointer* на  *interface table* или *itable* (в коде на C называется `ITab`). *itable* относится к *interface type* (`Stringer`), а не к к *dynamic type* (`Binary`). В начале *Itable* расположена информация о типе (*type(Binary)*), затем – список *pointer*'ов на *method*'s. *itable* для интерфейса `Stringer`, в который вложен тип `Binary`, содержит только *pointer*'ы на *method*'ы *underlying* типа (`Binary`), которые определены в интерфейсе `Stringer` (метод `String`). *Pointer*'s на те *method*'s, которые отсутствуют в интерфейсе `Stringer` (`Binary.Get()`), отсутствуют в этой *itable*. 
-
-  Конкретная *itable* специфична для пары – *value type* и *interface type*. Такая *itable* построена только один раз и закеширована для каждой пары *types*.
-
-- *pointer* на *underlying* данные. Это будет копия исходных данных из переменной `b`, т.к. выполнялось присваивание. В *interface structure* хранится только *pointer*, сами данные размещаются в *heap*.
-
-Это можно изучить *builtin function* `println()`:
-
-```go
-	var s string = "syz"
-	var i interface{} = &s
-
-	println(&s)  // 0xc000044768
-	println(i)   // (0x1062060,0xc000044768)  
-  						 // Хранит pointer на itable и значение &s
-```
-
-Т.е. *interface variable* по сути является контейнером, в который вкладываются *underlying* данные.
-
-Чтобы проверить, какой *type* находится внутри *interface variable* `s` (например, при использовании `s.(Binary)`), считывается значение `s.tab->type`.
-
-При вызове `s.String()` генерируется код вида `s.tab->fun[0](s.data)`, т.е. в функцию в качестве первого аргумента передается *pointer* на данные.
-
-Т.е. при вызове *method*'а для *interface type*: загрузить адрес *itable*, загрузить конкретный элемент из *itable* и вызвать его.
-
-#### Примеры
-
-##### *Slice* из *interface*
-
-Если определен `interface`:
-
-```go
-type Animal interface {
-    ...
-}
-```
-
-и *type*'s, которые удовлетворяют этому *interface*: `Dog`, `Cat`, `Liama`. 
-
-Тогда можно переменные этих *type*'s поместить в один *slice* с типом `Animal`:
-
-```go
-animals := []Animal{Dog{}, Cat{}, Llama{}}
-```
-
-Внутри `animals` *slice* каждый элемент имеет `Animal` type, но разные элементы могут иметь разные *underlying type*'s (`Dog`, `Cat`, `Llama`).
-
-##### Преобразование `[]T` в `[]interface{}`
-
-Преобразовать `[]T` в `[]interface{}` напрямую через присвоение невозможно, т.к. это – *slice*'s со значениями разных *type*'s:
-
-```go
-names := []string{"stanley", "david", "oscar"}
-var vals []interface{}
-
-vals = names // Ошибка!!! Cannot use 'names' (type []string) as type []interface{}
-```
-
-Такое преобразования можно сделать, пройдя по всему *slice* и выполняя автоматическое приведение каждого элемента отдельно:
-
-```go
-names := []string{"stanley", "david", "oscar"}
-vals := make([]interface{}, len(names))
-for i, v := range names {
-  vals[i] = v
-}
-```
-
-#### Приведение *value* и *pointer*'а к *interfac*'у
-
-В *interface variable* может быть сохранено:
-
-- *value* для *underlying type*. В этом случае *underlying* данные в структуре интерфейса – это самое *value*
-- *pointer* на *value*. В этом случае *underlying* данные в структуре интерфейса – это *pointer* (`&value`).
-
-Т.е. если некоторый *type* реализует *interface*, то и *pointer* на этот *type* также реализует *interface*. Поэтому нет никакого смысла создавать *pointer* на *interface*. 
-
-Это можно изучить *builtin function* `println()`:
-
-```go
-	var s string = "syz"
-	var i interface{} = &s
-
-	println(&s)  // 0xc000044768
-	println(i)   // (0x1062060,0xc000044768)  
-  						 // Хранит pointer на itable и pointer на data
-```
-
-
-
-И через *value* и через *pointer* можно вызывать *method*'ы, т.к. `*T` включает *method set* для `*T` и `T` ([1](#method-set)), а для `T` может выполняться автоматическое приведение к `*T` ([1](#автоматическое-приведение-pointer-value-и-value-pointer)).
-
-```go
-package main
-
-/* Интерфейс Animal */
-type Animal interface {}
-
-/* Структура Cat */
-type Cat struct {}
-
-func main() {
-  var a Animal = Cat{} // OK, тип выводится как {main.Animal | main.Cat}
-	var b Animal = &Cat{} // OK, тип выводится как {main.Animal | *main.Cat}
-}
-```
-
-Сохранение в *interface variable* для *type*'s с разными видами *reciever*'ов (*value reciever*, *pointer reciever*) в *method*'ах:
-
-- Для тех *type*'s, у которых *method*'ы принимают *value reciever*. 
-
-  В *interface variable* можно сохранять как *value*, так и *pointer*. Т.к. *method set* любого *pointer type*  `*T` – множество всех его *method*'s, объявленных с *receiver type* `*T` или `T`  ([1](#method-set)).
-
-  ```go
-  /* Интерфейс Animal */
-  type Animal interface {
-  	Speak()
-  }
-  
-  /* Структура Cat */
-  type Cat struct {}
-  
-  /* Method принимает value reciever */
-  func (c Cat) Speak() {
-  	fmt.Print("Meow")
-  }
-  
-  
-  func main() {
-  	// Приводим структуру Cat к интерфейсу Animal
-  	var a Animal = Cat{} // OK. Сохранение value
-    var b Animal = &Cat() // OK. Сохранение pointer'а
-  }
-  ```
-
-  Т.е. *method* `func (c Cat) Speek()`  включен как в *method set* для `Cat`, так и в *method set* для `*Cat`.
-
-- Для тех *type*'s, у которых *method*'ы принимают *pointer receiver*.
-
-  В *interface variable* можно передать только *pointer*, но не *value*. Т.к. *method set* для любого типа `T` содержит все *method*'ы, объявленные с *receiver type* `T` (но не содержит *method*'ы с *receiver type* `*T`).
-
-  ```go
-  /* Интерфейс Animal */
-  type Animal interface {
-  	Speak()
-  }
-  
-  /* Структура Cat */
-  type Cat struct {}
-  
-  /* Method с pointer reciever */
-  func (c *Cat) Speak() {
-  	fmt.Print("Meow")
-  }
-  
-  
-  func main() {
-  	var a Animal = &Cat{} // OK. Сохранение pointer'а
-  	var b Animal = Cat{} // Error: Cat does not implement Animal (Speak method has pointer receiver)
-  }
-  ```
-
-  Т.е. *method* `func (c *Cat) Speek()` включен в *method set* для `*Cat`, но не включен в *method set* для `Cat`.
-
-- Для *struct type* с *promoted method* действует специальные правила при разных сочетаниях (*promoted by pointer* и *promoted by value*; *receiver by value* и *receiever by pointer*) ([link](#struct-type))
-
-TODO!!!! Почитать еще тут [link](https://stackoverflow.com/questions/23044855/what-is-the-reason-golang-discriminates-method-sets-on-t-and-t/23046811#23046811)
-
-#### *Pointer* на *interface*
-
-Технически можно создать *pointer* на *interface*, но обычно в этом нет смысла, т.к. и *value* и *pointer* некоторого *type* можно привести к типу *interface* (не *pointer*)
-
-Через *pointer* на *interface* нельзя вызвать *method*'ы *underlying type*. *Pointer* на *interface* вообще не имеет методов, поэтому вызов *method*'а через *pointer* на *interface* всегда неверен.
-
-```go
-type Animal interface {
-	Speak()
-}
-
-type Cat struct {}
-
-func (c Cat) Speak() {}
-
-func main() {
-	var a Animal = Cat{}
-	p := &a  // Создание pointer'а на interface
-	p.Speak()  // Error! p.Speak undefined (type *Animal is pointer to interface, not interface)
-}
-```
-
-*Pointer* на *interface*:
-
-- можно присвоить переменной с этим *interface type* для `interface{}`
-
-- нельзя присвоить – для непустых interface
-
-  ```go
-  type Empty interface {}
-  type Nonempty interface {F()}
-  
-  func f (empty Empty, nonempty Nonempty) {
-  	var a Empty = &empty        // OK
-  	var b Nonempty = &nonempty  // Error. Cannot use &nonempty (type *Nonempty) as type Nonempty
-  }
-  ```
-
-  
-
-- 
-
-
-
-
-
-#### Построение *itable*
-
-Для каждого *concrete type* (например, `Binary`) создается своя *method table* (аналог *itable*) (как она выглядит??? она создается, наверное, в одном экземпляра для каждого *concrete type*). Эта *method table* содержит список *method*'ов, который реализует этот *specific type*.
-
-Аналогично, для кажого *interface type* (например, `Stringer`) создается своя *method table*, которая содержит его список *method*'ов.
-
-Во время выполнения программы автоматически создается *itable*, путем сопоставления *interface type's method table* и *concrete type's method table*. Полученная *itable* кешируется, чтобы ее не вычислять повторно.
-
-#### Оптимизации
-
-(1) Если выполняется присваивание к пустому *interface{}*, без *method*'ов:
-
-```go
-any := (interface{})(b)
-```
-
-тогда вместо *pointer* на *itable*, в *value* хранится *pointer* непосредственно на *type*:
-
-![interface3](../img/go/interface3.png)
-
-(2) Если определен *type*:
-
-```go
-type Binary32 uint32
-```
-
-В этом случае значение для 32-*bit machine* помещается в одном 32-*bit word*. 
-
-Тогда если привести переменную этого *type* к *interface* `Stringer`:
-
-```go
-b32 := Binary32(300)
-
-s32 := Stringer(b32)
-```
-
-то данные будут хранится непосредственно в *interface value* и не нужно их размещение в *heap*:
-
-![interface3](../img/go/interface4.png)
-
-На этом рисунке данные используются напрямую `Binary32.String`, т.к. данные встроены прямо в *interface value*. На 1 рисунке выше, данные использовались через разыменование *pointer*'а `*Binary.String`. 
-
-(3) Если `b32` приводится к пустому *interface{}*, то можно использовать обе оптимизации (1) и (2):
-
-![interface3](../img/go/interface5.png)
-
-
-
-### nil interface
-
-https://www.pixelstech.net/article/1554553347-Be-careful-about-nil-check-on-interface-in-GoLang
-
-https://mangatmodi.medium.com/go-check-nil-interface-the-right-way-d142776edef1
-
-https://stackoverflow.com/questions/13476349/check-for-nil-and-nil-interface-in-go
-
-https://gist.github.com/miguelmota/faca748b3c8598f2abf322b51b542d24
+[в отдельном файле](types/interface.md)
 
 ## `map` *type*
 
@@ -1643,7 +1180,7 @@ FunctionBody = Block .
 *Receiver* должен иметь:
 
 -  [defined type](#определение-type) (`T`). В этом случае *receiver* передается *by value* и любые изменения, произведенные в *receiver*'е, никак не отразятся на оригинальном значении.
-- или быть *pointer*'ом на [defined type](#определение-type) (`*T`). В этом случае *method* может изменять значение *receiver*'а.
+-  или быть *pointer*'ом на [defined type](#определение-type) (`*T`). В этом случае *method* может изменять значение *receiver*'а. Т.к. это часто требуется, *pointer receiver*'ы встречаются чаще, чем *value receiver*'ы.
 
 Этот тип `T` (*base type receiver*'а) не может быть *pointer* или `interface`, и он должен быть определен в том же *package*, что и *method*. Говорят, что *method* привязан к своему *base type receiver*'а и доступен только на *selector*'ах для типов `T` и `*T`.
 
@@ -1674,7 +1211,23 @@ func (v Implementation) String() string {
 }
 ```
 
-## Reciever By value vs By pointer
+### nil receiver
+
+https://go101.org/article/nil.html
+
+https://stackoverflow.com/questions/69384852/behaviour-of-nil-receiver-in-method-in-golang
+
+https://medium.com/@reetas/nil-receiver-in-golang-9d61ed8fd230
+
+https://stackoverflow.com/questions/42238624/calling-a-method-on-a-nil-struct-pointer-doesnt-panic-why-not
+
+https://groups.google.com/access-error?continue=https://groups.google.com/g/golang-nuts/c/wcrZ3P1zeAk/m/WI88iQgFMvwJ?pli%3D1
+
+
+
+
+
+### Reciever By value vs By pointer
 
 Для одного *type* можно смешивать *method*'s с *reciever by value* и c *receiver by pointer*:
 
@@ -1691,7 +1244,7 @@ https://stackoverflow.com/questions/27775376/value-receiver-vs-pointer-receiver/
 
 Best practices  тут (от создателей Go): https://github.com/golang/go/wiki/CodeReviewComments#receiver-type
 
-### Конструктор
+## Конструктор
 
 Go не является традиционным ООП языком, `struct` не обладают всеми свойствами объектов и и не могут иметь конструктор.
 
@@ -2290,104 +1843,7 @@ TODO!!!
 
 ## *Slice expression*
 
-*Slice expression* (выражения для *slice*) позволяют получить *substring* из `string` или *slice* из `array`, `*array` или `slice`. 
-
-Существует два варианты *slice expression*:
-
-- простой
-- полный
-
-### Простой *slice expression*
-
-**✔**
-
-В простой форме *slice expression* указывается нижняя и верхняя граница:
-
-```
-a[<low> : <high>]
-```
-
-В результате получается *substring* или *slice*, который:
-
-- содержит элементы с индексами, начиная с `<low>` и заканчивая `<high>-1`, т.е. из диапазона `[<low>;<high>)` (открытый справа). 
-- `len(res) = <high>-<low>`.
-- `cap(res) = len(a) - <low>`
-
-Например:
-
-```go
-a := [5]int{1, 2, 3, 4, 5}
-s := a[1:4]                // тип `s` – []int            
-fmt.Println(s)             // {2, 3, 4}
-fmt.Println(len(s))        // 3
-fmt.Println(cap(s))        // 4
-```
-
-Если `a` имеет тип  `*array`, то `a[<low> : <high>]` это сокращение для `(*a)[<low> : <high>]`.
-
-`<low>` или `<high>` можно не указывать, в этом случае *by default*:
-
-- `<low> = 0`
-- `<high> = len(a)`
-
-```go
-a[2:]  // same as a[2 : len(a)]
-a[:3]  // same as a[0 : 3]
-a[:]   // same as a[0 : len(a)]
-```
-
-```go
-func main() {
-  a := []int{1, 2}
-
-  fmt.Println(a[2:])  // == fmt.Println(a[2:2]), выводит []
-  fmt.Println(a[:0])  // == fmt.Println(a[0:0]), выводит []
-}
-```
-
-
-
-Для *array* и *string*, индексы должны находиться в диапазоне `0 <= low <= high <= len(a)`, в противном случае они находятся *out of range*. Для *slice*, верхней границей индекса является *slice capacity* `cap(a)`, а не его длина. [Константный](#constant) индекс должен быть неотрицательным и [representable](https://go.dev/ref/spec#Representability) значением типа `int`; для *array* и константных *string* – константные индексы также должны находиться в диапазоне (каком???). Если оба индекса являются [константами](#constant), они должны удовлетворять условию `low <= high`. Если индексы оказываются *out of range* во время выполнения, бросается  [run-time panic](#run-time-panic).
-
-Результаты *slice expression*:
-
-- для *string* и *slice* (за исключением [untyped string](#constant)) – результатом является *non-constant value* того же типа, что и операнд. 
-- для *untyped string* – результатом является *non-constant value* типа `string`. 
-- для *array*, он должен быть [addressable](https://go.dev/ref/spec#Address_operators), – результатом операции является *slice* с тем же типом элементов, что и *array*.
-
-Если операнд для корректного *slice expression* – `nil` *slice* (корректным, наверное, будет только *slice expression* с верхним и нижним индексом – 0) , то результатом будет также `nil` *slice*. 
-
-```go
-func main() {
-  var a []int
-
-  fmt.Println(a[:] == nil) // true
-  _ = a[1:]                // выбрасывает panic: runtime error: slice bounds out of range [1:0]
-}
-```
-
-Если результат *expression* – *slice*, то он разделяет свой *underlying array* с операндом. Например:
-
-```go
-var a [10]int
-s1 := a[3:7]   // underlying array of s1 is array a; &s1[2] == &a[5]
-s2 := s1[1:4]  // underlying array of s2 is underlying array of s1 which is array a; &s2[1] == &a[5]
-s2[1] = 42     // s2[1] == s1[2] == a[5] == 42; все элементы массива - это один и тот же underlying array element
-```
-
-### Полный *slice expression*
-
-Полный *slice expression* позволяет указать *capacity*.
-
-Может использоваться для `array`, `*array` или `slice` (но не для `string`):
-
-```
-a[<low> : <high> : <max>]
-```
-
-При этом будет создан *slice* как и для простого *slice expression* `a[<low> : <high>]`. Но для него устанавливается `capacity = <max> - <low>`.
-
-TODO!!!
+Смотреть [здесь](types/slice.md#slice-expression)
 
 ## Type assertion
 
@@ -2567,7 +2023,7 @@ add_op     = "+" | "-" | "|" | "^" .
 mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
 unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .  
 </pre>
-*Comparison operator* обсуждаются [в соответствующем разделе](#comparison-operator). Для других *binary operator*, *operand type*'s должны быть (!!!!) [identical](#type-identity), если *operation* не включает *shift operator* или [untyped constants](#constant). Для подробного описания *operation*, включающих только *constant*'s, смотрите раздел [constant expressions](#constant-expression).
+*Comparison operator* обсуждаются [в соответствующем разделе](#comparison-operator). Для других *binary operator*, *operand type*'s должны быть (!!!!) [identical](#type-identity), если *operation* не включает *shift operator* или [untyped constants](#constant). Для подробного описания *operation*, включающих только *constant*'s, смотрите раздел [constant expressions](constant.md#constant-expression).
 
 TODO!!!!
 
@@ -2865,12 +2321,16 @@ func() int(x)    // x is converted to func() int (unambiguous)
     var a int = 10
     var b MyInt = MyInt(a)
     ```
+    
+  - игнорируя *struct tag*'s (см. ниже), `x`'s *type* и `T` не являются  [type parameter](https://go.dev/ref/spec#Type_parameter_declarations)'ами, но имеют [identical](https://go.dev/ref/spec#Type_identity) [underlying types](https://go.dev/ref/spec#Types).
+  
+  - игнорируя *struct tag*'s (см. ниже), `x`'s *type* и `T` являются *pointer type*'s, которые не являются  [named type's](https://go.dev/ref/spec#Types), а их *pointer base type*'s не являются *type parameter*'s, но имеют идентичные *underlying type*'s.
+  
+  - `x`'s *type* и `T`  являются *integer* или *floating point (*число с плавающей запятой) типами.
 
 
 
-
-
-Т.е. есть при *conversion* есть разница между *constant* и *non-constant value*:
+Т.е. при *conversion* есть разница между *constant* и *non-constant value*:
 
 ```go
   const a float64 = 5.7
@@ -2882,7 +2342,13 @@ func() int(x)    // x is converted to func() int (unambiguous)
 
 
 
- 
+### Conversion между numeric type's
+
+При *conversion* для *non-constant numeric value* применяются следующие правила:
+
+1. При *conversion* между [integer types](#числовые-типы), если *value* является *signed integer*, (TODO!!! надо разбираться)
+2. При *conversion* *floating-point number* в *integer* – дробная часть отбрасывается (truncation, усечение до нуля).
+3. TODO!!!
 
 
 
@@ -3136,6 +2602,26 @@ switch doc.Key.Type {
 			return UnknownLocationType
 		}
 ```
+
+
+
+Когда необходимо указать несколько *case expression*'s для одного `StatementList`, необходимо их перечислять через запятую `,`, а не как в PHP ставить после каждого *case expression* двоеточие `:`:
+
+```go
+// Правильно
+case errors.Is(err, form.ErrFormNotFound),
+		errors.Is(err, form.ErrNoTransactions):
+		return rpcprotocol.NewValidationError(err.Error())
+```
+
+```go
+// Неправильно
+case errors.Is(err, form.ErrFormNotFound):   // здесь как будто пустой StatementList
+case errors.Is(err, form.ErrNoTransactions):
+		return rpcprotocol.NewValidationError(err.Error())
+```
+
+
 
 
 
@@ -3901,6 +3387,10 @@ t.next == nil
   var a = 1
   ```
 
+Подробнее про [`init()` *function*](init.go).
+
+
+
 ## Program execution
 
 Программа – один неимпортируемый (*unimported*) *package*, называемый *main package*, связанный со всеми остальными *package*'s, которые он импортирует, транзитивно (импортирует через другие *package*'s). *Main package* должен называться `main` и в нем должны быть объявлена `main` *function*, которая не имеет *argument*'s и *return value*.
@@ -4455,7 +3945,36 @@ func main() {
 
 ## `in_array()`
 
-В Go нет такой встроенной функции для *array type* и *slice type*.
+В Go 1.18+ можно:
+
+- использовать уже готовую реализацию из экспериментального пакета `slices` (`golang.org/x/exp/slices`)
+
+  ```go
+  if slices.Contains(arr, "x") {
+      // do something
+  }
+  ```
+
+-  самому реализовать ее через дженерики (работает для любого *comparable type*) 
+
+  ```go
+  func Contains[T comparable](arr []T, x T) bool {
+      for _, v := range arr {
+          if v == x {
+              return true
+          }
+      }
+      return false
+  }
+  
+  if Contains(arr, "x") {
+      // do something
+  }
+  ```
+
+  
+
+До Go 1.18 не было такой встроенной функции для *array type* и *slice type*.
 
 Можно использовать три приема:
 
@@ -4529,6 +4048,12 @@ func main() {
   return false
   }
   ```
+
+
+
+
+
+
 
 По тестам `switch` всегда быстрее, `slice` близок по скорости, `map` гораздо медленнее (наверно, это только для случая когда нужно еще строить сам map).
 

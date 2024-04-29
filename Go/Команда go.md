@@ -61,6 +61,22 @@ go <action> [packages]
 
 
 
+# `go env`
+
+```bash
+go env [-json] [-u] [-w] [var ...]
+```
+
+`env` выводит информацию о *Go environment*.
+
+По умолчанию `env` выводит информацию в формате *shell script*. Если в качестве аргументов указано одно или несколько имен *variable*'s, `env` печатает значение каждой указанной `variable` в отдельной строке.
+
+Флаг `-json` выводит *environment* в формате JSON, а не в формате *shell script*.
+
+Флаг `-u` требует один или несколько аргументов и делает *unset* настроек по умолчанию для указанных *environment variable*'s, если они были установлены с помощью `go env -w`.
+
+Флаг `-w` требует один или несколько аргументов в форме `NAME=VALUE` и изменяет настройки по умолчанию для указанных *environment variable*'s на заданные *value*'s.
+
 
 
 
@@ -241,5 +257,17 @@ go list [-f format] [-json] [-m] [list flags] [build flags] [packages]
 
 # `go imports`
 
-TODO!!!
+```bash
+goimports -w models.go
+```
+
+
+
+
+
+
+
+# Testing flag'и
+
+[Здесь смотреть](Testing.md#testing-flagи)
 

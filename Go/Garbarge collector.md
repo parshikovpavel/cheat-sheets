@@ -454,50 +454,7 @@ def memory_allocator(n):
 
 # Размещение объектов в *stack* и *heap* в Go
 
-Go (в отличии от многих языков c GC) предпочитает *allocate* объекты в *stack*'е, поэтому большая часть объектов оказывается там. В Go у каждой *goroutine* есть *stack*, и, когда это возможно, Go будет *allocate* объекты в этом *stack*'е. 
-
-Компилятор Go пытается доказать, что *variable* не используется вне *function* и не "убегает" (*escape*) за ее пределы, используя *escape analysis*. Если компилятор может определить время жизни *variable*, то он размещает ее в *stack*'е, а не в *heap*. Однако, если время жизни *variable* неизвестно, она будет размещена в *heap*. Обычно, если программа использует *pointer* на *object*, этот *object* хранится в *heap*. Взгляните на этот пример кода:
-
-```go
-type myStruct struct {
-  value int
-}
-
-var testStruct = myStruct{value: 0}
-
-func addTwoNumbers(a int, b int) int {
-  return a + b
-}
-func myFunction() {
-  testVar1 := 123
-  testVar2 := 456
-  testStruct.value = addTwoNumbers(testVar1, testVar2)
-}
-func someOtherFunction() {
-  // some other code
-  myFunction()
-  // some more code
-}
-```
-
-Будем считать, что это часть работающей программы (??? библиотека). Потому что если бы этот код – был целой программой, то компилятор Go оптимизировал бы ее и разместил *variable*'s в *stack*'е. 
-
-Итак:
-
-1. Переменной `testStruct` присваивается значение и она помещается в *heap*.
-
-2. При вызове `myFunction()` выполняется *push* в *stack* нового *stack frame*. Переменные `testVar1` и `testVar2` сохраняются в этом *stack frame*.
-
-3. При вызове `addTwoNumbers()` выполняется *push* в *stack* нового *stack frame* с двумя аргументами `a` и `b`.
-
-4. Когда завершается выполнение функции `addTwoNumbers()`, результат возвращается в функцию `myFunction()`, для *stack frame* функции `addTwoNumbers` выполняется *pop* из *stack*'а, соответствующий блок *memory* освобождается.
-
-5. Обращаемся по адресу переменной `testStruct` в *heap*, и изменяем значение поля `value`
-
-6. Когда завершается выполнение функции `myFunction()`, аналогично, для *stack frame* выполняется *pop* и *memory* освобождается. 
-7. Переменная `testStruct` остается в *heap* до тех пор, пока не произойдет *garbage collection*.
-
-Переменная `testStruct` осталась лежать в *heap*, и без специального анализа *Go runtime* не знает, нужна ли она еще. Чтобы понять это Go использует *garbarge collector*.
+[Смотреть здесь](../OS.md#stack-и-heap-в-go)
 
 # Реализация GC в Go
 

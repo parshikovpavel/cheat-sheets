@@ -32,6 +32,16 @@ slice = append([]byte("hello "), "world"...)
 	a = append(a, 1) // [1]
 ```
 
+`nil` переменные также добавляются в *slice*:
+
+```go
+  var a []A
+	var b A
+
+	a = append(a, 1) // [1]
+	a = append(a, b) // [1 <nil>]
+```
+
 
 
 

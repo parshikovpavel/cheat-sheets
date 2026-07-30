@@ -1002,7 +1002,7 @@ type Block interface {
 
 Новый *type* называется *defined* (определенный) *type* . Он отличается от любого другого *type*, в том числе от *type*, из которого он создан. То есть такие *type*'s, даже с одинаковой структурой, не могут использоваться взаимозаменяемо.
 
-*Defined type* может иметь связанные с ним *method*'ы. Он не наследует никаких методов, привязанных к указанному `Type`, но *method set* (набор методов) для типа `interface` и элементов (!!!) *composite type* (составного типа) остается неизменным:
+*Defined type* может иметь связанные с ним *method*'ы. Он не наследует никаких методов, привязанных к указанному `Type`, но *method set* (набор методов) для типа `interface` и элементов (!!!) *composite type* (составного типа) остается неизменным (т.е. рекурсивно не переопределяет типы полей, элементов, ключей, значений и т.д)
 
 ```go
 // Mutex - это тип данных с двумя методами: Lock и Unlock.
@@ -1026,6 +1026,28 @@ type PrintableMutex struct {
 // MyBlock - это interface type, который имеет тот же самый method set, что и Block (определен чуть выше).
 type MyBlock Block 
 ```
+
+```go
+type Engine struct{}
+
+func (Engine) Start() {}
+
+type Car struct {
+    Engine Engine
+}
+
+func (Car) Drive() {}
+
+type SpecialCar Car
+
+var c SpecialCar
+
+c.Drive()        // ошибка: метод Car.Drive не наследуется
+c.Engine.Start() // работает: поле осталось типа Engine
+// SpecialCar не получает методы Car, но поле Engine не превращается в какой-то новый тип — это всё ещё Engine со всеми его методами.
+```
+
+
 
 Пример определения нового *type* для *slice* со значениями типа `interface{}`:
 
@@ -1146,6 +1168,73 @@ func min(x int, y int) int {
 
 - *by value* (`T`). Внутри *function* мы используем копию оригинального значения. Любые изменения переменной, произведенные внутри функции, никак не отразятся на оригинальном значении.
 - *by pointer* (`*T`). Внутри *function* мы можем изменить оригинальное значение, на которое ссылается *pointer*.
+
+В Go нет *reference (ссылочный) variables*, поэтому в Go нет семантики вызова *function by reference*.
+
+В таких языках, как C++, можно объявить *reference variable*.
+
+```c++
+#include <stdio.h>
+
+int main() {
+        int a = 10;
+        int &b = a;
+
+        printf("%p %p %p\n", &a, &b); // 0x7ffe114f0b14 0x7ffe114f0b14
+}
+```
+
+Как видите `a`, `b` относятся к одному и тому же адресу в памяти. Запись в `a` изменит содержимое `b` .
+
+В отличие от C++, каждая в Go каждая *variable* занимает уникальное место в памяти.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+        var a, b, c int
+        fmt.Println(&a, &b, &c) // 0x1040a124 0x1040a128 0x1040a12c
+}
+```
+
+В Go невозможно создать две *variable*, которые используют одно и то же место в памяти. Можно создать две *variable*, содержимое которых *указывает* на одно и то же место в памяти.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+        var a int
+        var b, c = &a, &a
+        fmt.Println(b, c)   // 0x1040a124 0x1040a124
+        fmt.Println(&b, &c) // 0x1040c108 0x1040c110
+}
+```
+
+В этом примере переменные  `b` и `c` имеют одно и то же значение — адрес `a`, однако сами  `b` и `c` хранятся в уникальных местах. Обновление содержимого `b` не повлияет на `c`.
+
+*map* и *channel* не являются *reference*. Если бы они ими были, эта программа вывела бы  `false`.
+
+```go
+package main
+
+import "fmt"
+
+func fn(m map[int]int) {
+        m = make(map[int]int)
+}
+
+func main() {
+        var m map[int]int
+        fn(m)
+        fmt.Println(m == nil) // true 
+}
+```
+
+
 
 
 
@@ -1897,7 +1986,7 @@ TODO!!!
   ```go
   if v, ok := any.(Stringer); ok {
     return v.String()
-}
+  }
   ```
   
   
@@ -2737,7 +2826,7 @@ RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
 - `ExpressionList` – уже объявленные переменные
 - `IdentifierList` – новые переменные, идентификаторы
 
-Итерирует *entry*'s для *array*, *slice*, *string* или *map* или значений, полученных по *channel*. 
+Итерирует *entry*'s для разных типов *Expression*.
 
 `Expression`  может быть:
 
@@ -2747,6 +2836,12 @@ RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
 - string
 - map
 - *bidirectional* или *receive-only channel*
+- *integer values* от 0 до верхнего предела [[Go 1.22](https://go.dev/ref/spec#Go_1.22)]
+- значения, переданные функции `yield` итератора [[Go 1.23](https://go.dev/ref/spec#Go_1.23)]
+
+`Expression` справа в `range` *clause* называется *range expression* , которое может представлять собой *array, pointer to array, slice, string, map, channel (разрешающий [receive operations](https://go.dev/ref/spec#Receive_operator), integer или function со специальной signature*. Как и при присваивании, операнды слева, если они присутствуют, должны быть [addressable](https://go.dev/ref/spec#Address_operators) или *map index expression*; они обозначают *iteration variable*. Если *range expression* является *function*, максимальное количество *iteration variable*'s зависит от *function signature*. Если *range expression* является *channel* или *integer*, допускается не более одной переменной итерации; в противном случае их может быть до двух. Если последняя переменная итерации является [пустым идентификатором](https://go.dev/ref/spec#Blank_identifier) , предложение диапазона эквивалентно тому же предложению без этого идентификатора.
+
+
 
 Для каждого элемента присваивает *iteration variable*'s (может быть несколько переменных в `IdentifierList`) некоторые *iteration value*'s, зависящие от типа `Expression` (см. таблицу ниже), а затем выполняет блок.
 
@@ -2839,7 +2934,7 @@ for w := range ch {
 }
 ```
 
-Можно не указывать `ExpressionList` и `IdentifierList`:
+Можно не указывать `ExpressionList` и `IdentifierList`, тогда все обрабатывается аналогично, только возвращаемые значения никуда не присваиваются:
 
 ```go
 // очистить channel, receive все value's
@@ -2848,6 +2943,11 @@ for range ch {}
 // tick каждую 1 секунду
 for range time.Tick(time.Second) {
   // ..
+}
+
+// Значение времени здесь не сохраняется, потому что переменная перед range не указана. Если оно нужно:
+for currentTime := range time.Tick(time.Second) {
+	// ...
 }
 ```
 
@@ -3068,11 +3168,13 @@ func main() {
 }
 ```
 
- 
+ Если *deferred function* имеет какие-либо *return value*'s, эти значения отбрасываются (не используются).
+
+### Время выполнения 
+
+До Go 1.14 накладные расходы на `defer`  составляли около 35 наносекунд, тогда как прямой вызов функции занимал примерно 6 наносекунд. Такая разница побуждала разработчиков избегать `defer` в «горячих» участках кода (например, в циклах с миллионами итераций), что могло снижать читаемость кода и приводить к ошибкам при последующем изменении логики. В Go 1.14 `defer` был оптимизирован прежде всего за счет илайн-кода в нужное место
 
 
-
-Если *deferred function* имеет какие-либо *return value*'s, эти значения отбрасываются (не используются).
 
 # Built-in functions
 
@@ -4056,5 +4158,4 @@ func main() {
 
 
 По тестам `switch` всегда быстрее, `slice` близок по скорости, `map` гораздо медленнее (наверно, это только для случая когда нужно еще строить сам map).
-
 

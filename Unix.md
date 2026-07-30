@@ -98,6 +98,13 @@ export PATH="$HOME/bin:$PATH"
 source ~/.bash_profile
 ```
 
+Для добавления *environment variable*:
+
+```bash
+echo 'export MY_VARIABLE="value"' >> ~/.bash_profile
+source ~/.bash_profile
+```
+
 
 
 ### `PATH`
@@ -448,6 +455,16 @@ cat file.txt
 ```
 
 
+
+### `source`
+
+Команда `source` читает указанный файл и выполняет его команды **в текущей оболочке**:
+
+```bash
+source ~/.bash_profile
+```
+
+Это позволяет сразу применить изменения конфигурации терминала — например, новые переменные окружения, алиасы и функции — без перезапуска терминала.
 
 
 

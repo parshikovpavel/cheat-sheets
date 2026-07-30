@@ -727,6 +727,30 @@ func (h Header) Set(key, value string)
 
 
 
+## `type Handler`
+
+```go
+type Handler interface {
+	ServeHTTP(ResponseWriter, *Request)
+}
+```
+
+`Handler()` отвечает на *HTTP request*.
+
+### `ServeHTTP()`
+
+Метод `Handler.ServeHTTP()` должен записать *header*'ы и *data* ответа в [`ResponseWriter`](#responsewriter) , а затем сделать `return`. `return` означает, что *request* завершен; использование [`ResponseWriter`](#ResponseWriter) или чтение из [`Request.Body`](#Request.Body) после или *concurrently* с завершением вызова `ServeHTTP` недопустимо .
+
+В зависимости от используемого *HTTP client software, HTTP protocol version* и любых посредников между *client* и *Go server*, чтение из [`Request.Body`](#type-request) после записи в [`ResponseWriter`](#ResponseWriter) может быть невозможно . Осторожные *handler*'ы должны сначала прочитать [`Request.Body`](#type-request) , а затем писать в [`ResponseWriter`](#ResponseWriter).
+
+За исключением чтения [`Request.Body`](#type-request), *handler*'ы не должны изменять предоставленный *Request*.
+
+
+
+
+
+
+
 ## `type Request`
 
 ```go

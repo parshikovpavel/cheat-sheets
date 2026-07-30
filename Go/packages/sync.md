@@ -126,7 +126,7 @@ func main() {
 
 `RWMutex` нельзя копировать после первого использования.
 
-Если *goroutine* удерживает `RWMutex` для *reading* и другая горутина может вызвать `Lock()` (для *writing*), ни какая *goroutine* не сможет взять *read lock* до тех пор пока не будет снята начальная *read lock*. В частности, это запрещает рекурсивную *read locking*. Это необходимо для того, чтобы *lock* в конечном итоге (*eventually*) стала доступной; вызов `Lock()` исключает захват блокировки новыми *reader*'s.
+Если какая-либо *goroutine* вызывает `Lock()` , когда блокировка уже удерживается одним или несколькими *reader*,  вызовы `RLock()` будут блокироваться до тех пор, пока *writer* не получит (и не освободит) блокировку, чтобы гарантировать, что блокировка в конечном итоге станет доступна *writer*'у. В частности, это запрещает рекурсивную *read locking* (иначе будет дедлок).  Это необходимо для того, чтобы *lock* в конечном итоге (*eventually*) стала доступной; вызов `Lock()` исключает захват блокировки новыми *reader*'s.
 
 ```go
 type RWMutex struct {
@@ -134,9 +134,64 @@ type RWMutex struct {
 }
 ```
 
+#### `RWMutex.Lock()`
+
+```go
+func (rw *RWMutex) Lock()
+```
+
+`Lock()` блокирует на  *writing*. Если блокировка уже заблокирована для *reading* или *writing*, блокировка будет продолжаться до тех пор, пока блокировка не станет доступной.
+
+#### `RWMutex.RLock()`
+
+```go
+func (rw *RWMutex) RLock()
+```
+
+`RLock()` блокирует на *reading*.
+
+Его не следует использовать для рекурсивной блокировки *read*; вызов `Lock()` исключает для новых *reader* возможность получения блокировки.
+
+#### `RWMutex.RUnLock()`
+
+```
+func (rw * RWMutex ) RUnlock()
+```
+
+`RUnlock()` отменяет один вызов `RLock()`; она не влияет на другие параллельные *reader*'s. Если при вызове `RUnlock()` - `rw` не заблокирована для *reading*, это приводит к *run-time error*.
+
+#### `RWMutex.UnLock()`
+
+```go
+func (rw *RWMutex) Unlock()
+```
+
+`Unlock()` разблокирует для *writing*. Если `rw` не заблокирован на *writing* при вызове `Unlock()`, это приведет к *run-time error*.
 
 
-TODO!!!
+
+Пример:
+
+```go
+type DataStore struct {
+    mu  sync.RWMutex
+    data map[string]string
+}
+
+func (ds *DataStore) Get(key string) string {
+    ds.mu.RLock() // Захватываем блокировку для чтения
+    defer ds.mu.RUnlock() // Гарантируем освобождение через defer
+    return ds.data[key]
+}
+
+func (ds *DataStore) Set(key, value string) {
+    ds.mu.Lock() // Захватываем блокировку для записи
+    ds.data[key] = value
+    ds.mu.Unlock() // Освобождаем блокировку
+}
+```
+
+
 
 
 

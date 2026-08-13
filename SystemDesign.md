@@ -64,7 +64,7 @@ https://devpractice.ru/c4-model-modeling-software-architecture/
 
 Для связи элементов диаграммы между собой используется штриховая линия с надписью.
 
-![img](https://devpractice.ru/wp-content/uploads/2023/12/image-5.png)
+![img](img/system_design/13.png)
 
 ### **Программная система**
 
@@ -130,7 +130,7 @@ https://devpractice.ru/c4-model-modeling-software-architecture/
 
 Нарисуем диаграмму компонентов для *Web API App*. Для *Web API App* пользователем является *Single-Page App*, именно он отправляет в него запросы по *REST API* согласно нашей задумке.
 
-![img](https://devpractice.ru/wp-content/uploads/2023/12/image-9-1024x743.png)
+![img](img/system_design/14.png)
 
 ### Диаграмма кода
 
@@ -216,6 +216,7 @@ https://devpractice.ru/c4-model-modeling-software-architecture/
 - необходимо ли размещать большой контент или медиа в *entity* (большой текст, фото, видео)
 - необходимо ли отдельно загружать/скачивать медиа (фото, видео)
 - ограничение размера *entity* (размера URL, размера текста, размер твита). На основе этого можно расчитать объем хранимых данных
+- неравномерность распределения связей между *entity* - проблема селебрити (звезд)
 - можно ли задавать `expiration_time`, удаляются ли entity автоматически через некоторое время.
 - можно ли задавать `custom_entity_hash`, `custom_URL`
 - пользователи
@@ -236,6 +237,8 @@ https://devpractice.ru/c4-model-modeling-software-architecture/
 - генерация пользовательского контента
 - геотаргетинг
 - реклама
+- персональные данные - есь ли и как хранятся
+- необходимость legal согласований передачи данных (подписание договоров с банками, )
 - теги
 - категории
 - suggestion

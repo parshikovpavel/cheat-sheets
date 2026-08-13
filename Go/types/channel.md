@@ -1125,6 +1125,34 @@ func main() {
   }
   ```
 
+  ```go
+  // другой вариант
+  
+  func main() {
+  	semaphore := make(chan struct{}, 10)  // semaphore capacity - 10
+  	var wg sync.WaitGroup
+  
+  	var worker = func(id int) {
+  		defer wg.Done()                 // завершение goroutine
+  
+  		fmt.Println("Worker#", id, " starts.")
+  		time.Sleep(time.Duration(rand.Intn(3) + 1) * time.Second)
+    	fmt.Println("Worker#", id, " job done.")
+  
+  		<-semaphore                     // release semaphore
+  	}
+  
+  	wg.Add(50)                    // запускаем 50 goroutine
+  	for i := 0; i < 50; i++ {
+      semaphore <- struct{}{}         // не будет запускаться более 10 горутин
+  		go worker(i)
+  	}
+  	wg.Wait()
+  }
+  ```
+
+  
+
 - *acquire* через *receive*, *release* через  *send* 
 
   Пример с пулом номеров в *channel*:

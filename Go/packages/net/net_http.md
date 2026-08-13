@@ -35,7 +35,10 @@ if err != nil {
 	// handle error
 }
 defer resp.Body.Close()							// (2) Закрыть response body
-body, err := io.ReadAll(resp.Body)  // (1) Read до конца
+if _, err := io.Copy(io.Discard, resp.Body); err != nil { // (1) Read до конца
+    fmt.Println(err.Error())
+    return
+}  
 // ...
 ```
 
@@ -52,15 +55,12 @@ body, err := io.ReadAll(resp.Body)  // (1) Read до конца
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+  defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
-    return nil, err
-	}
+	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+    fmt.Println(err.Error())
+    return
+  }
 ```
 
 `defer resp.Body.Close()` необходимо ставить после проверки ошибки `err != nil`, т.к. в этом случае чаще всего `resp.Body == nil`. Но даже если `resp.Body != nil` при ошибках оно будет автоматически закрыто нижележащим `Transport`. В случае *error* любой ответ можно игнорировать. `Response != nil && err != nil` возникает только при *fail* в `CheckRedirect()`, но в этом случае `Response.Body` уже закрыт.
@@ -165,7 +165,7 @@ type Client struct {
 // Конструктор клиента
 func NewClient(url string, timeout time.Duration) *Client {
 	httpClient := &http.Client{
-	Timeout: timeout,
+	  Timeout: timeout,
 }
 	return &Client{url: url, httpClient: httpClient}
 }

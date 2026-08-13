@@ -260,7 +260,7 @@ func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)
 
 Функция `CancelFunc` освобождает ресурсы, если *timer* еще запущен.
 
-Читать про [обязательный вызов `cancel()`](обязательный-вызов-cancel)
+Читать про [обязательный вызов `cancel()`](#обязательный-вызов-cancel)
 
 Пример:
 

@@ -76,7 +76,7 @@ $ cat test.s
 
 *Compiler* реализовал операцию *read* с использованием двух *machine instruction*'s: первая – *read* младшие 32 *bit* в `eax`, а вторая - старшие 32 *bit* в `edx`. В этом случае, если *concurrent write* переменной `sharedValue` может произойти между двумя *instruction*'s, это приведет к **torn read**.
 
-Эти проблемы не только теоретические. Если провести тестирование[Набор](http://mintomic.github.io/) тестов [Mintomic](http://mintomic.github.io/) включает вызываемый тестовый пример `test_load_store_64_fail`, в котором один *thread* делает *write* для *64-bit variable* с помощью простого *assignment operator*, а другой *thread* выполняет *read* из той же *variable*, сравнивая значения. На *multicore x86*, этот тест, как и ожидалось, постоянно терпит неудачу.
+Эти проблемы не только теоретические. Если провести тестирование [Набор](http://mintomic.github.io/) тестов [Mintomic](http://mintomic.github.io/) включает вызываемый тестовый пример `test_load_store_64_fail`, в котором один *thread* делает *write* для *64-bit variable* с помощью простого *assignment operator*, а другой *thread* выполняет *read* из той же *variable*, сравнивая значения. На *multicore x86*, этот тест, как и ожидалось, постоянно терпит неудачу.
 
 ## *Non-Atomic* для одиночной *CPU Instruction*
 
@@ -86,7 +86,7 @@ $ cat test.s
 strd r0, r1, [r2]
 ```
 
-На некоторых CPU ARMv7 эта *instruction* – *non-atomic*. Когда CPU видит эту *instruction*, он фактически выполняет *два* отдельных . 
+На некоторых CPU ARMv7 эта *instruction* – *non-atomic*. Когда CPU видит эту *instruction*, он фактически выполняет *две* отдельных . 
 
 Другой пример – на x86 CPU, 32-bit `mov` *instruction* является *atomic*, если *operand* является *naturally aligned*, и *non-atomic* в противном случае. Другими словами, *atomic* гарантируется только тогда, когда *32-bit integer* находится по адресу, кратному 4. Если запустить тест на C++, который будет размещать `sharedInt` по *unaligned address*'s, то при *concurrently read/write* – тест будет *fail*. 
 
@@ -108,9 +108,117 @@ var a int64 = 1
 
 # `atomic`
 
-[atomic](https://pkg.go.dev/sync/atomic@go1.17.5)
+[atomic](https://pkg.go.dev/sync/atomic)
+
+## Function
 
 *Atomic operation* реализованы на *hardware level* (аппаратном уровне).
+
+
+
+### `AddInt64()` 
+
+```go
+func AddInt64(addr *int64 , delta int64 ) (new int64 )
+```
+
+Метод `AddInt64()` атомарно добавляет `delta` к `*addr` и возвращает новое значение `new`. Рекомендуется использовать более эргономичный и менее подверженный ошибкам метод `Int64.Add()` (особенно если вы ориентируетесь на 32-битные платформы; см. раздел с ошибками).
+
+## Type
+
+Атомарные типы (например, `atomic.Int64`) удобнее API и безопасностью использования. Обычно он компилируется в те же атомарные инструкции, что и вызов функций (например, `atomic.AddInt64`).
+
+1. Нельзя случайно обратиться к значению неатомарно
+
+С обычным `int64` легко смешать атомарные и обычные операции:
+
+```golang
+var counter int64
+
+atomic.AddInt64(&counter, 1)
+fmt.Println(counter) // ошибка: обычное чтение может вызвать data race
+counter++            // ошибка: неатомарная запись
+```
+
+С `atomic.Int64` внутреннее значение недоступно:
+
+```golang
+var counter atomic.Int64
+
+counter.Add(1)
+fmt.Println(counter.Load())
+
+// counter++           // не компилируется
+// fmt.Println(counter.value) // поле недоступно
+```
+
+API буквально подсказывает допустимые операции: `Add`, `Load`, `Store`, `Swap`, `CompareAndSwap`.
+
+2. Код короче и лучше выражает намерение
+
+Старый API:
+
+```golang
+var counter int64
+
+atomic.AddInt64(&counter, 1)
+value := atomic.LoadInt64(&counter)
+atomic.StoreInt64(&counter, 10)
+```
+
+Типизированный API:
+
+```golang
+var counter atomic.Int64
+
+counter.Add(1)
+value := counter.Load()
+counter.Store(10)
+```
+
+По типу поля сразу видно, что оно предназначено для атомарного доступа:
+
+```golang
+type Metrics struct {
+    requests atomic.Int64
+}
+```
+
+### `type Int64`
+
+```golang
+type Int64 struct {
+	// contains filtered or unexported fields
+}
+```
+
+`Int64` — это атомарный тип данных int64. *Zero value* равно нулю.
+
+`Int64` не следует копировать после первого использования.
+
+#### `Add()`
+
+```go
+func (x *Int64) Add(delta int64) (new int64)
+```
+
+`Add()` атомарно добавляет `delta` к `x` и возвращает значение `new`.
+
+#### `Load()`
+
+```go
+func (x *Int64) Load() int64
+```
+
+`Load()` атомарно загружает и возвращает значение, хранящееся в переменной `x`. 
+
+#### `Store()`
+
+```go
+func (x * Int64 ) Store(val int64 )
+```
+
+`Store()` атомарно записывает `val` в `x`.
 
 
 

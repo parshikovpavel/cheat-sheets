@@ -70,7 +70,7 @@ def memory_allocator(n):
 
 Самый простой способ GC — просто подождать, пока *task* (или *request*) не будет завершен, и освободить всю *memory* сразу. Это возможно, если есть ряд независимых *task* (*request*'ов). Например, веб-сервер Apache создает небольшой пул *memory* для каждого *request*'а и освобождает весь пул, когда *request* завершается.
 
-![сборка мусора-NO_GC](/Users/paparshikov/repos/cheat-sheets/img/go/no-gc.png)
+![сборка мусора-NO_GC](../img/go/no-gc.png)
 
 Показана анимация запущенной программы:
 
@@ -100,7 +100,7 @@ def memory_allocator(n):
 
 Еще одно простое решение — подсчитывать, сколько раз вы используете *object*, и когда `counter = 0` – удалять *object*. Это наиболее распространенный прием, который разработчики используют при добавлении *garbage collection* в существующую систему — это единственный *garbage collector*, который легко интегрируется с другими *resource manager*'ами (которые отвечают за работу с памятью) и существующими кодовыми базами. 
 
-![garbage-collection-REF_COUNT_GC](/Users/paparshikov/repos/cheat-sheets/img/go/reference-counting-gc.png)
+![garbage-collection-REF_COUNT_GC](../img/go/reference-counting-gc.png)
 
 На анимации:
 
@@ -150,7 +150,7 @@ def memory_allocator(n):
 
 
 
-![img](/Users/paparshikov/repos/cheat-sheets/img/go/gc-mark-sweep.png)
+![img](../img/go/gc-mark-sweep.png)
 
 *Object*'ы не сразу *reclaim*, а остаются в памяти до тех пор, пока не будет достигнут определенный порог или пройдет некоторое время. На анимации видно, что есть периоды *read/write* без *garbage collection*.
 
@@ -570,7 +570,7 @@ func add(numbers []int) int {
 
 Трассировка на компьютере с 12 *processor*'s:
 
-![img](/Users/paparshikov/repos/cheat-sheets/img/go/gc-7.png)
+![img](../img/go/gc-7.png)
 
 Синяя полоска GC вверху – период работы *collector*'а. Три из двенадцати `P`  исполняют `GC (dedicted)`. Некоторые *goroutine*'s выполняют *mark assist*, а не *application*. В конце *collection* только один `P` исполняет `GC (dedicted)`  и  `STW (Mark Termination)`.
 
@@ -600,11 +600,11 @@ func add(numbers []int) int {
 
 Но на рисунке, в работе *goroutine*'s появляются розовые участки – моменты, когда *goroutine* выполняет *sweep*, а не *application*. 
 
-![img](/Users/paparshikov/repos/cheat-sheets/img/go/gc-8.png)
+![img](../img/go/gc-8.png)
 
 Если посмотреть детальней *stack trace* для *goroutine* в этот момент:
 
-![img](/Users/paparshikov/repos/cheat-sheets/img/go/gc-9.png)
+![img](../img/go/gc-9.png)
 
 то видно, что:
 

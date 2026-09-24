@@ -119,9 +119,8 @@ godoc -http=:8000
 
   ```bash
   $ go mod vendor
-  $ avito service run
   ```
-
+  
 - в GoLand нужно проверить, что в `Settings/Preferences | Go | Go Modules` включена поддержка *Go modules*, и сделать `File -> Invalidate Caches / Restart` 
 
 - почистить кеш go modules:
@@ -1135,7 +1134,15 @@ a := string("b") // С указанием типа
 
 *Short variable declaration* может появляться только внутри *function*. В некоторых контекстах, таких как *initializer* (??? наверно, присвоение в заголовке) для `if` , `for` или `switch` *statement*'s , *short variable declaration* может использоваться для объявления локальных временных *variable*.
 
+При объявлении внутри блока кода:
 
+```go
+for {
+  a := 0
+}
+```
+
+`a := 0` выполняется на каждой итерации: создаётся локальная переменная `a` со значением `0`. Значение с предыдущей итерации не сохраняется.
 
 ## *Function declaration*
 

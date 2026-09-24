@@ -165,7 +165,7 @@ b := Binary(200)
 
 
 
-![interface1](/Users/paparshikov/repos/cheat-sheets/img/go/interface1.png)
+![interface1](../../img/go/interface1.png)
 
 Если объявить интерфейс:
 
@@ -185,7 +185,7 @@ s := Stringer(b)
 
 
 
-![interface2](/Users/paparshikov/repos/cheat-sheets/img/go/interface2.png)
+![interface2](../../img/go/interface2.png)
 
 
 
@@ -429,7 +429,7 @@ any := (interface{})(b)
 
 тогда вместо *pointer* на *itable*, в *value* хранится *pointer* непосредственно на *type*:
 
-![interface3](/Users/paparshikov/repos/cheat-sheets/img/go/interface3.png)
+![interface3](../../img/go/interface3.png)
 
 (2) Если определен *type*:
 
@@ -449,13 +449,13 @@ s32 := Stringer(b32)
 
 то данные будут хранится непосредственно в *interface value* и не нужно их размещение в *heap*:
 
-![interface3](/Users/paparshikov/repos/cheat-sheets/img/go/interface4.png)
+![interface3](../../img/go/interface4.png)
 
 На этом рисунке данные используются напрямую `Binary32.String` (? `s32.data`), т.к. данные встроены прямо в *interface value*. На 1 рисунке выше, данные использовались через разыменование *pointer*'а `*Binary.String` (`*s32.data`). 
 
 (3) Если `b32` приводится к пустому *interface{}*, то можно использовать обе оптимизации (1) и (2):
 
-![interface3](/Users/paparshikov/repos/cheat-sheets/img/go/interface5.png)
+![interface3](../../img/go/interface5.png)
 
 
 

@@ -106,7 +106,7 @@ Go предоставляет достаточно способов управл
 Самое простое решение - использование примитива *channel*.
 
 1. Создаем пустой *struct channel* `make(chan struct{}, 1)` 
-2. Каждая дочерняя горутина **должна публиковать в канале свои данные** (здесь может быть полезен принцип defer).
+2. Каждая дочерняя горутина **должна публиковать в канале свои данные** (здесь может быть полезен принцип `defer`).
 3. Родительская горутина **должна читать из канала столько раз, сколько ожидаемых горутин**.
 
 
@@ -244,7 +244,7 @@ func run(ctx context.Context) {
 
 Даже если мы разобрались с тем, как правильно передавать состояние процессов и ожидание, нам все равно необходимо реализовать завершение. Посмотрим, как это можно сделать на простом примере, введя все необходимые примитивы Go.
 
-Начнем с очень простого примера "Hello in a loop":
+Начнем с очень простого примера `"Hello in a loop"`:
 
 ```go
 func main() {
@@ -260,13 +260,12 @@ func main() {
 Прослушивание сигнала ОС для остановки выполнения:
 
 ```go
-exit := make(chan os.Signal, 1) // we need to reserve to buffer size 1, so the notifier are not blocked
+exit := make(chan os.Signal, 1) // необходим буфер размером 1, чтобы не заблокировать notifier
 signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 ```
 
-- Нам необходимо использовать `os.Interrupt` для изящного завершения работы по `Ctrl+C`, который является SIGINT
-- `syscall.SIGTERM` - обычный сигнал завершения работы и сигнал по умолчанию (может быть [изменен](https://docs.docker.com/engine/reference/builder/#stopsignal)) для контейнеров [docker](https://docs.docker.com/engine/reference/commandline/stop/), который также используется в [kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination/).
-- Подробнее о `signal` можно прочитать [в документации к пакету](https://pkg.go.dev/os/signal/) и [рассмотреть на примере](https://gobyexample.com/signals).
+- Нам необходимо использовать `os.Interrupt` для изящного завершения работы по `Ctrl+C`, который отправляет `SIGINT`
+- `syscall.SIGTERM` - обычный сигнал завершения работы и сигнал по умолчанию для контейнеров [docker](https://docs.docker.com/engine/reference/commandline/stop/), который также используется в [kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination/).
 
 ### Разрыв цикла
 

@@ -37,7 +37,7 @@ j;hglfj;'lf`
 
 
 
-Символы *carriage return* (возврата каретки, `'\ r'`) внутри *raw string literal* отбрасываются из итогового значения строки (*raw string value*).
+Символы *carriage return* (возврата каретки, `'\r'`) внутри *raw string literal* отбрасываются из итогового значения строки (*raw string value*).
 
 TODO!!!
 

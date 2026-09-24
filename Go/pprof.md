@@ -140,13 +140,13 @@ $ brew install graphviz
 
 После выполнения команды `web` получаем граф вызовов:
 
-![image-20221114012156929](/Users/paparshikov/repos/cheat-sheets/img/go/pprof-1.png)
+![image-20221114012156929](../img/go/pprof-1.png)
 
 Изучая такой граф, в первую очередь нужно обращать внимание на толщину ребер (стрелочек) и на размер узлов графа (квадратиков). На ребрах подписано время: сколько времени данный узел или любой из ниже лежащих узлов находился в *stack-trace* во время *profiling*'а.
 
 Пойдем по жирным стрелочкам с самого первого (верхнего) узла и дойдем до первой развилки.
 
-![image-20221114012955379](/Users/paparshikov/repos/cheat-sheets/img/go/pprof-2.png)
+![image-20221114012955379](../img/go/pprof-2.png)
 
 
 
@@ -194,7 +194,7 @@ ok      paparshikov/perftest    3.618s
 
 Посмотрим на граф вызовов:
 
-![image-20221120011324837](/Users/paparshikov/repos/cheat-sheets/img/go/pprof-3.png)
+![image-20221120011324837](../img/go/pprof-3.png)
 
 Из графа вызовов пропала ветка с `regexp.Compile()`. Компиляция выполняет один раз до запуска *benchmark*'а и не попала в граф (наверно, т.к. `regexp.Compile()` теперь не входит в состав `BenchmarkRegex` и время компиляции значительно ниже чем многократный запуск бенчмарка).
 
@@ -529,7 +529,7 @@ go tool pprof goprofex http://127.0.0.1:8080/debug/pprof/profile
 
 Видим, что большую часть процессорного времени приложение затрачивает на ведение лога (`log.Printf()`) и сбор метрик (`statsD.Send()`).
 
-![image-20230305133827777](/Users/paparshikov/repos/cheat-sheets/img/go/pprof-8.png)
+![image-20230305133827777](../img/go/pprof-8.png)
 
 Посмотрим на выполнение функции `leftpad()`:
 
@@ -1711,7 +1711,7 @@ $ go tool trace t.out
 
 Выполнение этой команды запускает браузер Chrome с интерфейсом для визуальной трассировки:
 
-![img](/Users/paparshikov/repos/cheat-sheets/img/go/pprof.png)
+![img](../img/go/pprof.png)
 
 ## *Tracing* по сети через `net/http/pprof` *package*
 

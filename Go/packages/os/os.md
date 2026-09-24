@@ -174,9 +174,25 @@ func (f *File) Write(b []byte) (n int, err error)
 
 
 
+## `type Signal`
 
+```go
+type Signal interface {
+	String() string
+  Signal() // для отличия от других Stringer's (реализующих String)
+}
+```
 
+`Signal` представляет собой сигнал операционной системы. Обычно его реализация зависит от операционной системы: в Unix это `syscall.Signal`.
 
+```go
+var (
+	Interrupt Signal = syscall.SIGINT
+	Kill      Signal = syscall.SIGKILL
+)
+```
+
+Единственными гарантированно присутствующими в пакете `os` на всех системах значениями сигналов являются `os.Interrupt` (отправка прерывания процессу) и `os.Kill` (принудительное завершение процесса).
 
 TODO!!!
 

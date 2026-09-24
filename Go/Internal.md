@@ -304,7 +304,7 @@ func schedule() {
 
 Рассмотрим ту же ситуацию на примере *goroutine*'s и *go scheduler*'а.
 
-![img](/Users/paparshikov/repos/cheat-sheets/img/go/94_figure17.png)
+![img](../img/go/94_figure17.png)
 
 На рисунке, 2 *goroutine*'s обмениваются сообщениями. Для **G1** выполняется *context-switch* на **M1**, который исполняется на *Core 1* (**C1**). **G1** переходит в *executing state* и отправляет сообщение к **G2**.
 
@@ -486,7 +486,7 @@ CPU обращается к *memory* по одному *memory word* за раз
 
 
 
-![Действия, выполняемые процессором для доступа к невыровненной памяти](/Users/paparshikov/repos/cheat-sheets/img/go/unaligned-access.png?1)
+![Действия, выполняемые процессором для доступа к невыровненной памяти](../img/go/unaligned-access.png?1)
 
 
 
@@ -597,7 +597,7 @@ func main() {
 
 ```
 
-![image-20211105182348170](/Users/paparshikov/repos/cheat-sheets/img/go/struct-in-memory-8bytes.png)
+![image-20211105182348170](../img/go/struct-in-memory-8bytes.png)
 
 Изменив размер самого большого *field* в *struct* на *4 byte*, меняем и *required alignment* для *struct* на *4 byte*:
 
@@ -614,7 +614,7 @@ func main() {
 
 ```
 
-![image-20211105183258511](/Users/paparshikov/repos/cheat-sheets/img/go/struct-in-memory-4bytes.png)
+![image-20211105183258511](../img/go/struct-in-memory-4bytes.png)
 
 ### 32-bit и 64-bit architecture 
 

@@ -68,7 +68,7 @@
 
 [*Typed constant*'ы](#typed-constantы)
 
-[Default type для untypes constant]()
+[Default type для untyped constant](#default-type-для-untyped-constant)
 
 (не важно)
 

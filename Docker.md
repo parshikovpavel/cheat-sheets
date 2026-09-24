@@ -44,7 +44,7 @@ https://en.wikipedia.org/wiki/Docker_(software)
 
 Существует ряд инструментов оркестрации
 
-![image-20220410183624654](/Users/paparshikov/repos/cheat-sheets/img/docker/orchestration.png)
+![image-20220410183624654](img/docker/orchestration.png)
 
 Самый популярный из них Kubernetes.
 
@@ -60,7 +60,7 @@ Kubernetes оркестрирует pod'ами. Pod – это группа ко
 
 Структура kubernetes:
 
-![image-20220220165635025](/Users/paparshikov/repos/cheat-sheets/img/microservice/kubernetes1.png)
+![image-20220220165635025](img/microservice/kubernetes1.png)
 
 - etcd – distributed key-value storage. Хранит данные о состоянии кластера kubernetes. 
 

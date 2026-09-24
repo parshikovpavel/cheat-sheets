@@ -84,7 +84,7 @@
 
 **Закон Конвея** – любая организация, которая разрабатывает систему, вынуждена создавать проекты, структура которых является копией структуры связей внутри организации. И микросервисная архитектура отражает структуру связей в компании (между командами, юнитами, кластерами).
 
-![monolith-vs-microservice](/Users/paparshikov/repos/cheat-sheets/img/monolith-vs-microservice.png)
+![monolith-vs-microservice](img/monolith-vs-microservice.png)
 
 ## Недостатки
 
@@ -151,7 +151,7 @@
 
 Другой вид архитектуры с монолитом, сервисами и SSR:
 
-![image-20220220140942557](/Users/paparshikov/repos/cheat-sheets/img/microservice/architecture1.png)
+![image-20220220140942557](img/microservice/architecture1.png)
 
 Api-gateway встречает трафик. Api-composition сервисы за ним, далее Brief сервисы.
 
@@ -560,7 +560,7 @@ TODO!!!
 
   При обработке каждого очередного сообщения происходит сравнение его `sequenceId` с `last_seq`. *Message*'s `m1` и `m2` приходят в нужном порядке и они обрабатываются. *Message* `m4` приходит перед `m3` и оно перекладывается в отложенную очередь через `defer`. Ждем получения *message* `m3`. После того как *message* `m3` было обработано, из отложенной очереди извлекается `m4`.
 
-  ![image-20211124020442530](/Users/paparshikov/repos/cheat-sheets/img/microservice/delivery-sequence.png)
+  ![image-20211124020442530](img/microservice/delivery-sequence.png)
 
 
 
@@ -1194,7 +1194,7 @@ CREATE TABLE `account` (
 
 *saga* должна выполнить последовательность компенсирующих *transaction*'s *С<sub>i</sub>* в обратном порядке. Например, если в последовательности *T<sub>1</sub>*, ..., *T<sub>n</sub>* , *step* *T<sub>n+1</sub>* терпит неудачу, то необходимо выполнить последовательность компенсирующих *transaction*'s *С<sub>i</sub>*, ..., *С<sub>1</sub>* в обратном порядке.
 
-![image-20211227234241031](/Users/paparshikov/repos/cheat-sheets/img/microservice/saga3.png)
+![image-20211227234241031](img/microservice/saga3.png)
 
 Механика запуска компенсирующих *transaction*'s *С<sub>i</sub>* аналогична запуску основных *transaction*'s *T<sub>i </sub>*. Завершение *С<sub>i</sub>* должно запускать исполнение *С<sub>i-1</sub>*.
 

@@ -89,7 +89,7 @@ func main() {
 
 
 
-#### `func NotifyContext()`
+### `func NotifyContext()`
 
 ```go
 func NotifyContext(parent context.Context, signals ...os.Signal) (ctx context.Context, stop context.CancelFunc)

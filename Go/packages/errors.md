@@ -18,7 +18,7 @@ https://pkg.go.dev/errors
 
 Функции `Unwrap()`, `Is()` и `As()` работают с *error*, которые могут *wrap* другие *error*. *Error wrap* другую *error*, если ее *type* имеет *method*
 
-```
+```go
 Unwrap() error
 ```
 
@@ -49,7 +49,7 @@ if errors.Is(err, fs.ErrExist)
 if err == fs.ErrExist
 ```
 
-Т.к. `errors.Is()` вернет `true`, если `err`  *wrap* `fs.ErrExist`.
+Т.к. `errors.Is()` вернет `true`, если `err`  *wrap* `fs.ErrExist` (а проверка на равенство вернет только если они равны, [ниже подробнее](#особенности-сравнения-errors))
 
 `As()` *unwrap* свой первый аргумент, последовательно пытаясь найти *error*, которую можно *assign* (присвоить) второму аргументу, который должен быть *pointer* (даже *pointer* на *pointer*):
 
@@ -73,7 +73,22 @@ if validationErr, ok := err.(*tinkoff.ValidationError); ok {
 }
 ```
 
-Потому что `errors.As()` вернет `true`, если `err` *wrap* `*tinkoff.ValidationError`.
+Потому что `errors.As()` вернет `true`, если `err` *wrap* `*tinkoff.ValidationError` (а проверка на равенство только еслии совпадает тип текущей ошибки)
+
+Начиная с Go 1.26 появилась функция `AsType()`. [Функция `AsType()`](https://pkg.go.dev/errors#AsType) *unwrap* свой аргумент, последовательно пытаясь найти *error*,  *type* которой соответствует *type argument*. Результат:
+
+- в случае успеха она выполняет *assignment* *value* этого *type* и возвращает `true`. 
+- в противном случае – возвращает *zero value* этого *type* и `false`. 
+
+ Форма
+
+```go
+if validationErr, ok := errors.AsType[*tinkoff.ValidationError](err); ok {
+	//...
+}
+```
+
+Это делает код лаконичнее, чем с `As()` и избавляет от промежуточной *variable*.
 
 
 

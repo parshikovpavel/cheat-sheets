@@ -69,6 +69,41 @@ make (chan int, 100)
 
 *Channel* действуют как FIFO (*first-in-first-out*) *queue*. Т.е., если одна *goroutine* отправляет значения по *channel*, а вторая *goroutine* получает их, значения будут получены в том порядке, как они были отправлены.
 
+*Channel value* — внутри содержит дескриптор канала, который при присваивании и передаче в функцию копируется, но обе копии указывают на один и тот же *underlying channel*. Т.е. *channel value* копируется *by value*, но это *value* содержит ссылку на один и тот же *channel*. Это аналогично `map` и `slice`, поэтому при создании необходимо использовать функцию `make()`
+
+Например:
+
+```go
+ch1 := make(chan int)
+ch2 := ch1
+
+go func() {
+	ch2 <- 42
+}()
+
+fmt.Println(<-ch1) // 42
+```
+
+`ch1` и `ch2` — разные переменные, но работают с одним каналом.
+
+То же самое при передаче в функцию:
+
+```go
+func send(ch chan int) {
+	ch <- 10
+}
+
+func main() {
+	ch := make(chan int)
+
+	go send(ch)
+
+	fmt.Println(<-ch)
+}
+```
+
+
+
 ## Buffered и unbuffered channel
 
 По сути буферизация *channel*, если channel имеет достаточную *capacity*, влияет только на поведение *sender*. 
@@ -1271,46 +1306,194 @@ func main() {
 }
 ```
 
+## Паттерны
 
+### Goroutine pool
 
+Пул горутин (Worker Pool) в Golang — это паттерн, который позволяет эффективно управлять набором легковесных горутин для параллельной обработки задач из общей очереди. Вместо того чтобы создавать новую горутину для каждой задачи, мы заранее запускаем фиксированное количество воркеров, которые берут задачи из канала и обрабатывают их. Это помогает оптимизировать использование ресурсов системы и избежать проблем, связанных с чрезмерным созданием горутин.
 
+Основные компоненты пула:
 
-## Паттерн goroutine pool
+- Канал задач (`chan jobs`) — через него продюсеры (основная *goroutine*) отправляет задания на обработку.
+- Канал результатов (`chan results`) – куда воркер отправляет результат выполненной работы.
+- Пул воркеров — *goroutine*'s, которые постоянно слушают канал с задачами и обрабатывают их, и отправляют результаты в канал `results`.
+- Когда все задачи отправлены в канал, продюсер закрывает его `close(jobs)`, сигнализируя воркерам, что новых задач не будет. 
+- `wg sync.WaitGroup` — используется для корректного ожидания завершения всех *worker*'ов.
+- после этого мы знаем, что *sender*'ов в *results* не осталось и можно его *close*
+- после этого в `for-range` вычитываем из *results*
 
+```go
+package main
 
+import (
+    "fmt"
+    "time"
+)
 
- *Num CPU worker*'ов обрабатывает *50 request*'ов из пула с помощью `for/range` и обрабатывает их.
+// worker — функция, представляющая нашего рабочего процесса
+// Принимает id рабочего, канал задач и канал для отправки результатов
+func worker(id int, jobs <-chan int, results chan<- int, wg *sync.WaitGroup) {
+    defer wg.Done()
+  
+    for job := range jobs {
+        fmt.Printf("Воркер %d начал выполнение задачи %d\n", id, job)
+        time.Sleep(time.Second) // симулируем выполнение задачи
+        fmt.Printf("Воркер %d завершил выполнение задачи %d\n", id, job)
+        results <- job * 2 // отправляем результат
+    }
+}
+
+func main() {
+    const numJobs = 50 // количество задач для выполнения
+    numWorkers := runtime.NumCPU() // количество воркеров
+    jobs := make(chan int) 
+    results := make(chan int) 
+    var wg sync.WaitGroup
+
+    // создаем пул из numWorkers воркеров
+    wg.Add(numWorkers)
+    for w := 0; w < numWorkers; w++ {
+        go worker(w, jobs, results, &wg)
+    }
+
+    // отправляем задачи в канал jobs
+    go func() {
+      for j := 0; j < numJobs; j++ {
+        jobs <- j
+      }
+      // закрываем канал задач, чтобы воркеры поняли, что больше задач не будет
+      close(jobs)
+    }()
+
+    // нужно ожидать в отдельной горутине и отправлять в ней сигнал закрытия канала,
+    // т.к. results небуферизованный, иначе будет дедлок
+    go func() {
+      wg.Wait()
+      close(results)
+    }()
+
+    // получаем результаты от воркеров
+    for res := range results {
+        fmt.Printf("Результат: %d\n", res)
+    }
+}
+```
+
+В примере *worker*'ы в количестве *num cpu* обрабатывают *50 request*'ов.
 
 Как правило, следует выделять по 1 *goroutine* на каждый CPU. При нагрузочном тестировании или по метрикам в prod'е можно скорректировать количество *goroutine*'s в *pool*. 
 
+### С обработкой отмены по контексту
+
+Пример выше с *context*'ом:
+
 ```go
-func main() {
-  g := runtime.NumCPU()
-  var wg sync.WaitGroup
-  wg.Add(g)
-  
-	requests := make(chan int)
-	for i := 0; i < g; i++ {  // стартует 10 goroutine's
-    go func(id int) {       // goroutine, который обрабатывается requests 
-      defer wg.Done()
-      
-    	for c := range requests {               // выбирает очередной request
-				log.Print("++ worker #", id, " starts the request #", c)
-				time.Sleep(time.Second * time.Duration(1 + rand.Intn(3)))
-				log.Print("-- worker #", id, " finishes the request #", c)
+func worker(
+	ctx context.Context,
+	id int,
+	jobs <-chan int,
+	results chan<- int,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case job, ok := <-jobs:
+			if !ok { //канал задач еще не closed
+				return
 			}
-    }(i)  
+
+			fmt.Printf("Воркер %d начал выполнение задачи %d\n", id, job)
+
+			// В отличие от time.Sleep, такое ожидание можно прервать.
+			timer := time.NewTimer(time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return
+			case <-timer.C:
+			}
+
+			fmt.Printf("Воркер %d завершил выполнение задачи %d\n", id, job)
+
+			results <- job * 2:
+			}
+		}
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	const numJobs = 50
+	numWorkers := runtime.NumCPU()
+
+	jobs := make(chan int)
+	results := make(chan int)
+
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+
+	for w := 0; w < numWorkers; w++ {
+		go worker(ctx, w, jobs, results, &wg)
 	}
 
-	for i := 0; i < 50; i++ {  // send в channel request'ы на обработку
-		requests <- i
+	go func() {
+		defer close(jobs)
+
+		for j := 0; j < numJobs; j++ {
+			select {
+			case <-ctx.Done():
+				return
+			case jobs <- j:
+			}
+		}
+	}()
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	for res := range results {
+		fmt.Printf("Результат: %d\n", res)
 	}
-  
-  close(request)
-  
-  wg.Wait()
+
+	if err := ctx.Err(); err != nil {
+		fmt.Printf("Обработка остановлена: %v\n", err)
+	}
 }
 ```
+
+### Обработка ошибок
+
+Для возврата ошибки из воркера в продюсер задач (основную *goroutine*) необходимо использовать структуру:
+
+```go
+// Result — структура для хранения результата и ошибки
+type result struct {
+    data int
+    err  error
+}
+
+// ...
+
+
+for job := range jobs {
+  results <- result{job * 2, err} // отправляем результат
+}
+```
+
+
+
+
+
+
 
 ## Пинг-понг (обмен числом через *channel*)
 

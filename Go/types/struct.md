@@ -88,14 +88,37 @@ func (b B) method() int {
 
 Такие `field` и `method` (внутри *embedded field*) называются *promoted*.
 
-*Promoted fields* могут использоваться как обычные *fields* c одним ограничением:
+До Go 1.27 *promoted fields* могли использоваться как обычные *fields* c одним ограничением – *promoted fields* не могли использовать в *composite literal*, нужно было явно описать весь *embedded field*:
 
-- *promoted fields* не могут использовать в *composite literal*. Нужно явно описать весь *embedded field*:
+```go
+a := A{field: 1} // Error!!!
+a: = A{B{field: 1}} // OK!
+```
 
-  ```go
-  a := A{field: 1} // Error!!!
-  a: = A{B{field: 1}} // OK!
-  ```
+Начиная с Go 1.27 ключом может быть любое *field*, для которого у структуры есть корректный *field selector*. Поэтому *promoted field* можно указать напрямую:
+
+```go
+a := A{field: 1}
+```
+
+Глубина встраивания, при этом, не важна:
+
+```go
+//  Добавим ещё уровень: C -> A -> B
+type С struct {
+    A
+}
+
+func main() {
+	c := C{
+		field: 1,
+	}
+}
+```
+
+В `C{field: 1}` ключ доберётся до `field`, который лежит двумя уровнями ниже, в `Base`.
+
+
 
 # *Tag*
 

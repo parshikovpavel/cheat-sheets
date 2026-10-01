@@ -197,9 +197,9 @@ func (ds *DataStore) Set(key, value string) {
 
 ### `type WaitGroup`
 
-Ожидает завершения набора *goroutine*'s. *Main goroutine* вызывает `Add()`, чтобы установить количество ожидаемых *gotoutine*'s. Затем каждая из *goroutine* запускается и по завершении вызывает `Done()`. `Wait()` можно использовать, чтобы заблокироваться дло тех пор пока все *goroutine*'s не будут завершены.
+WaitGroup — это подсчитывающий *semaphore*,  используемый для ожидания завершения группы *goroutine*'s.
 
-`WaitGroup` не должен копироваться после первого использования. В функцию `WaitGroup` необходимо передавать *by pointer*. 
+
 
 ```
 type WaitGroup struct {
@@ -207,7 +207,39 @@ type WaitGroup struct {
 }
 ```
 
-<u>Примеры:</u>
+*Main goroutine* запускает *goroutine*'s, вызывая метод [`Go()`](#WaitGroup.Go) , а затем ожидает завершения всех задач, вызывая метод [`Wait()`](#WaitGroup.Wait) . Например:
+
+```go
+var wg sync.WaitGroup
+wg.Go(task1)
+wg.Go(task2)
+wg.Wait()
+```
+
+Старый вариант использования `WaitGroup` – через методы `Add()` и `Done()`.
+
+*Main goroutine* вызывает `Add()`, чтобы установить количество ожидаемых *gotoutine*'s. Затем каждая из *goroutine* запускается и по завершении вызывает `Done()`. `Wait()` используется, чтобы заблокироваться дло тех пор пока все *goroutine*'s не будут завершены. 
+
+`WaitGroup` не должен копироваться после первого использования. В функцию `WaitGroup` необходимо передавать *by pointer*. 
+
+```go
+func worker(wg *sync.WaitGroup) {
+	defer wg.Done() 
+	fmt.Println("Работа выполнена")
+}
+
+func main() {
+	var wg sync.WaitGroup
+
+	wg.Add(1)      
+	go worker(&wg) // Передаём указатель.
+	wg.Wait()     
+}
+```
+
+
+
+Предыдущий пример через методы `Add()` и `Done()`.
 
 
 ```go
@@ -231,6 +263,31 @@ go func() {
 wg.Wait()
 ```
 
+В этом примере выполняется одновременная загрузка нескольких URL-адресов с использованием `WaitGroup` для блокировки до завершения всех загрузок.
+
+```go
+func main() {
+	var wg sync.WaitGroup
+	var urls = []string{
+		"http://www.golang.org/",
+		"http://www.google.com/",
+		"http://www.example.com/",
+	}
+	for _, url := range urls {
+		// Launch a goroutine to fetch the URL.
+		wg.Go(func() {
+			// Fetch the URL.
+			http.Get(url)
+		})
+	}
+	// Wait for all HTTP fetches to complete.
+	wg.Wait()
+}
+```
+
+Этот же пример через методы `Add()` и `Done()`.
+
+
  ```go
 var wg sync.WaitGroup
 	var urls = []string{
@@ -253,7 +310,9 @@ var wg sync.WaitGroup
 	wg.Wait()
  ```
 
-#### `sync.Add()`
+#### `WaitGroup.Add()`
+
+Лучше стоит использовать [`WaitGroup.Go()`](#WaitGroup.Go) .
 
 ```go
 func (wg *WaitGroup) Add(delta int)
@@ -291,11 +350,9 @@ func main() {
 
 Если *WaitGroup* повторно используется для ожидания нового набора событий, новые вызовы `Add()` должны выполняться после возврата всех предыдущих вызовов `Wait()`.
 
+#### `WaitGroup.Done()`
 
-
-
-
-#### `sync.Done()`
+Лучше стоит использовать [`WaitGroup.Go()`](#WaitGroup.Go) .
 
 ```go
 func (wg *WaitGroup) Done()
@@ -303,9 +360,21 @@ func (wg *WaitGroup) Done()
 
 Уменьшает *counter* на единицу.
 
+#### `WaitGroup.Go()`
+
+```go
+func (wg *WaitGroup ) Go(f func())
+```
+
+`Go()` вызывает функцию `f()` в новой *goroutine* и добавляет эту *task* (?) в `WaitGroup` . Когда `f()` возвращает управление, *task* удаляется из `WaitGroup`.
+
+`Go()` вызывается для запуска *task* до вызова `Wait()`. *goroutine*, запущенная `Go()`, сама может вызвать `Go()`. Если WaitGroup используется повторно для ожидания нескольких независимых наборов *task*, новые вызовы `Go()` должны происходить после того, как все предыдущие вызовы `Wait()` вернут результат.
 
 
-#### `sync.Wait()`
+
+
+
+#### `WaitGroup.Wait()`
 
 ```
 func (wg *WaitGroup) Wait()

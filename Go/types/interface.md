@@ -541,10 +541,14 @@ func doSomething() error {
 
 ## *interface* равен `nil`
 
-Если *interface* равен `nil`, то он не содержит:
+ 
 
-- ни *value*
-- ни *concrete type*
+Если *interface* равен `nil` тогда и только тогда, когда оба слова пусты, т.е.:
+
+- `value = nil`
+- `concrete type = nil`
+
+Как только в *interface* кладётся значение *concrete type* (пусть даже *nil‑pointer* этого *type*), *concrete type* становится *non-nil*, и *interface* перестаёт быть `nil`.
 
 Вызов *method*'а на `nil` *interface* вызывает *panic: runtime error*, т.к. указатель на *itable* отсутствует (`nil`?) и непонятно какой *concrete method* вызывать.
 

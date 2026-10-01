@@ -38,19 +38,26 @@ map[string]interface{}
 
 Если передать `map` *by value* в *function* и там изменять ее содержимое через формальный параметр, то изменения будут видны и через фактический параметр (как `object` в PHP).
 
-This variable `m` is a map of string keys to int values:
+Эта переменная `m` представляет собой `map` из *string key*'s и *int value*'s:
 
-```
+```go
 var m map[string]int
 ```
 
-Map types are reference types, like pointers or slices, and so the value of `m` above is `nil`; it doesn't point to an initialized map. A nil map behaves like an empty map when reading, but attempts to write to a nil map will cause a runtime panic; don't do that. To initialize a map, use the built in `make` function:
+*Map type*'s - это *reference type*'s, как *pointer* или *slice*, поэтому выше `m == nil`; оно не указывает на *initialized map*. 
 
-```
+Для *nil map*:
+
+- при чтении ведет себя как *empty map*
+- при записи произойдет *runtime panic* (!!!) 
+
+Для инициализировать map необходимо использовать *built-in function* `make` ([ссылка](../packages/builtin.md#make())):
+
+```go
 m = make(map[string]int)
 ```
 
-The `make` function allocates and initializes a hash map data structure and returns a map value that points to it. The specifics of that data structure are an implementation detail of the runtime and are not specified by the language itself. In this article we will focus on the *use* of maps, not their implementation.
+Функция `make` выделяет память и инициализирует структуру данных в виде *hash map*, а затем возвращает *map value*, указывающее на нее. Особенности этой структуры данных зависят от реализации среды выполнения и не определены самим языком. 
 
 TODO!!!! https://blog.golang.org/maps
 

@@ -1417,12 +1417,12 @@ type Server struct {
 	// If nil, logging is done via the log package's standard logger.
 	ErrorLog *log.Logger
 
-	// BaseContext optionally specifies a function that returns
-	// the base context for incoming requests on this server.
-	// The provided Listener is the specific Listener that's
-	// about to start accepting requests.
-	// If BaseContext is nil, the default is context.Background().
-	// If non-nil, it must return a non-nil context.
+  // BaseContext опционально указывает на function, которая возвращает
+	// base context для входящих request'ов на этом server'е.
+	// Указанный Listener — это конкретный Listener, который
+	// вот-вот начнет принимать request'ы.
+	// Если BaseContext равен nil, по умолчанию используется context.Background().
+	// Если не равен nil, он должен возвращать non-nil context.
 	BaseContext func(net.Listener) context.Context
 
 	// ConnContext optionally specifies a function that modifies
@@ -1435,6 +1435,64 @@ type Server struct {
 ```
 
 `Server` определяет параметры для работы *HTTP server*. *Zero value* для `Server` является валидной конфигурацией.
+
+### `Server.ListenAndServe()`
+
+```go
+func (s *Server) ListenAndServe() error
+```
+
+`ListenAndServe()` прослушивает T*CP network address* `s.Addr`, а затем вызывает [Server.Serve](https://pkg.go.dev/net/http#Serve) для обработки запросов по входящим соединениям. Принятые соединения настроены на включение *TCP keep-alives*.
+
+`ListenAndServe()` всегда возвращает *non-nil error*.
+
+После [`Server.Shutdown`](#Server.Shutdown) или [`Server.Close()`](https://pkg.go.dev/net/http#Server.Close) возвращается ошибка [`ErrServerClosed`](https://pkg.go.dev/net/http#ErrServerClosed) .
+
+### `Server.Shutdown()`
+
+```go
+func (s *Server) Shutdown(ctx context.Context) error
+```
+
+Функция `Shutdown()` корректно завершает работу сервера, не прерывая активных *connection*'ов. Shutdown работает следующим образом: сначала закрываются все открытые *listener*'ы, затем все *idle connection*'ы, а затем неопределенное время ожидается, пока *connection*'ы вернутся в состояние *idle*, после чего происходит отключение (shut down). Если предоставленный *context* истекает до завершения *shutdown*, `Shutdown()` возвращает *context's error*, в противном случае возвращается любая *error*, возникшая при закрытии *[Server](https://pkg.go.dev/net/http#Server)'s underlying Listener(s).*
+
+При вызове функции `Shutdown()` функции [Serve](https://pkg.go.dev/net/http#Serve) , [ServeTLS](https://pkg.go.dev/net/http#ServeTLS) , [ListenAndServe](https://pkg.go.dev/net/http#ListenAndServe) и [ListenAndServeTLS](https://pkg.go.dev/net/http#ListenAndServeTLS) немедленно возвращают [ErrServerClosed](https://pkg.go.dev/net/http#ErrServerClosed) . Убедитесь, что программа не завершает работу, а ожидает возврата значения функции `Shutdown().
+
+(не важно)
+
+Пример *shutdown* по сигналу:
+
+```go
+func main() {
+	var srv http.Server
+
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
+
+		// Получили interrupt signal, делаем shut down.
+		if err := srv.Shutdown(context.Background()); err != nil {
+			// Ошибка от closing listeners или context timeout:
+			log.Printf("HTTP server Shutdown: %v", err)
+		}
+		close(idleConnsClosed)
+	}()
+
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		// Error starting or closing listener:
+		log.Fatalf("HTTP server ListenAndServe: %v", err)
+	}
+
+	<-idleConnsClosed
+}
+
+```
+
+
+
+
 
 
 

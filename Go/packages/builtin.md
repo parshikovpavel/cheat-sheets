@@ -206,15 +206,15 @@ v := make([]int, 100) // v - slice на 100 элементов (каждый э�
 ### `new()`
 
 ```go
-func new(Type) *Type
+func new(TypeOrExpr) *Type
 ```
 
-Функция, выполняет *allocate* памяти указанного *type* с *zero value* и возвращает *pointer* на нее. Подробнее про *zero value* ([link](#zero-value)).
+*Allocate* новую инициализированную *variable* и возвращает *pointer* на неё. Она принимает один аргумент, который может быть:
 
--  Аргумент:
-   - `Type`  – *type* (не *value*). 
--  Возвращаемое значение:
-   - `*Type` – *Pointer* на выделенный участок памяти указанного *type* с *zero value*.
+- *type*
+- *expression*
+
+Если аргумент имеет тип `T`, то `new(T)` *allocate* памяти указанного *type* с *zero value* и возвращает *pointer* на нее. В противном случае аргументом является *expression* `x`, и `new(x)` *allocate variale* типа `x`, инициализированную значением `x`. Если это значение является *untyped constant*, оно сначала неявно преобразуется в свой *default type*.
 
 По сути, `new()` аналогично *variable declaration* ([link](#variable-declaration)), но возвращает *pointer*, а не *value*.
 
@@ -229,6 +229,26 @@ var b int     // type int
 s := new(S)
 s := &S{}
 ```
+
+Поддержка *expression* появилась в Go 1.26. Ранее вводила кастомную функцию:
+
+```go
+func ToPtr[T any](in T) *T {
+	return &in
+}
+
+enabled := ToPtr(true)
+```
+
+Теперь это можно сделать через `new`:
+
+```go
+enabled := new(true)
+```
+
+
+
+
 
 ### `panic()`
 

@@ -2568,7 +2568,28 @@ TODO
 
 
 
+При присваивании значения *variable* заменяются только данные, хранящиеся в этой *variable*. Если значение содержит  [reference](https://go.dev/ref/spec#Representation_of_values) [,](https://go.dev/ref/spec#Representation_of_values) *assignment* копирует *reference*, но не создает копию данных, на которые она ссылается (например, *underlying array* для *slice*).
 
+```go
+var s1 = []int{1, 2, 3}
+var s2 = s1                    // s2 хранит slice descriptor для s1
+s1 = s1[:1]                    // s1's длина = 1 но он по-прежнему использует тот же underlying array, что и  s2
+s2[0] = 42                     // установка s2[0] также изменяет s1[0]
+fmt.Println(s1, s2)            // выводит [42] [42 2 3]
+
+var m1 = make(map[string]int)
+var m2 = m1                    // m2 хранит map descriptor of m1
+m1["foo"] = 42                 // установка m1["foo"] также изменяет m2["foo"].
+fmt.Println(m2["foo"])         // выводит 42
+```
+
+В Go нельзя написать цепочку *assignment*, как в PHP:
+
+```
+a = b = c = 1 // ошибка синтаксиса
+```
+
+*Assignment* в Go — инструкция (*statement*), а не *expression*, поэтому оно ничего не возвращает. Использовать результат *assignment* в другом *assignment* нельзя.
 
 
 

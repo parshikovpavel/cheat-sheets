@@ -313,6 +313,19 @@ a = 'ц'  // constant 1094 overflows byte
 
 
 
+# Variables
+
+*Static type* (или просто *type* ) *variable* — это *type*, указанный в её *declaration*, *type*, предоставленный в `new` вызове или *composite literal*'е, или *type* элемента *structured variable*. 
+
+*Variable*'s *interface type* также имеют отдельный *dynamic type* , который является (*non-interface*) *type* значения, присваиваемого *variable* во время *run time* (если только значение не является *predeclared identifier*'ом `nil`, который не имеет *type*). *Dynamic type* может изменяться во время *run time*, но значения, хранящиеся в *interface variable*'s, всегда могут быть [*assignable*](https://go.dev/ref/spec#Assignability) *static type* *variable*.
+
+```go
+var x interface{} // x равен nil и имеет static type interface{}
+var v *T // v имеет значение nil, static type *T
+x = 42 // x имеет значение 42 и dynamic type int
+x = v // x имеет значение (*T)(nil) и dynamic type *T
+```
+
 
 
 # Type
@@ -344,11 +357,12 @@ https://go101.org/article/value-part.html
 - *map*
 - *slice*
 - *channels*
+- *interface*
 - ...
 
 Поэтому при присвоении – присваивается *value*, которое внутри содержит *reference*. Поэтому, как-бы, они присваиваются *by reference*. 
 
-Эти *type*'s аллоцируются с помощью `make()`, которая возвращает *value* (не *pointer*). Но т.к. они уже внутри содержат *reference*, их всегда и используют *by value* и получать отдельно *pointer* не нужно. 
+Эти *type*'s аллоцируются с помощью `make()` (кроме *interface*), которая возвращает *value* (не *pointer*). Но т.к. они уже внутри содержат *reference*, их всегда и используют *by value* и получать отдельно *pointer* не нужно. 
 
 ### Non-reference type
 
@@ -424,7 +438,9 @@ TODO!!!! Почитать еще тут [link](https://stackoverflow.com/questio
 
 [link](types/string.md)
 
-## Числовые типы
+## Numeric type
+
+Сюда входят *integer*, *floating-point* или *complex type*,  вместе они называются *numeric type*'s.
 
 ```
 uint8       the set of all unsigned  8-bit integers (0 to 255)
@@ -488,6 +504,16 @@ ElementType = Type .
 [3][5]int
 [2][2][2]float64  // same as [2]([2]([2]float64))
 ```
+
+*Array* объявляется без функции `make` и сразу содержит элементы в необходимом количестве:
+
+```go
+var numbers [3]int // сразу состоит из 3 элементов [0 0 0]
+```
+
+
+
+
 
 ### *Slice type*
 
@@ -577,7 +603,7 @@ func(prefix string, values ...int)
 func(a, b int, z float64, opt ...interface{}) (success bool)
 ```
 
-Про передачу параметров в *variadic function* написано [здесь](#passing-arguments-to-parameters)
+Про передачу параметров в *variadic function* написано [здесь](#passing-arguments-to-...-parameters)
 
 
 
@@ -1571,11 +1597,26 @@ type PPoint *Point
 [2]PPoint{{1.5, -3.5}, {}}          // same as [2]PPoint{PPoint(&Point{1.5, -3.5}), PPoint(&Point{})}
 ```
 
+Каждая строка *composite literal* должна заканчиваться запятой `,`, даже если это последняя или единственная строка в expression. Это результат  автоматической простановки точек с запятой ([1](#точка-с-запятой)).
+
+```go
+mapa := map[string]string{
+    "jedan": "one",
+    "dva":   "two"  // ошибка, здесь будет поставлена ;
+}
+```
 
 
 
 
-### Array literal
+
+### Особенности array и slice literal
+
+Для *array и slice literal* действуют следующие правила:
+
+- Каждому элементу присваивается *integer index*, указывающий его позицию в массиве.
+- Элемент с *key* использует этот *key* в качестве своего *index*. *Key* должен быть *non-negative constant*, [representable](https://go.dev/ref/spec#Representability)https://go.dev/ref/spec#Representability) значением типа `int`; и если он типизирован, то должен быть [integer type](https://go.dev/ref/spec#Numeric_types).
+- Для элемента без *key* используется *index* предыдущего элемента плюс единица. Если у первого элемента нет *key*, его *index* равен нулю.
 
 Способы указания длины для *array literal*:
 
@@ -1598,9 +1639,9 @@ type PPoint *Point
 
 
 
-### Slice literal
+### Особенности *slice literal*
 
-Slice literal описывается следующим образом: 
+*Slice literal* описывается следующим образом: 
 
 ```
 []T{x1, x2, … xn}
@@ -1608,13 +1649,11 @@ Slice literal описывается следующим образом:
 
 Его length и capacity – максимальный индекс + 1.
 
-Каждая строка *composite literal* должна заканчиваться запятой `,`, даже если это последняя или единственная строка в expression. Это результат  автоматической простановки точек с запятой ([1](#точка-с-запятой)).
+Эта запись является сокращением для инициализации *array* и применения к нему *slice expression*:
 
 ```go
-mapa := map[string]string{
-    "jedan": "one",
-    "dva":   "two"  // ошибка, здесь будет поставлена ;
-}
+tmp := [n]T{x1, x2, … xn}
+tmp[0 : n]
 ```
 
 
@@ -1647,6 +1686,61 @@ func (b int) int { return b }
   ```
 
 *Function literal* – *closure* (замыкание): они могут использовать *variable*'s, определенные во внешних *function*'s (??? *block*'s). Эти *variable*'s используется совместно внешними *function*'s и *function literal*, и не вычищаются из памяти до тех пор пока доступны в каком-то месте.
+
+*Closure* хранит не только код функции, но и *environment* — данные, к которым этот код обращается. 
+
+Например код:
+
+```go
+var wg sync.WaitGroup
+
+go func() {
+    wg.Wait()
+}()
+```
+
+Компилятор преобразует в:
+
+```go
+// Окружение замыкания.
+type closureEnv struct {
+    wg *sync.WaitGroup
+}
+
+// Код функции внутри goroutine
+func closureBody(env *closureEnv) {
+    env.wg.Wait()
+}
+
+wg := new(sync.WaitGroup)
+env := &closureEnv{wg: wg}
+
+// запуск функции-closure с аргументом - closure environment
+go closureBody(env)
+```
+
+Это иллюстрация, а не точный код, который генерирует компилятор. В окружение попадает адрес `wg`, а не копия структуры `WaitGroup`. Поэтому разные замыкания могут хранить одинаковый адрес:
+
+```
+goroutine 1 ── указатель ──┐
+goroutine 2 ── указатель ──┼──► одна wg
+goroutine 3 ── указатель ──┘
+```
+
+Компилятор не всегда захватывает переменные через указатель. Компилятор анализирует, как используется переменная. При выборе способа захвата компилятор проверяет, можно ли скопировать переменную. Захват по значению допускается, если:
+
+- адрес переменной не берётся;
+- переменной не присваивается новое значение;
+- её размер не превышает 128 байт.
+
+В случае `wg` ключевой момент — методы с получателем-указателем:
+
+```go
+func (wg *WaitGroup) Done()
+func (wg *WaitGroup) Wait()
+```
+
+То есть адрес `wg` берётся неявно, даже если ты не написал `&`. Первое условие уже нарушено, поэтому *closure* захватывает её по ссылке. 
 
 
 
@@ -1941,7 +2035,7 @@ TODO!!!
 
 Смотреть [здесь](types/slice.md#slice-expression)
 
-## Type assertion
+## *Type assertion*
 
 Есть два вида преобразований:
 
@@ -1965,6 +2059,64 @@ x.(T)
 - и что значение в `x`  имеет тип `T`.
 
 Если *type assertions* выполняется, возвращает значение, хранящееся в `x` с типом `T`. 
+
+Точное правило *assertion*:
+
+- если `T` — *non-interface type*, то `x.(T)` утверждает, что *dynamic type* `x` [identical](#type-identity) *type* `T`. В этом случае `T` должен [implement](#method-set) *interface type* `x`; иначе *type assertion* недопустим, поскольку `x` не может хранить значение *type* `T`. 
+
+  ```go
+  var x interface{} = 7          // x имеет dynamic type int и value 7
+  i := x.(int)                   // допустимо, т.к. dynamic type int
+  												       // i имеет type int и value 7
+  j := y.(string)                // ошибка, т.к. dynamic type int
+  
+  
+  type I interface { m() }
+  
+  func f(y I) {
+  	s := y.(string)        // ошибка, т.к. dynamic type y не может быть string, string не реализует I (отсутствует метод m)
+  }
+  ```
+
+- если `T` — *interface type*, то `x.(T)` утверждает, что *dynamic type* `x` [implement](#method-set) интерфейс `T`.
+
+  ```go
+  type I interface { m() }
+  
+  func f(y I) {
+  	r := y.(io.Reader)     // пройдет без ошибки, если y's dynamic type реализует и I и io.Reader
+                           // r будет иметь тип io.Reader
+  }
+  ```
+
+  Такое тоже работает:
+
+  ```go
+  type Foo struct{}
+  
+  func (f *Foo) A() {}
+  func (f *Foo) B() {}
+  func (f *Foo) C() {}
+  
+  type AB interface {
+  	A()
+  	B()
+  }
+  
+  type BC interface {
+  	B()
+  	C()
+  }
+  
+  func main() {
+  	var f AB = &Foo{}  // f's static type — AB, f's dynamic type — *Foo
+    y := f.(BC)        // корректно: f's dynamic type *Foo реализует оба интерфейса и AB и BC
+  }
+  ```
+
+  
+
+
 
 TODO!!!
 
@@ -1997,6 +2149,8 @@ TODO!!!
   ```
   
   
+
+
 
 
 
@@ -2175,7 +2329,7 @@ package main
 func main() {
     a := 3.14
     b := 2
-    result := a / b  // invalid operation: a / b (mismatched types int and int64)
+    result := a / b  // invalid operation: a / b (mismatched types float64 and int)
 }
 ```
 
@@ -2689,7 +2843,7 @@ case x < 0: return -x
 default: return x
 }
 
-switch {
+switch { // проверка на true
 case x < y: f1()
 case x < z: f2()
 case x == 4: f3()
@@ -2867,9 +3021,7 @@ RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
 - *integer values* от 0 до верхнего предела [[Go 1.22](https://go.dev/ref/spec#Go_1.22)]
 - значения, переданные функции `yield` итератора [[Go 1.23](https://go.dev/ref/spec#Go_1.23)]
 
-`Expression` справа в `range` *clause* называется *range expression* , которое может представлять собой *array, pointer to array, slice, string, map, channel (разрешающий [receive operations](https://go.dev/ref/spec#Receive_operator), integer или function со специальной signature*. Как и при присваивании, операнды слева, если они присутствуют, должны быть [addressable](https://go.dev/ref/spec#Address_operators) или *map index expression*; они обозначают *iteration variable*. Если *range expression* является *function*, максимальное количество *iteration variable*'s зависит от *function signature*. Если *range expression* является *channel* или *integer*, допускается не более одной переменной итерации; в противном случае их может быть до двух. Если последняя переменная итерации является [пустым идентификатором](https://go.dev/ref/spec#Blank_identifier) , предложение диапазона эквивалентно тому же предложению без этого идентификатора.
-
-
+`Expression` справа в `range` *clause* называется *range expression* , которое может представлять собой *array, pointer to array, slice, string, map, channel (разрешающий [receive operations](https://go.dev/ref/spec#Receive_operator)), integer или function со специальной signature*. Как и при присваивании, операнды слева, если они присутствуют, должны быть [addressable](https://go.dev/ref/spec#Address_operators) или *map index expression*; они обозначают *iteration variable*. Если *range expression* является *function*, максимальное количество *iteration variable*'s зависит от *function signature*. Если *range expression* является *channel* или *integer*, допускается не более одной переменной итерации; в противном случае их может быть до двух. 
 
 Для каждого элемента присваивает *iteration variable*'s (может быть несколько переменных в `IdentifierList`) некоторые *iteration value*'s, зависящие от типа `Expression` (см. таблицу ниже), а затем выполняет блок.
 
@@ -2887,18 +3039,46 @@ for key, val = range <map> {
 *Value*'s зависят от типа `Expression` следующим образом:
 
 ```
-Range expression                          1st value          2nd value
+Range expression                                       1st value                2nd value
 
-array or slice  a  [n]E, *[n]E, or []E    index    i  int    a[i]       E
-string          s  string type            index    i  int    see below  rune
-map             m  map[K]V                key      k  K      m[k]       V
-channel         c  chan E, <-chan E       element  e  E
+array or slice      a  [n]E, *[n]E, or []E             index    i  int          a[i]       E
+string              s  string type                     index    i  int          see below  rune
+map                 m  map[K]V                         key      k  K            m[k]       V
+channel             c  chan E, <-chan E                element  e  E
+integer value       n  integer type, or untyped int    value    i  see below
+function, 0 values  f  func(yield func() bool)
+function, 1 value   f  func(yield func(V) bool)        value    v  V                               yield cannot be variadic
+function, 2 values  f  func(yield func(K, V) bool)     key      k  K            v          V       yield cannot be variadic
 ```
 
 1. Для *array*, *pointer to array* и *slice*, выполняет итерации по индексам в порядке возрастания, начиная с индекса 0. Для `nil` *slice* количество итераций равно 0.
+
 2. Для *string*, выполняет итерации по *Unicode code point*'s в *string*, начиная с байта с индексом 0. При последующих итерациях *index value* будет равно индексу первого байта последовательных *UTF-8-encoded code point*'s в *string* и второе *value* с типом `rune` будет значением соответствующей *code point*. 
+
 3. Порядок итераций по *map* не определен и не гарантируется, что он будет одинаковым от одной итерации к другой. Если еще не достигнутая *map entry* будет удалена во время итерации, соответствующее *iteration value* не будет выдано. Если *map entry* создается во время итерации, эта запись может быть выдана во время итерации или может быть пропущена. Если *map* есть `nil`, количество итераций равно 0.
+
 4. Для *channel*, выдаваемые *iteration value*'s являются последовательными значениями, отправляемыми по *channel* до тех пор, пока *channel* не будет *close*. Если *channel* есть `nil`, *range expression* блокируется навсегда.
+
+5. Для *integer value* `n`, где `n`— [integer type](#Numeric_type) или нетипизированная *untyped* [integer constant](Constant.md) , значения итераций от 0 до `n-1` генерируются в порядке возрастания. Если `n`имеет *integer type*, значения итераций имеют тот же тип. В противном случае тип `n` определяется так, как если бы он был присвоен *iteration variable*. В частности: если *iteration variable* существует, тип *iteration value*'s равен типу *iteration variable*, которая должна быть *integer type*. В противном случае, если *iteration variable* объявлена с помощью предложения `range` или отсутствует, тип *iteration value*'s равен [default type](#Constant.md) для `n`. Если `n`<= 0, цикл не выполняет никаких итераций.
+
+   ```go
+   // вызов f(0), f(1), ... f(9)
+   for i := range 10 {
+   	// Тип переменной i — int (тип по умолчанию для untyped constant 10)
+   	f(i)
+   }
+   
+   // Недопустимо: значение 256 не может быть присвоено uint8
+   var u uint8
+   for u = range 256 {
+   }
+   
+   // Недопустимо: 1e3 — floating-point constant
+   for range 1e3 {
+   }
+   ```
+
+   
 
 `Expression` вычисляется один раз перед началом цикла, за одним исключением: если присутствует не более одной *iteration variable* и `len(Expression)` является [constant](https://go.dev/ref/spec#Length_and_capacity)), `Expression` вообще не вычисляется. Пример функции внутри `Expression`:
 
@@ -3023,6 +3203,62 @@ for i := 0; i < 10; i++ {
 }
 ```
 
+
+
+### Scope iteration variable
+
+Начиная с Go 1.22, каждая *iteration* имеет свою собственную отдельно объявленную *variable* (или *variable*'s). *Variable*, используемая в первой *iteration*, объявляется `InitStmt`. *Variable*, используемая в каждой последующей *iteration*, объявляется неявно перед выполнением `PostStmt` и инициализируется значением *variable* предыдущей итерации на этот момент (а затем уже выполняется для нее `PostStmt`)
+
+Поэтому здесь работает корректно:
+
+```go
+func main() {
+	wg := sync.WaitGroup{}
+
+	for i := range 5 {
+		wg.Go(func() {
+			fmt.Println(i)
+		})
+	}
+
+	wg.Wait()
+}
+// 0 3 1 2 4
+```
+
+Здесь:
+
+```go
+var prints []func()
+for i := 0; i < 5; i++ {
+	prints = append(prints, func() { println(i) })
+	i++
+}
+for _, p := range prints {
+	p()
+}
+```
+
+Печатает
+
+```
+1
+3
+5
+```
+
+До версии [ [Go 1.22](https://go.dev/ref/spec#Go_1.22) ] *iteration*'s шарили один набор *variable*'s вместо отдельных *variable*'s. В этом случае в приведенном выше примере выводилось следующее:
+
+```
+6
+6
+6
+```
+
+https://go.dev/wiki/LoopvarExperiment
+
+
+
 ## `return` *statement*
 
 <pre>
@@ -3103,7 +3339,7 @@ OuterLoop:
 
 ## `select` *statement*
 
-[смотреть тут](types/channel.md#selecr-statement)
+[смотреть тут](types/channel.md#select-statement)
 
 
 

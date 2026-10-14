@@ -116,6 +116,8 @@ TODO!!!
 
 https://golang.org/ref/spec#String_literals
 
+
+
 ## Конкатенация `string`
 
 смотреть [String concatenation](../Lang.md#string-concatenation)
@@ -129,6 +131,12 @@ https://golangdocs.com/concatenate-strings-in-golang
 https://www.geeksforgeeks.org/different-ways-to-concatenate-two-strings-in-golang/
 
 https://stackoverflow.com/questions/1760757/how-to-efficiently-concatenate-strings-in-go
+
+
+
+## `strings` package
+
+[Здесь](../packages/strings.md)
 
 
 

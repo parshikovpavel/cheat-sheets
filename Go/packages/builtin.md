@@ -10,7 +10,11 @@ https://pkg.go.dev/builtin
 func append(slice []Type, elems ...Type) []Type
 ```
 
-`append()` добавляет *element*'ы в конец *slice*. Если он имеет достаточную *capacity*, место назначения *resliced* (?) для размещения новых *element*'ов. Если нет – будет выделен новый *underlying array*. 
+`append()` добавляет *element*'ы в конец *slice*. 
+
+Если он имеет достаточную *capacity*, length будет просто увеличена поверх того же *underlying array* для размещения новых *element*'ов.
+
+ Если нет – будет выделен новый *underlying array* большего размера. Обычно *capacity* удваивается, но точный рост *capacity* не гарантирован спецификацией Go, на него не стоит полагаться.
 
 `append()` возвращает обновленный *slice*. Т.к. необходимо сохранить результат `append`, это часто делают в исходную *variable* со *slice*:
 
@@ -77,6 +81,18 @@ func copy(dst, src []Type) int
 `copy()` копирует элементы из *source slice* в *destination slice*. (Как частный случай, `copy()` также копирует байты из *string* в *slice of byte*). *Source* и *destination slice* могут перекрываться. `copy()` возвращает количество скопированных элементов, которое будет минимумом из `len(src)` и `len(dst)`.
 
 Т.е. `copy()` копирует количество элементов, равное минимуму из `len(src)` и `len(dst)`!!!
+
+
+
+#### `clear()`
+
+```go
+func clear[T ~[]Type | ~map[Type]Type1](t T)
+```
+
+`clear()` очищает *map*'s и *slice*'s. Для *map* `clear()` удаляет все записи, в результате чего получаем *empty map*. Для *slice*'s `clear()` устанавливает для всех элементов до *length slice* – *zero value* соответствующего типа элемента. Если аргумент `type` является *type parameter*, то *type parameter's type* должен содержать только типы *map* или *slice*, и `clear()` выполняет операцию, подразумеваемую аргументом `type`. Если `t` равно `nil`, `clear()` ничего не делает.
+
+
 
 
 

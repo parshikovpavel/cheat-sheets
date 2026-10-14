@@ -204,6 +204,14 @@ func (x *Int64) Add(delta int64) (new int64)
 
 `Add()` атомарно добавляет `delta` к `x` и возвращает значение `new`.
 
+#### `CompareAndSwap()`
+
+```go
+func (x *Int64) CompareAndSwap(old, new int64) (swapped bool)
+```
+
+`CompareAndSwap` исполняет *compare-and-swap operation* для x ([читать](../../Algorithm.md#сравнение-с-обменом-compare-and-swap-cas))
+
 #### `Load()`
 
 ```go
@@ -215,7 +223,7 @@ func (x *Int64) Load() int64
 #### `Store()`
 
 ```go
-func (x * Int64 ) Store(val int64 )
+func (x *Int64 ) Store(val int64 )
 ```
 
 `Store()` атомарно записывает `val` в `x`.

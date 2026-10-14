@@ -1,1 +1,0 @@
-План обучения scrum https://cf.avito.ru/pages/viewpage.action?pageId=118943260

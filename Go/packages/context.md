@@ -512,7 +512,7 @@ type User struct {...}
 // Т.е. это просто variable со значением - zero value (0)
 type key int
 
-// `userKey` – это key для value типа user.User в context'е. Эта variable – unexported
+// `userKey` – это key для value типа user.key в context'е. Эта variable – unexported
 // клиенты должны использовать user.NewContext() и user.FromContext() для доступа к value
 // и не использовать этот key напрямую
 var userKey key

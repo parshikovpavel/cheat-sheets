@@ -203,6 +203,10 @@ s := Stringer(b)
 
 `Value` и `Type` также называют *dynamic*, т.к. они могут содержать разные значения во время выполнения программы.
 
+Подробнее про [dynamic type](../Lang.md#variables)
+
+[Подробно про роль *dynamic type* в *assertion*](../Lang.md#type-assertion)
+
 Это можно изучить *builtin function* `println()`:
 
 ```go

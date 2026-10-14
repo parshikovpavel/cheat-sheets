@@ -69,6 +69,41 @@ https://github.com/golang-standards/project-layout
 
 https://github.com/tmrts/go-patterns
 
+## Принимай интерфейсы, возвращай конкретные типы
+
+Принимай интерфейсы, возвращай конкретные типы (*Accept interfaces, return structs*).
+
+Принимая интерфейс, функция требует только нужное ей поведение и может работать с разными реализациями:
+
+```go
+type Reader interface {
+    Read(key string) (string, bool)
+}
+
+func NewService(cache Reader) *Service {
+    return &Service{cache: cache}
+}
+```
+
+Возвращая конкретный тип, конструктор оставляет вызывающему коду доступ ко всем его методам:
+
+```go
+func NewCache() *Cache {
+    return &Cache{}
+}
+```
+
+Вызывающий код сам решает, какой интерфейс использовать:
+
+```go
+cache := NewCache()          // *Cache — доступны все методы
+service := NewService(cache) // сервису нужен только Read
+```
+
+**Интерфейс определяют там, где его используют**, — например, рядом с `Service`, а не в пакете c `Cache`. Так потребитель описывает свои требования, а реализация автоматически им соответствует.
+
+
+
 ## Strategy
 
 Интерфейс стретегии:
@@ -119,7 +154,7 @@ func (v *validator) getGeoData(ctx context.Context) error {
 }
 ```
 
-## Функция с переменным числом аргументов
+## Конструирование объекта
 
 https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis
 
@@ -183,6 +218,7 @@ func NewWithTimeoutAndMaxIdleConns(url string, timeout time.Duration, maxIdleCon
 
 - негибко
 - громоздко
+- новый конструктор для каждого нового набора параметров
 
 ### Используем аргумент-структуру `Config`
 
@@ -204,7 +240,7 @@ type Config struct {
   maxIdleConns int
 }
 
-func New(url string, config Config) *Client {
+func NewClient(url string, config Config) *Client {
    return &client{
       url: url,
       timeout: config.timeout,
@@ -219,11 +255,173 @@ func New(url string, config Config) *Client {
 
 Недостатки:
 
-- https://medium.com/german-gorelkin/go-functional-options-727ec78e4a8f
+- требует создания дополнительной структуры
 
+- необходимо продумать параметры по умолчанию в структуре 
 
+  
+
+### Fluent interface
+
+Еще один подход – настройка через отдельные `Set` методы. Это позволяет постепенно настраивать экземпляр объекта.
+
+```go
+type Client struct {
+	url          string
+	timeout      time.Duration
+	maxIdleConns int
+}
+
+func NewClient(url string) *Client {
+	c := &Client{
+		url: url,
+	}
+
+	return c
+}
+
+func (c *Client) SetTimeout(timeout time.Duration) *Client {
+	c.timeout = timeout
+}
+
+func (c *Client) SetMaxIdleConns(maxIdleConns int) *Client {
+	c.maxIdleConns = maxIdleConns
+}
+
+func main() {
+	c := NewClient("https://www.ya.ru").
+		SetTimeout(5 * time.Minute).
+		SetMaxIdleConns(5)
+}
+```
+
+Проблема:
+
+- пользователь библиотеки может вызвать методы `Set` в любой момент, не только в момент конструирования, что может повлечь неожиданное поведение методов, которые привязаны к этой структуре.
 
 ### Functional options
+
+Сигнатура  *functional option* (функциональной опции) имеет вид:
+
+```go
+type Option func(*Client)
+```
+
+и принимает в качестве аргумента *pointer* на структуру `Client`. 
+
+Такие *function* очень просты - они изменяют соответствующее *property* в *struct*:
+
+```go
+var timeout = 1 * time.Second
+func SetTimeout(c *Client) {
+	c.timeout = timeout
+}
+```
+
+Удобнее испоьзовать отдельную функцию с префиксом `With` – конструктор для *functional option*, который возвращает *functional option* и может принимать аргументы, для постановки значений в *property*: 
+
+```go
+func WithTimeout(timeout time.Duration) func(*Client) {
+	return func(c *Client) {
+		c.timeout = timeout
+	}
+}
+```
+
+Такой конструктор вернет *functional option*, который изменяет `timeout`. Функция `WithTimeout` может использоваться из другого *package*, при этом она изменяет *non-exported property* `timeout`. Функция `WithTimeout` использует замыкание переменной `timeout`, захватывая ее для последующей подстановки в экземпляр `Client`.
+
+Конструктор `NewClient()` имеет вид:
+
+```go
+func NewClient(url string, opts ...Option) *Client {
+	c := &Client{
+		url: url,
+	}
+
+	// Перебираем в цикле functional option
+	for _, opt := range opts {
+		// Вызов соответствующей funcitonal option
+		// в качестве аргумента - *Client
+		opt(c)
+	}
+
+	return c
+}
+```
+
+Конструкторпринимает список любого количества аргументов *functional option*, каждая *functional option* применяется к экземпляру `*Client`.
+
+Пример создания клиенты:
+
+```go
+c := NewClient(
+		"https://www.ya.ru",
+		WithTimeout(5*time.Minute),
+		WithMaxIdleConns(5),
+	)
+```
+
+Весь пример:
+
+```go
+type Option func(*Client)
+
+type Client struct {
+	url        string
+	timeout time.Duration
+	maxIdleConns int
+}
+
+func NewClient(url string, opts ...Option) *Client {
+	c := &Client{
+		url: url,
+	}
+
+	// Применяем в цикле каждую functional option
+	for _, opt := range opts {
+		// Вызов соответствующей funcitonal option
+		// в качестве аргумента - *Cliebt
+		opt(c)
+	}
+
+	return c
+}
+
+func WithTimeout(timeout time.Duration) func(*Client) {
+	return func(c *Client) {
+		c.timeout = timeout
+	}
+}
+
+func WithMaxIdleConns(maxIdleConns int) func(*Client) {
+	return func(c *Client) {
+		c.maxIdleConns = maxIdleConns
+	}
+}
+
+func main() {
+	c := NewClient(
+		"https://www.ya.ru",
+		WithTimeout(5*time.Minute),
+		WithMaxIdleConns(5),
+	)
+}
+```
+
+Преимущества:
+
+- строгий контракт, безопасно для новичков
+- выразительность и понятность вызова конструктора, самодокументирование
+- легко расширять количество *functional option*'s, позволяют создавать расширяемое API
+- любой порядок передачи *functional option*
+- любая комбинация *functional option*'s
+- опциональность любой из *functional option*, наличие значений *by default*
+
+
+
+
+
+
 
 
 

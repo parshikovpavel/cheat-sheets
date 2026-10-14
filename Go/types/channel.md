@@ -1322,6 +1322,12 @@ func main() {
 - после этого мы знаем, что *sender*'ов в *results* не осталось и можно его *close*
 - после этого в `for-range` вычитываем из *results*
 
+В примере `main()` является координатором *goroutine pool*, в задачи которого входит:
+
+- создание *goroutine pool*
+- отправка в *jobs channel* данных на обработку
+- получение из *result channel* результатов 
+
 ```go
 package main
 
@@ -1382,6 +1388,73 @@ func main() {
 В примере *worker*'ы в количестве *num cpu* обрабатывают *50 request*'ов.
 
 Как правило, следует выделять по 1 *goroutine* на каждый CPU. При нагрузочном тестировании или по метрикам в prod'е можно скорректировать количество *goroutine*'s в *pool*. 
+
+Возможен другой вариант реализации *goroutine pool* - через `select`, внутри которого. (1) `case` на отправку задач и (2) `case` на получение результатов:
+
+```go
+
+// worker — функция, представляющая нашего рабочего процесса
+// Принимает id рабочего, канал задач и канал для отправки результатов
+func worker(id int, jobs <-chan int, results chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for job := range jobs {
+		fmt.Printf("Воркер %d начал выполнение задачи %d\n", id, job)
+		time.Sleep(time.Second) // симулируем выполнение задачи
+		fmt.Printf("Воркер %d завершил выполнение задачи %d\n", id, job)
+		results <- job * 2 // отправляем результат
+	}
+}
+
+func main() {
+	const numJobs = 50             // количество задач для выполнения
+	numWorkers := runtime.NumCPU() // количество воркеров
+	jobs := make(chan int)
+	results := make(chan int)
+	var wg sync.WaitGroup
+
+	// создаем пул из numWorkers воркеров
+	wg.Add(numWorkers)
+	for w := 0; w < numWorkers; w++ {
+		go worker(w, jobs, results, &wg)
+	}
+
+	// Количество выданных заданий, результаты которых ещё не получены
+	inProcess := 0
+	j := 0
+
+	// крутимся в цикле, пока задачи не закончились, или еще есть задачи в процессе
+	for j < numJobs || inProcess > 0 {
+		// если задачи уже закончились, отключаем ветку в select
+		// через отправку в nil channel (block forever)
+		var readyJobs chan<- int
+		if j < numJobs {
+			readyJobs = jobs
+		}
+
+		select {
+		// отправляем задачи
+		case readyJobs <- j:
+			inProcess++
+			j++
+		// получаем результаты	
+		case res := <-results:
+			fmt.Printf("Результат: %d\n", res)
+			inProcess--
+		}		
+	}
+
+	// Закончились jobs
+	// сообщаем воркерам, что необходимо завершать работу
+	close(jobs)
+	
+	// дожидаемся завершения воркеров
+	wg.Wait()
+}
+
+```
+
+
 
 ### С обработкой отмены по контексту
 
@@ -1863,6 +1936,8 @@ func main() {
 
 Соединенные между собой *module*'s образуют *data flow system*.
 
+ВАЖНО: большинство примеров ниже не закрывают выходной *channel*, это нужно делать через `WaitGroup` и отдельную *goroutine*, как в [агрегация данных](#агрегация-данных).
+
 ### Генерация данных (*generation*)
 
 Примеры генерации данных:
@@ -1943,27 +2018,29 @@ func RandomGenerator() <-chan int {
 Это переделанный (вариант 1) с *goroutine*, как сделать (вариант 2) с `select` – не знаю):
 
 ```go
-func Aggregator(inputs ...<-chan int) <-chan int {
-	output := make(chan int)
-	var wg sync.WaitGroup
-	for _, in := range inputs {
-		wg.Add(1)
-		go func(in <-chan int) {
+func merge(cs ...<-chan int) <-chan int {
+	ch := make(chan int)
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(cs))
+	for _, c := range cs {
+		// запускаем для каждого канала отдельную горутину, которая будет читать из него и писать в общий канал ch
+		go func(c <-chan int) {
 			defer wg.Done()
-			// В цикле receive value's до тех пор
-			// пока channel не будет close
-			for x := range in {
-				output <- x
+			// читаем из входного канала (до его закрытия) и пишем в выходной
+			for val := range c {
+				ch <- val
 			}
-		}(in)
+		}(c)
 	}
+
+	// чтобы закрыть выходной канал ch (этого будут ждать reader'ы из него), 
+	// нужно в отдельной горутине дождаться, когда закроются все входные каналы, и закрыть ch
 	go func() {
 		wg.Wait()
-
-		// когда все goroutine's завершились, close output
-		close(output)
+		close(ch)
 	}()
-	return output
+	return ch
 }
 ```
 
